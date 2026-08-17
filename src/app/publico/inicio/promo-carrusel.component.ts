@@ -47,6 +47,20 @@ import { PromocionesService } from '../../compartido/promociones.service';
                   <p class="promo__subtitulo">{{ p.subtitulo }}</p>
                   <p class="promo__texto">{{ p.descripcion }}</p>
 
+                  @if (p.sesionesDetalle?.length) {
+                    <div class="promo__incluye">
+                      <span>Incluye</span>
+                      <ol>
+                        @for (s of p.sesionesDetalle; track s.titulo) {
+                          <li>
+                            <strong>{{ s.titulo }}</strong>
+                            <p>{{ s.descripcion }}</p>
+                          </li>
+                        }
+                      </ol>
+                    </div>
+                  }
+
                   <div class="promo__datos">
                     @if (p.precio) {
                       <div class="promo__precio">
@@ -195,6 +209,63 @@ import { PromocionesService } from '../../compartido/promociones.service';
       max-width: 58ch;
       margin-bottom: 24px;
     }
+    .promo__incluye {
+      position: relative;
+      margin: 0 0 24px;
+      padding: 18px 18px 18px 22px;
+      border-radius: var(--radio-lg);
+      background: var(--rosa-50);
+      border: 1px solid var(--linea);
+    }
+    .promo__incluye > span {
+      display: block;
+      color: var(--magenta);
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .promo__incluye ol {
+      list-style: none;
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      counter-reset: promo-sesion;
+    }
+    .promo__incluye li {
+      position: relative;
+      padding-left: 36px;
+      counter-increment: promo-sesion;
+    }
+    .promo__incluye li::before {
+      content: counter(promo-sesion);
+      position: absolute;
+      left: 0;
+      top: 1px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--magenta);
+      color: #fff;
+      font-size: .72rem;
+      font-weight: 700;
+    }
+    .promo__incluye strong {
+      display: block;
+      color: var(--vino);
+      font-size: .9rem;
+      margin-bottom: 2px;
+    }
+    .promo__incluye p {
+      margin: 0;
+      color: var(--gris);
+      font-size: .84rem;
+      line-height: 1.45;
+    }
     .promo__datos {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -273,7 +344,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
     .promo__puntos button.activo { background: var(--magenta); }
     .promociones__lista {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 14px;
       margin-top: 16px;
     }

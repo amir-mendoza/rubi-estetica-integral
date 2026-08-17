@@ -423,27 +423,20 @@ export class SesionesComponent {
       if (promo) {
         this.formNombrePlan.set(promo.titulo);
         this.formPrecioTotal.set(promo.precio || 0);
-        
+
         const numSesiones = promo.sesiones || 1;
-        const arr = [];
-        if (promo.id === 1) { // Plan facial luminosidad
-          arr.push({ tratamientoId: 1, procedimiento: 'Limpieza facial profunda' });
-          arr.push({ tratamientoId: 8, procedimiento: 'Hidratación con ácido hialurónico' });
-          arr.push({ tratamientoId: 7, procedimiento: 'Skin care de mantenimiento' });
-          arr.push({ tratamientoId: 9, procedimiento: 'Peeling suave' });
-        } else if (promo.id === 2) { // Modelamiento corporal 6 sesiones
-          arr.push({ tratamientoId: 5, procedimiento: 'Hidrolipoclasia' });
-          arr.push({ tratamientoId: 6, procedimiento: 'Drenaje linfático' });
-          arr.push({ tratamientoId: 5, procedimiento: 'Hidrolipoclasia' });
-          arr.push({ tratamientoId: 6, procedimiento: 'Drenaje linfático' });
-          arr.push({ tratamientoId: 10, procedimiento: 'Lifting 360° Tens Booster' });
-          arr.push({ tratamientoId: 6, procedimiento: 'Drenaje linfático de cierre' });
+        if (promo.sesionesDetalle?.length) {
+          this.formSesiones.set(promo.sesionesDetalle.map(s => ({
+            tratamientoId: s.tratamientoId ?? 1,
+            procedimiento: s.titulo.replace(/^Sesion \d+ ·\s*/, '')
+          })));
         } else {
+          const arr = [];
           for (let i = 1; i <= numSesiones; i++) {
             arr.push({ tratamientoId: 1, procedimiento: `Sesión ${i} - ${promo.titulo}` });
           }
+          this.formSesiones.set(arr);
         }
-        this.formSesiones.set(arr);
       }
     } else if (val.startsWith('trat-')) {
       const id = Number(val.replace('trat-', ''));

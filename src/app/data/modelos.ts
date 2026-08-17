@@ -211,6 +211,7 @@ export interface Promocion {
   precioAntes?: number;
   precio?: number;
   sesiones?: number;
+  sesionesDetalle?: { titulo: string; descripcion: string; tratamientoId?: number }[];
   vigenciaDesde: string;
   vigenciaHasta: string;
   imagen: string;
