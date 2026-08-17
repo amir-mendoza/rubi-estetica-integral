@@ -108,8 +108,9 @@ import { MarcaService } from '../../compartido/marca.service';
             <select><option>15 días</option><option>30 días</option><option>7 días</option></select>
             <span class="campo__ayuda">Valor sugerido al programar la siguiente sesión de un plan.</span>
           </div>
-          <div class="campo"><label>Anticipación mínima para reservar en línea</label>
-            <select><option>2 horas</option><option>1 hora</option><option>Mismo día sin restricción</option></select>
+          <div class="campo"><label>Llegada recomendada antes de la hora reservada</label>
+            <select><option>20 minutos antes</option><option>30 minutos antes</option><option>15 minutos antes</option></select>
+            <span class="campo__ayuda">Mensaje visible para pacientes: si llegan tarde no pierden la reserva, pero podrían esperar cabina disponible.</span>
           </div>
           @for (l of locales; track l.id) {
             <div class="campo">

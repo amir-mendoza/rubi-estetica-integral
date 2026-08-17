@@ -23,9 +23,16 @@ export class AgendaService {
   cambiarEstado(id: number, estado: EstadoCita, usuario: string): void {
     this.lista.update(lista => lista.map(c => {
       if (c.id !== id) { return c; }
-      const notas = estado === 'En proceso'
-        ? `Ingreso registrado en recepción por ${usuario}.`
-        : c.notas;
+      let notas = c.notas;
+      if (estado === 'En espera') {
+        notas = `Llegada registrada por ${usuario}. Pendiente de asignación de cabina.`;
+      }
+      if (estado === 'En proceso') {
+        notas = `Ingreso a atención registrado por ${usuario}.`;
+      }
+      if (estado === 'Llegó tarde') {
+        notas = `Paciente llegó tarde. Mantiene su reserva, pero queda en espera hasta que recepción pueda asignar una cabina disponible.`;
+      }
       return { ...c, estado, notas };
     }));
   }

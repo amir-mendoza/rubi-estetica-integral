@@ -3,8 +3,8 @@
     <div class="miga"><a routerLink="/">Inicio</a> / Reservar cita</div>
     <h1>Reservar cita</h1>
     <p>
-      Elige tu tratamiento y la hora a la que planeas llegar. En el local te recibimos
-      y asignamos la cabina y la especialista disponible en ese momento.
+      Elige tu tratamiento y tu hora de llegada al local. Te recomendamos llegar
+      20 minutos antes para agilizar tu atención.
     </p>
   </div>
 </section>
@@ -23,6 +23,9 @@
           Código de reserva <strong>CT-1042</strong>. Te enviaremos la confirmación por WhatsApp al
           {{ celular || 'número registrado' }}.
         </p>
+        <div class="aviso aviso--llegada">
+          Tu reserva se mantiene aunque llegues tarde, pero podrías esperar más tiempo hasta que recepción pueda asignarte una cabina disponible.
+        </div>
 
         <div class="resumen-final">
           <div class="dato"><span class="dato__label">Paciente</span><span class="dato__valor">{{ nombre }} {{ apellido }}</span></div>
@@ -142,8 +145,8 @@
             <div class="bloque">
               <h3>3. Elige el día y la hora en la que llegarás</h3>
               <p>
-                Atendemos las 24 horas del día. Cada hora recibe hasta 10 pacientes: cuando una
-                hora llega a su cupo se cierra y puedes elegir la siguiente.
+                Atendemos por hora de llegada. Cada bloque horario tiene un cupo para evitar esperas excesivas:
+                cuando una hora llega a su cupo, se cierra y puedes elegir la siguiente.
               </p>
 
               <div class="dias">
@@ -174,8 +177,8 @@
               </div>
 
               <div class="aviso" style="margin-top:18px">
-                La hora que elijas es tu hora de llegada. La atención empieza en cuanto se
-                libere una cabina, según el orden de llegada de ese bloque.
+                Tu hora reservada es tu hora de llegada al local. Llega 20 minutos antes para agilizar tu atención.
+                Si llegas tarde, tu reserva no se pierde, pero podrías esperar más hasta que recepción pueda asignarte una cabina disponible.
               </div>
 
               <div class="acciones-paso">
@@ -288,6 +291,7 @@
             <h4>Cómo funciona la agenda</h4>
             <ul class="reglas">
               <li>Reservas la hora a la que llegarás, no una cabina ni una especialista.</li>
+              <li>Te recomendamos llegar 20 minutos antes de tu hora reservada.</li>
               @if (local()) {
                 <li>
                   {{ local()?.nombre }} tiene {{ cabinasSede() }} cabinas y acepta
@@ -298,6 +302,7 @@
                 <li>Cada sede acepta un número limitado de citas por hora.</li>
               }
               <li>Cuando una hora llega a su cupo se cierra y se ofrece la siguiente.</li>
+              <li>Si llegas tarde, tu reserva se mantiene, pero la atención dependerá de la disponibilidad de cabina.</li>
               <li>La especialista se asigna en el local según disponibilidad.</li>
             </ul>
           </div>

@@ -163,8 +163,10 @@ export class CalendarioComponent {
     switch (estado) {
       case 'Atendida': return 'chip chip--ok';
       case 'En proceso': return 'chip chip--info';
+      case 'En espera': return 'chip chip--info';
       case 'Programada': return 'chip chip--alerta';
       case 'Reprogramada': return 'chip chip--alerta';
+      case 'Llegó tarde': return 'chip chip--alerta';
       default: return 'chip chip--error';
     }
   }

@@ -76,6 +76,15 @@
   font-size: .76rem; color: var(--gris); background: var(--rosa-50);
 }
 .ocupacion__bloque--lleno { border-color: var(--alerta); color: var(--alerta); background: #fffaf2; }
+.politica-llegada {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+  border-left: 3px solid var(--magenta);
+}
+.politica-llegada strong { color: var(--vino); font-size: .92rem; white-space: nowrap; }
+.politica-llegada span { color: var(--gris); font-size: .86rem; }
 
 /* Acciones de recepcion */
 .cita__acciones { margin-top: 14px; display: grid; gap: 6px; }

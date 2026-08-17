@@ -140,6 +140,11 @@
   border-radius: var(--radio-lg); padding: 28px; margin: 34px 0;
 }
 .confirmacion__acciones { display: flex; gap: 14px; justify-content: center; }
+.aviso--llegada {
+  max-width: 680px;
+  margin: 20px auto 0;
+  text-align: left;
+}
 
 @media (max-width: 1000px) {
   .reserva { grid-template-columns: 1fr; }

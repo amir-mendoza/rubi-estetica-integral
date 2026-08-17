@@ -10,14 +10,16 @@
  */
 export type EstadoCita =
   | 'Programada'
+  | 'En espera'
   | 'En proceso'
   | 'Atendida'
+  | 'Llegó tarde'
   | 'No asistió'
   | 'Cancelada'
   | 'Reprogramada';
 
 export const ESTADOS_CITA: EstadoCita[] = [
-  'Programada', 'En proceso', 'Atendida', 'No asistió', 'Cancelada', 'Reprogramada'
+  'Programada', 'En espera', 'En proceso', 'Atendida', 'Llegó tarde', 'No asistió', 'Cancelada', 'Reprogramada'
 ];
 
 export type EstadoPago =

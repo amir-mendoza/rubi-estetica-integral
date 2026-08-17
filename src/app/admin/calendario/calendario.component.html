@@ -2,8 +2,8 @@
   <div>
     <h1>Calendario / Citas</h1>
     <p>
-      Selecciona un día para ver la lista de atención en orden de llegada. Desde aquí
-      recepción cambia el estado de cada paciente y registra los cobros en efectivo.
+      Selecciona un día para ver la lista por hora de llegada. Recepción registra si la paciente
+      llegó, está en espera, llegó tarde, entró a cabina o ya fue atendida.
     </p>
   </div>
   <div class="cabecera-admin__acciones">
@@ -103,6 +103,14 @@
         </div>
       </div>
     }
+
+    <div class="panel politica-llegada">
+      <strong>Política de llegada</strong>
+      <span>
+        La paciente debe llegar 20 minutos antes. Si llega tarde, no pierde su reserva:
+        queda en espera hasta que recepción pueda asignarle una cabina disponible.
+      </span>
+    </div>
 
     @if (!listaDelDia().length) {
       <div class="panel texto-centro" style="padding:48px">
