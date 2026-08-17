@@ -638,7 +638,7 @@ export const PROMOCIONES: Promocion[] = [
     ],
     vigenciaDesde: conDias(-10),
     vigenciaHasta: conDias(35),
-    imagen: 'img/trat-hifu.jpg',
+    imagen: 'img/promo-botox-hifu.jpg',
     etiqueta: 'Combo lifting',
     destacada: true,
     activa: true
@@ -659,7 +659,7 @@ export const PROMOCIONES: Promocion[] = [
     ],
     vigenciaDesde: conDias(-5),
     vigenciaHasta: conDias(25),
-    imagen: 'img/trat-hidro.jpg',
+    imagen: 'img/promo-reduce-medidas.jpg',
     etiqueta: 'Corporal',
     destacada: true,
     activa: true
@@ -678,7 +678,7 @@ export const PROMOCIONES: Promocion[] = [
     ],
     vigenciaDesde: conDias(-2),
     vigenciaHasta: conDias(20),
-    imagen: 'img/trat-hifu.jpg',
+    imagen: 'img/promo-hifu-pdrn.jpg',
     etiqueta: 'Facial premium',
     destacada: true,
     activa: true
@@ -697,8 +697,84 @@ export const PROMOCIONES: Promocion[] = [
     ],
     vigenciaDesde: conDias(-20),
     vigenciaHasta: conDias(10),
-    imagen: 'img/trat-tens.jpg',
+    imagen: 'img/promo-lifting-360.jpg',
     etiqueta: 'Promocion facial',
+    destacada: true,
+    activa: true
+  },
+  {
+    id: 5,
+    titulo: 'HIFU 25D + coctel reafirmante',
+    subtitulo: 'Reafirma y redefine el contorno facial',
+    descripcion: 'Protocolo facial para mejorar firmeza, definir el rostro y favorecer una piel mas renovada.',
+    categoria: 'Aparatología',
+    precioAntes: 550,
+    precio: 350,
+    sesiones: 1,
+    sesionesDetalle: [
+      { titulo: 'Sesion unica · HIFU 25D + coctel', descripcion: 'Reafirma, redefine y revitaliza la piel en un solo protocolo.', tratamientoId: 2 }
+    ],
+    vigenciaDesde: conDias(-8),
+    vigenciaHasta: conDias(18),
+    imagen: 'img/promo-hifu-coctel.jpg',
+    etiqueta: 'Reafirmante',
+    destacada: true,
+    activa: true
+  },
+  {
+    id: 6,
+    titulo: 'Tens Booster efecto lifting',
+    subtitulo: 'Firmeza, elasticidad y luminosidad desde la primera sesion',
+    descripcion: 'Tratamiento reafirmante de efecto tensor inmediato para recuperar firmeza y luminosidad.',
+    categoria: 'Aparatología',
+    precioAntes: 450,
+    precio: 299,
+    sesiones: 1,
+    sesionesDetalle: [
+      { titulo: 'Sesion unica · Tens Booster', descripcion: 'Solucion tensora reafirmante facial para un efecto lifting visible.', tratamientoId: 10 }
+    ],
+    vigenciaDesde: conDias(-8),
+    vigenciaHasta: conDias(18),
+    imagen: 'img/promo-tens-booster.jpg',
+    etiqueta: 'Efecto lifting',
+    destacada: true,
+    activa: true
+  },
+  {
+    id: 7,
+    titulo: 'Limpieza facial profunda',
+    subtitulo: 'Purifica, ilumina e hidrata tu piel',
+    descripcion: 'Promo facial para renovar la piel, retirar impurezas y devolver luminosidad con protocolo profesional.',
+    categoria: 'Facial',
+    precioAntes: 120,
+    precio: 90,
+    sesiones: 1,
+    sesionesDetalle: [
+      { titulo: 'Sesion unica · Limpieza profunda', descripcion: 'Purificacion, hidratacion y proteccion para una piel mas luminosa.', tratamientoId: 1 }
+    ],
+    vigenciaDesde: conDias(-8),
+    vigenciaHasta: conDias(18),
+    imagen: 'img/promo-limpieza-profunda.jpg',
+    etiqueta: 'Facial',
+    destacada: true,
+    activa: true
+  },
+  {
+    id: 8,
+    titulo: 'Plasma rico en plaquetas + colageno',
+    subtitulo: 'Regeneracion facial y luminosidad',
+    descripcion: 'Promo regenerativa para estimular colageno, mejorar textura y devolver luminosidad a la piel.',
+    categoria: 'Medicina estética',
+    precioAntes: 200,
+    precio: 100,
+    sesiones: 1,
+    sesionesDetalle: [
+      { titulo: 'Sesion unica · Plasma + colageno', descripcion: 'Aplicacion regenerativa para firmeza, textura y luminosidad facial.', tratamientoId: 4 }
+    ],
+    vigenciaDesde: conDias(-8),
+    vigenciaHasta: conDias(18),
+    imagen: 'img/promo-plasma-colageno.jpg',
+    etiqueta: 'Regenerativo',
     destacada: true,
     activa: true
   }

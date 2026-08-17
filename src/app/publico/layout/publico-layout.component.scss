@@ -35,9 +35,9 @@
   display: flex; align-items: center; justify-content: space-between;
   gap: 28px; min-height: var(--header-h);
 }
-.cabecera__logo { display: inline-flex; }
+.cabecera__logo { display: inline-flex; flex: none; }
 
-.navegacion { display: flex; gap: 30px; }
+.navegacion { display: flex; gap: 30px; min-width: 0; }
 .navegacion a {
   position: relative;
   font-size: .78rem;
@@ -54,7 +54,7 @@
 .navegacion a:hover::after, .navegacion a.activo::after { width: 100%; }
 .navegacion a.activo { color: var(--magenta); }
 
-.cabecera__acciones { display: flex; align-items: center; gap: 16px; }
+.cabecera__acciones { display: flex; align-items: center; gap: 16px; flex: none; }
 .icono-enlace {
   display: inline-flex; align-items: center; justify-content: center;
   width: 38px; height: 38px; color: var(--vino);
@@ -126,6 +126,13 @@
 @media (max-width: 1180px) {
   .navegacion { gap: 20px; }
   .navegacion a { font-size: .72rem; letter-spacing: .1em; }
+}
+@media (max-width: 1320px) {
+  .cabecera__interior { gap: 18px; }
+  .navegacion { gap: 18px; }
+  .navegacion a { font-size: .72rem; letter-spacing: .1em; }
+  .cabecera__acciones { gap: 10px; }
+  .cabecera__ingresar { display: none; }
 }
 @media (max-width: 1000px) {
   .barra-superior__datos span:not(:first-child) { display: none; }

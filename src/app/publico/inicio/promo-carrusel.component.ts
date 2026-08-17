@@ -152,7 +152,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
       position: relative;
       min-height: 430px;
       overflow: hidden;
-      background: var(--rosa);
+      background: #fff;
     }
     .promo__arte::after {
       content: '';
@@ -160,6 +160,12 @@ import { PromocionesService } from '../../compartido/promociones.service';
       inset: 0;
       background: linear-gradient(120deg, rgba(110, 19, 56, .18), rgba(176, 27, 114, .02));
       pointer-events: none;
+    }
+    .promo__arte img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 10px;
     }
     .promo__sello {
       position: absolute;
