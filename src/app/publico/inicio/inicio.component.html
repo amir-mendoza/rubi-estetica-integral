@@ -1,0 +1,239 @@
+<!-- ==================================================== Promociones -->
+<app-promo-carrusel />
+
+<!-- ======================================================== Portada -->
+<section class="portada">
+  <div class="portada__imagen">
+    <img class="img-cobertura" src="img/hero.jpg" alt="Tratamiento facial en Rubí Estética Integral">
+  </div>
+  <div class="portada__velo"></div>
+  <div class="contenedor portada__contenido">
+    <span class="eyebrow eyebrow--claro">Estética facial y corporal · San Juan de Lurigancho</span>
+    <h1>Tratamientos no invasivos<br>con resultados reales</h1>
+    <p class="portada__texto">
+      Protocolos faciales y corporales diseñados por especialistas colegiadas, con tecnología
+      certificada y seguimiento en cada sesión. Reserva tu evaluación en línea, a cualquier hora.
+    </p>
+    <div class="portada__acciones">
+      <a routerLink="/reservar" class="btn btn--primario">Reservar cita</a>
+      <a routerLink="/tratamientos" class="btn btn--claro">Ver tratamientos</a>
+    </div>
+    <div class="portada__datos">
+      <div><strong>+2 000</strong><span>Pacientes atendidas</span></div>
+      <div><strong>2</strong><span>Sedes en Lima Este</span></div>
+      <div><strong>10</strong><span>Protocolos disponibles</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= Pilares -->
+<section class="seccion seccion--compacta">
+  <div class="contenedor">
+    <div class="grid grid-4">
+      @for (p of pilares; track p.titulo) {
+        <div class="pilar">
+          <div class="filete"></div>
+          <h4>{{ p.titulo }}</h4>
+          <p>{{ p.texto }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ==================================================== Tratamientos -->
+<section class="seccion seccion--rosa">
+  <div class="contenedor">
+    <div class="encabezado-seccion texto-centro">
+      <span class="eyebrow">Nuestros tratamientos</span>
+      <h2>Protocolos faciales y corporales</h2>
+      <div class="filete filete--centro"></div>
+      <p class="lead mx-auto">
+        Cada procedimiento indica su duración real y el tiempo de preparación de cabina,
+        para que tu cita empiece y termine a la hora acordada.
+      </p>
+    </div>
+
+    <div class="grid grid-3">
+      @for (t of destacados; track t.id) {
+        <article class="tarjeta-trat">
+          <a [routerLink]="['/tratamientos', t.id]" class="tarjeta-trat__imagen">
+            <img class="img-cobertura" [src]="t.imagen" [alt]="t.nombre">
+            <span class="tarjeta-trat__categoria">{{ t.categoria }}</span>
+          </a>
+          <div class="tarjeta-trat__cuerpo">
+            <h3>{{ t.nombre }}</h3>
+            <p>{{ t.resumen }}</p>
+            <div class="tarjeta-trat__meta">
+              <span>{{ t.duracionMin }} min de sesión</span>
+              <span class="punto"></span>
+              <span>+{{ t.limpiezaMin }} min de cabina</span>
+            </div>
+            <div class="tarjeta-trat__pie">
+              <div class="precio">
+                @if (t.precioAntes) { <span class="precio__antes">{{ soles(t.precioAntes) }}</span> }
+                <span class="precio__actual">{{ soles(t.precio) }}</span>
+              </div>
+              <a [routerLink]="['/tratamientos', t.id]" class="enlace-flecha">Ver detalle</a>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+
+    <div class="texto-centro" style="margin-top:48px">
+      <a routerLink="/tratamientos" class="btn btn--linea">Ver todos los tratamientos</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ Cómo -->
+<section class="seccion">
+  <div class="contenedor pasos">
+    <div class="pasos__intro">
+      <span class="eyebrow">Reserva en línea</span>
+      <h2>Agenda tu cita en cuatro pasos</h2>
+      <div class="filete"></div>
+      <p>
+        Atendemos las 24 horas en ambas sedes. El sistema controla en tiempo real los cupos de
+        cada hora: la cabina y la especialista se asignan en recepción cuando llegas.
+      </p>
+      <a routerLink="/reservar" class="btn btn--primario">Comenzar reserva</a>
+    </div>
+    <div class="pasos__lista">
+      @for (p of pasos; track p.n) {
+        <div class="paso">
+          <span class="paso__n">{{ p.n }}</span>
+          <div>
+            <h4>{{ p.titulo }}</h4>
+            <p>{{ p.texto }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ==================================================== Especialistas -->
+<section class="seccion seccion--nude">
+  <div class="contenedor">
+    <div class="encabezado-seccion">
+      <span class="eyebrow">Nuestro equipo</span>
+      <h2>Especialistas que te acompañan</h2>
+      <div class="filete"></div>
+    </div>
+    <div class="grid grid-4">
+      @for (e of especialistas; track e.id) {
+        <article class="tarjeta-esp">
+          <img class="img-cobertura" [src]="e.foto" [alt]="e.nombre + ' ' + e.apellido">
+          <div class="tarjeta-esp__cuerpo">
+            <h4>{{ e.nombre }} {{ e.apellido }}</h4>
+            <span class="tarjeta-esp__rol">{{ e.especialidad }}</span>
+            <p>{{ e.bio }}</p>
+          </div>
+        </article>
+      }
+    </div>
+    <div style="margin-top:40px">
+      <a routerLink="/especialistas" class="enlace-flecha">Conocer al equipo completo</a>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================== Productos -->
+<section class="seccion">
+  <div class="contenedor">
+    <div class="encabezado-seccion texto-centro">
+      <span class="eyebrow">Tienda</span>
+      <h2>Cuidado profesional en casa</h2>
+      <div class="filete filete--centro"></div>
+      <p class="lead mx-auto">
+        Productos recomendados por nuestras especialistas para mantener los resultados
+        entre sesión y sesión. Recojo únicamente en nuestras sedes.
+      </p>
+    </div>
+    <div class="grid grid-4">
+      @for (p of productos; track p.id) {
+        <article class="tarjeta-prod">
+          <a [routerLink]="['/productos', p.id]" class="tarjeta-prod__imagen">
+            <img class="img-cobertura" [src]="p.imagen" [alt]="p.nombre">
+          </a>
+          <div class="tarjeta-prod__cuerpo">
+            <span class="tarjeta-prod__marca">{{ p.marca }}</span>
+            <h4>{{ p.nombre }}</h4>
+            <div class="precio">
+              @if (p.precioAntes) { <span class="precio__antes">{{ soles(p.precioAntes) }}</span> }
+              <span class="precio__actual">{{ soles(p.precio) }}</span>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+    <div class="texto-centro" style="margin-top:48px">
+      <a routerLink="/productos" class="btn btn--linea">Ir a la tienda</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== Testimonios -->
+<section class="seccion seccion--vino">
+  <div class="contenedor">
+    <div class="encabezado-seccion texto-centro mx-auto">
+      <span class="eyebrow eyebrow--claro">Testimonios</span>
+      <h2>Lo que dicen nuestras pacientes</h2>
+    </div>
+    <div class="grid grid-3">
+      @for (t of testimonios; track t.autor) {
+        <blockquote class="testimonio">
+          <p>“{{ t.texto }}”</p>
+          <footer>
+            <strong>{{ t.autor }}</strong>
+            <span>{{ t.detalle }}</span>
+          </footer>
+        </blockquote>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================== Locales -->
+<section class="seccion">
+  <div class="contenedor">
+    <div class="encabezado-seccion">
+      <span class="eyebrow">Nuestras sedes</span>
+      <h2>Dos locales en San Juan de Lurigancho</h2>
+      <div class="filete"></div>
+    </div>
+    <div class="grid grid-2">
+      @for (l of locales; track l.id) {
+        <article class="tarjeta-local">
+          <img class="img-cobertura" [src]="l.imagen" [alt]="l.nombre">
+          <div class="tarjeta-local__cuerpo">
+            <h3>{{ l.nombre }}</h3>
+            <p>{{ l.direccion }}<br>{{ l.referencia }}<br>{{ l.distrito }}</p>
+            <div class="tarjeta-local__horarios">
+              @for (h of l.horario; track h.dias) {
+                <div><span>{{ h.dias }}</span><strong>{{ h.apertura }} — {{ h.cierre }}</strong></div>
+              }
+            </div>
+            <div class="tarjeta-local__acciones">
+              <a [href]="'tel:' + l.telefono" class="btn btn--linea btn--sm">{{ l.telefono }}</a>
+              <a routerLink="/reservar" class="btn btn--primario btn--sm">Reservar aquí</a>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================== CTA -->
+<section class="cta">
+  <img class="img-cobertura" src="img/cta.jpg" alt="">
+  <div class="cta__velo"></div>
+  <div class="contenedor cta__contenido">
+    <h2>Tu primera evaluación es el mejor punto de partida</h2>
+    <p>Agenda en línea y recibe un diagnóstico profesional de tu piel sin costo adicional.</p>
+    <a routerLink="/reservar" class="btn btn--primario">Reservar mi cita</a>
+  </div>
+</section>

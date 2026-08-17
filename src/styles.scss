@@ -73,7 +73,43 @@ p { margin: 0 0 1rem; color: var(--gris); }
 a { color: var(--magenta); text-decoration: none; }
 a:hover { color: var(--vino); }
 
-img { max-width: 100%; display: block; }
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.img-responsiva {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.img-cobertura {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.media-responsivo {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--rosa-50);
+}
+
+.media-responsivo > img,
+.media-responsivo > picture,
+.media-responsivo > picture > img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
 
 hr { border: none; border-top: 1px solid var(--linea); margin: 2.5rem 0; }
 
@@ -305,7 +341,7 @@ table.tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
   transition: transform .25s ease, box-shadow .25s ease;
 }
 .tarjeta-trat:hover { transform: translateY(-4px); box-shadow: var(--sombra-alta); }
-.tarjeta-trat__imagen { display: block; position: relative; aspect-ratio: 4/3; overflow: hidden; }
+.tarjeta-trat__imagen { display: block; position: relative; aspect-ratio: 4/3; overflow: hidden; background: var(--rosa-50); }
 .tarjeta-trat__imagen img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
 .tarjeta-trat:hover .tarjeta-trat__imagen img { transform: scale(1.05); }
 .tarjeta-trat__categoria {
@@ -329,7 +365,7 @@ table.tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Tarjeta de especialista */
 .tarjeta-esp { background: #fff; border: 1px solid var(--linea); border-radius: var(--radio-lg); overflow: hidden; }
-.tarjeta-esp img { width: 100%; aspect-ratio: 4/5; object-fit: cover; }
+.tarjeta-esp img { width: 100%; height: auto; aspect-ratio: 4/5; object-fit: cover; }
 .tarjeta-esp__cuerpo { padding: 22px; }
 .tarjeta-esp__cuerpo h4 { margin-bottom: .2rem; }
 .tarjeta-esp__rol {
@@ -355,7 +391,7 @@ table.tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Tarjeta de local */
 .tarjeta-local { background: #fff; border: 1px solid var(--linea); border-radius: var(--radio-lg); overflow: hidden; }
-.tarjeta-local img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+.tarjeta-local img { width: 100%; height: auto; aspect-ratio: 16/9; object-fit: cover; }
 .tarjeta-local__cuerpo { padding: 30px; }
 .tarjeta-local__horarios { display: flex; flex-direction: column; gap: 8px; margin: 20px 0 24px; }
 .tarjeta-local__horarios div {

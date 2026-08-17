@@ -93,4 +93,13 @@ export class PlanesService {
       };
     }));
   }
+
+  crearPlan(plan: Omit<PlanSesiones, 'id' | 'codigo'>): void {
+    this.lista.update(lista => {
+      const id = lista.reduce((max, p) => Math.max(max, p.id), 0) + 1;
+      const codigo = `PL-${3000 + id}`;
+      return [...lista, { ...plan, id, codigo } as PlanSesiones];
+    });
+  }
 }
+
