@@ -76,7 +76,7 @@ interface ResumenPeriodo {
     <div class="kpis kpis-5">
       <div class="kpi kpi--acento"><span class="kpi__label">Cobrado total</span><span class="kpi__valor">{{ soles(cobradoTotal()) }}</span><span class="kpi__nota">Atenciones + productos pagados</span></div>
       <div class="kpi"><span class="kpi__label">Atenciones cobradas</span><span class="kpi__valor" style="color:var(--ok)">{{ soles(cobradoAtenciones()) }}</span><span class="kpi__nota">{{ atendidosPagados().length }} pacientes atendidos y pagados</span></div>
-      <div class="kpi"><span class="kpi__label">Productos vendidos</span><span class="kpi__valor">{{ soles(cobradoProductos()) }}</span><span class="kpi__nota">{{ pedidosPeriodo().length }} pedidos en el periodo</span></div>
+      <div class="kpi"><span class="kpi__label">Productos cobrados</span><span class="kpi__valor">{{ soles(cobradoProductos()) }}</span><span class="kpi__nota">{{ pedidosPeriodo().length }} pedidos en el periodo</span></div>
       <div class="kpi"><span class="kpi__label">Pendiente por cobrar</span><span class="kpi__valor" style="color:var(--alerta)">{{ soles(pendienteTotal()) }}</span><span class="kpi__nota">Saldo de citas y pedidos</span></div>
       <div class="kpi"><span class="kpi__label">Atendidos con deuda</span><span class="kpi__valor" style="color:var(--error)">{{ atendidosConSaldo().length }}</span><span class="kpi__nota">Ya atendidos, falta completar pago</span></div>
     </div>

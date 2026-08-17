@@ -20,9 +20,9 @@ import { PEDIDOS, productoPorId, soles } from '../../data/datos';
 
     <div class="kpis kpis-4">
       <div class="kpi"><span class="kpi__label">Pedidos del periodo</span><span class="kpi__valor">{{ pedidos.length }}</span><span class="kpi__nota">Últimos días</span></div>
-      <div class="kpi"><span class="kpi__label">Vendido</span><span class="kpi__valor">{{ soles(vendido) }}</span><span class="kpi__nota">Total facturado</span></div>
-      <div class="kpi"><span class="kpi__label">Cobrado</span><span class="kpi__valor" style="color:var(--ok)">{{ soles(cobrado) }}</span><span class="kpi__nota">Confirmado</span></div>
-      <div class="kpi"><span class="kpi__label">Por cobrar</span><span class="kpi__valor" style="color:var(--alerta)">{{ soles(vendido - cobrado) }}</span><span class="kpi__nota">Pendiente de pago</span></div>
+      <div class="kpi"><span class="kpi__label">Cobrado</span><span class="kpi__valor" style="color:var(--ok)">{{ soles(cobrado) }}</span><span class="kpi__nota">Dinero confirmado por productos</span></div>
+      <div class="kpi"><span class="kpi__label">Por cobrar</span><span class="kpi__valor" style="color:var(--alerta)">{{ soles(porCobrar) }}</span><span class="kpi__nota">Pendiente, no cuenta como ingreso</span></div>
+      <div class="kpi"><span class="kpi__label">Anulado</span><span class="kpi__valor" style="color:var(--error)">{{ soles(anulado) }}</span><span class="kpi__nota">Pedidos cancelados</span></div>
     </div>
 
     <div class="barra-filtros">
@@ -95,8 +95,9 @@ export class PedidosComponent {
   estado = signal('Todos');
   entrega = signal('Todas');
 
-  vendido = PEDIDOS.filter(p => p.estado !== 'Cancelado').reduce((t, p) => t + p.total, 0);
   cobrado = PEDIDOS.reduce((t, p) => t + p.pagado, 0);
+  porCobrar = PEDIDOS.filter(p => p.estado !== 'Cancelado').reduce((t, p) => t + Math.max(p.total - p.pagado, 0), 0);
+  anulado = PEDIDOS.filter(p => p.estado === 'Cancelado').reduce((t, p) => t + p.total, 0);
 
   lista = computed(() => {
     const texto = this.busqueda().trim().toLowerCase();

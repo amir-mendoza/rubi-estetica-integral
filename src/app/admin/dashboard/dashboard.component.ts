@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
-  CITAS, ESPECIALISTAS, LOCALES, PAGOS, PRODUCTOS, TRATAMIENTOS,
+  CITAS, ESPECIALISTAS, LOCALES, PAGOS, PEDIDOS, PRODUCTOS, TRATAMIENTOS,
   aISO, formatoFechaLarga, HOY_ISO, nombreEspecialista, nombrePaciente, soles, tratamientoPorId
 } from '../../data/datos';
 import { Cita } from '../../data/modelos';
@@ -23,19 +23,23 @@ export class DashboardComponent {
   private citasSemana = CITAS.filter(c => this.enUltimos(c.fecha, 7));
   private citasMes = CITAS.filter(c => c.fecha.slice(0, 7) === HOY_ISO.slice(0, 7));
 
-  // ---- Dinero del día
-  vendidoHoy = this.suma(this.citasHoy.filter(c => c.estado !== 'Cancelada'), c => c.montoTotal);
-  pagadoHoy = this.suma(this.citasHoy.filter(c => c.estado !== 'Cancelada'), c => c.montoPagado);
-  pendienteHoy = this.vendidoHoy - this.pagadoHoy;
-  canceladoHoy = this.suma(this.citasHoy.filter(c => c.estado === 'Cancelada'), c => c.montoTotal);
-  gananciaHoy = Math.round(this.pagadoHoy * 0.62);
+  // ---- Caja real del día: solo dinero efectivamente cobrado.
+  private pagosPagadosHoy = PAGOS.filter(p => p.fecha === HOY_ISO && p.estado === 'Pagado');
+  cobradoHoy = this.suma(this.pagosPagadosHoy, p => p.monto);
+  cobradoCitasHoy = this.suma(this.pagosPagadosHoy.filter(p => p.origen === 'Cita'), p => p.monto);
+  cobradoProductosHoy = this.suma(this.pagosPagadosHoy.filter(p => p.origen === 'Producto'), p => p.monto);
+  pendienteHoy = this.suma(
+    this.citasHoy.filter(c => c.estado !== 'Cancelada' && c.estado !== 'No asistió'),
+    c => Math.max(c.montoTotal - c.montoPagado, 0)
+  );
+  canceladoHoy = this.suma(this.citasHoy.filter(c => c.estado === 'Cancelada' || c.estado === 'No asistió'), c => c.montoPagado);
 
-  pagosOnlineHoy = this.suma(PAGOS.filter(p => p.fecha === HOY_ISO && p.canal === 'Online' && p.estado === 'Pagado'), p => p.monto);
-  pagosLocalHoy = this.suma(PAGOS.filter(p => p.fecha === HOY_ISO && p.canal === 'En local' && p.estado === 'Pagado'), p => p.monto);
+  pagosOnlineHoy = this.suma(this.pagosPagadosHoy.filter(p => p.canal === 'Online'), p => p.monto);
+  pagosLocalHoy = this.suma(this.pagosPagadosHoy.filter(p => p.canal === 'En local'), p => p.monto);
   reembolsosHoy = Math.abs(this.suma(PAGOS.filter(p => p.fecha === HOY_ISO && p.estado === 'Reembolsado'), p => p.monto));
 
-  ingresoSemana = this.suma(this.citasSemana, c => c.montoPagado);
-  ingresoMes = this.suma(this.citasMes, c => c.montoPagado);
+  ingresoSemana = this.suma(PAGOS.filter(p => this.enUltimos(p.fecha, 7) && p.estado === 'Pagado'), p => p.monto);
+  ingresoMes = this.suma(PAGOS.filter(p => p.fecha.slice(0, 7) === HOY_ISO.slice(0, 7) && p.estado === 'Pagado'), p => p.monto);
 
   // ---- Conteos de citas de hoy
   atendidas = this.citasHoy.filter(c => c.estado === 'Atendida').length;
@@ -46,8 +50,8 @@ export class DashboardComponent {
   // ---- Desgloses del mes
   porLocal: Fila[] = LOCALES.map(l => ({
     etiqueta: l.nombre,
-    monto: this.suma(this.citasMes.filter(c => c.localId === l.id), c => c.montoPagado),
-    detalle: `${this.citasMes.filter(c => c.localId === l.id).length} citas`
+    monto: this.suma(PAGOS.filter(p => p.localId === l.id && p.fecha.slice(0, 7) === HOY_ISO.slice(0, 7) && p.estado === 'Pagado'), p => p.monto),
+    detalle: `${PAGOS.filter(p => p.localId === l.id && p.fecha.slice(0, 7) === HOY_ISO.slice(0, 7) && p.estado === 'Pagado').length} cobros`
   })).sort((a, b) => b.monto - a.monto);
 
   porTratamiento: Fila[] = TRATAMIENTOS.map(t => ({
@@ -67,12 +71,13 @@ export class DashboardComponent {
   maxEspecialista = Math.max(...this.porEspecialista.map(f => f.monto), 1);
 
   agendaHoy = [...this.citasHoy].sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
-  pagosRecientes = PAGOS.slice(0, 6);
+  pedidosHoy = PEDIDOS.filter(p => p.fecha === HOY_ISO);
+  pagosRecientes = [...PAGOS].sort((a, b) => `${b.fecha} ${b.hora}`.localeCompare(`${a.fecha} ${a.hora}`)).slice(0, 6);
   stockBajo = PRODUCTOS.filter(p => p.stock <= 6).slice(0, 5);
 
   // ---- Serie de los últimos 7 días para el gráfico
   serie = this.ultimos(7).map(iso => {
-    const monto = this.suma(CITAS.filter(c => c.fecha === iso), c => c.montoPagado);
+    const monto = this.suma(PAGOS.filter(p => p.fecha === iso && p.estado === 'Pagado'), p => p.monto);
     const [, , d] = iso.split('-');
     return { iso, dia: d, monto };
   });

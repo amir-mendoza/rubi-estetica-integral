@@ -13,6 +13,7 @@
 }
 .linea-dato:last-child { border-bottom: none; }
 .linea-dato strong { color: var(--tinta); font-weight: 500; }
+.nota-caja { margin: 12px 0 0; color: var(--gris-claro); font-size: .78rem; line-height: 1.5; }
 
 .grafico { display: flex; align-items: flex-end; gap: 8px; height: 96px; margin-top: 18px; }
 .grafico__col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 6px; height: 100%; }

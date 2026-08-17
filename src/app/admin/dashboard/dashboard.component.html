@@ -13,29 +13,29 @@
 <section class="bloque-dinero">
   <div class="kpis kpis-5">
     <div class="kpi kpi--acento">
-      <span class="kpi__label">Monto vendido hoy</span>
-      <span class="kpi__valor">{{ soles(vendidoHoy) }}</span>
-      <span class="kpi__nota">Total agendado sin contar cancelaciones</span>
+      <span class="kpi__label">Cobrado hoy</span>
+      <span class="kpi__valor">{{ soles(cobradoHoy) }}</span>
+      <span class="kpi__nota">Dinero real confirmado por caja o Izipay</span>
     </div>
     <div class="kpi">
-      <span class="kpi__label">Pagado</span>
-      <span class="kpi__valor">{{ soles(pagadoHoy) }}</span>
-      <span class="kpi__nota">Confirmado por Izipay o caja</span>
+      <span class="kpi__label">Tratamientos cobrados</span>
+      <span class="kpi__valor">{{ soles(cobradoCitasHoy) }}</span>
+      <span class="kpi__nota">Pagos de citas atendidas o reservadas</span>
     </div>
     <div class="kpi">
-      <span class="kpi__label">Pendiente en local</span>
+      <span class="kpi__label">Productos cobrados</span>
+      <span class="kpi__valor">{{ soles(cobradoProductosHoy) }}</span>
+      <span class="kpi__nota">{{ pedidosHoy.length }} pedidos registrados hoy</span>
+    </div>
+    <div class="kpi">
+      <span class="kpi__label">Por cobrar</span>
       <span class="kpi__valor" style="color:var(--alerta)">{{ soles(pendienteHoy) }}</span>
-      <span class="kpi__nota">Por cobrar al momento de la atención</span>
+      <span class="kpi__nota">Saldo pendiente, no cuenta como ingreso</span>
     </div>
     <div class="kpi">
-      <span class="kpi__label">Cancelado</span>
+      <span class="kpi__label">Devuelto / anulado</span>
       <span class="kpi__valor" style="color:var(--error)">{{ soles(canceladoHoy) }}</span>
       <span class="kpi__nota">Incluye {{ soles(reembolsosHoy) }} reembolsados</span>
-    </div>
-    <div class="kpi">
-      <span class="kpi__label">Ganancia estimada</span>
-      <span class="kpi__valor" style="color:var(--ok)">{{ soles(gananciaHoy) }}</span>
-      <span class="kpi__nota">Sobre lo efectivamente cobrado</span>
     </div>
   </div>
 </section>
@@ -46,13 +46,14 @@
     <h4>Origen del dinero de hoy</h4>
     <div class="linea-dato"><span>Pagos online (Izipay)</span><strong>{{ soles(pagosOnlineHoy) }}</strong></div>
     <div class="linea-dato"><span>Pagos en local</span><strong>{{ soles(pagosLocalHoy) }}</strong></div>
-    <div class="linea-dato"><span>Pendiente por cobrar</span><strong style="color:var(--alerta)">{{ soles(pendienteHoy) }}</strong></div>
+    <div class="linea-dato"><span>Total cobrado</span><strong style="color:var(--ok)">{{ soles(cobradoHoy) }}</strong></div>
     <div class="linea-dato"><span>Reembolsos</span><strong style="color:var(--error)">{{ soles(reembolsosHoy) }}</strong></div>
+    <p class="nota-caja">El saldo pendiente se muestra aparte para no confundirlo con dinero ganado.</p>
   </div>
 
   <div class="panel">
     <h4>Ingresos por periodo</h4>
-    <div class="linea-dato"><span>Hoy</span><strong>{{ soles(pagadoHoy) }}</strong></div>
+    <div class="linea-dato"><span>Hoy</span><strong>{{ soles(cobradoHoy) }}</strong></div>
     <div class="linea-dato"><span>Últimos 7 días</span><strong>{{ soles(ingresoSemana) }}</strong></div>
     <div class="linea-dato"><span>Mes en curso</span><strong>{{ soles(ingresoMes) }}</strong></div>
     <div class="grafico">

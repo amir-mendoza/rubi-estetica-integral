@@ -10,7 +10,7 @@ import { HOY_ISO, LOCALES, PAGOS, localPorId, soles } from '../../data/datos';
     <div class="cabecera-admin">
       <div>
         <h1>Pagos</h1>
-        <p>Todos los movimientos con su código de operación, quién los confirmó y por qué canal ingresaron.</p>
+        <p>Caja real: dinero cobrado, pendientes por cobrar y devoluciones separados para no mezclar ingresos.</p>
       </div>
       <div class="cabecera-admin__acciones">
         <button class="btn btn--linea btn--sm">Exportar a Excel</button>
@@ -56,8 +56,8 @@ import { HOY_ISO, LOCALES, PAGOS, localPorId, soles } from '../../data/datos';
       </div>
       <div class="kpi"><span class="kpi__label">Online (Izipay)</span><span class="kpi__valor">{{ soles(online()) }}</span><span class="kpi__nota">Confirmado por webhook</span></div>
       <div class="kpi"><span class="kpi__label">En local</span><span class="kpi__valor">{{ soles(local()) }}</span><span class="kpi__nota">Cobros en recepción</span></div>
-      <div class="kpi"><span class="kpi__label">Pendiente</span><span class="kpi__valor" style="color:var(--alerta)">{{ soles(pendiente()) }}</span><span class="kpi__nota">Por cobrar en caja</span></div>
-      <div class="kpi"><span class="kpi__label">Reembolsos</span><span class="kpi__valor" style="color:var(--error)">{{ soles(reembolsos()) }}</span><span class="kpi__nota">Devoluciones registradas</span></div>
+      <div class="kpi"><span class="kpi__label">Por cobrar hoy</span><span class="kpi__valor" style="color:var(--alerta)">{{ soles(pendienteHoy()) }}</span><span class="kpi__nota">No cuenta como ingreso</span></div>
+      <div class="kpi"><span class="kpi__label">Reembolsos hoy</span><span class="kpi__valor" style="color:var(--error)">{{ soles(reembolsosHoy()) }}</span><span class="kpi__nota">Dinero devuelto</span></div>
     </div>
 
     <div class="barra-filtros">
@@ -97,7 +97,7 @@ import { HOY_ISO, LOCALES, PAGOS, localPorId, soles } from '../../data/datos';
     <div class="tabla-panel">
       <div class="tabla-panel__cabecera">
         <h3>Movimientos</h3>
-        <span class="dato__label">{{ lista().length }} registros · {{ soles(totalFiltrado()) }}</span>
+        <span class="dato__label">{{ lista().length }} registros · {{ soles(totalCobradoFiltrado()) }} cobrado</span>
       </div>
       <div class="tabla-envoltura">
         <table class="tabla">
@@ -164,8 +164,8 @@ export class PagosComponent {
   cobradoHoy = computed(() => this.movimientos().filter(p => p.fecha === HOY_ISO && p.estado === 'Pagado').reduce((t, p) => t + p.monto, 0));
   online = computed(() => this.movimientos().filter(p => p.fecha === HOY_ISO && p.canal === 'Online' && p.estado === 'Pagado').reduce((t, p) => t + p.monto, 0));
   local = computed(() => this.movimientos().filter(p => p.fecha === HOY_ISO && p.canal === 'En local' && p.estado === 'Pagado').reduce((t, p) => t + p.monto, 0));
-  pendiente = computed(() => this.movimientos().filter(p => p.estado === 'Pendiente').reduce((t, p) => t + p.monto, 0));
-  reembolsos = computed(() => Math.abs(this.movimientos().filter(p => p.estado === 'Reembolsado').reduce((t, p) => t + p.monto, 0)));
+  pendienteHoy = computed(() => this.movimientos().filter(p => p.fecha === HOY_ISO && p.estado === 'Pendiente').reduce((t, p) => t + p.monto, 0));
+  reembolsosHoy = computed(() => Math.abs(this.movimientos().filter(p => p.fecha === HOY_ISO && p.estado === 'Reembolsado').reduce((t, p) => t + p.monto, 0)));
 
   lista = computed(() => {
     const texto = this.busqueda().trim().toLowerCase();
@@ -178,7 +178,7 @@ export class PagosComponent {
     );
   });
 
-  totalFiltrado = computed(() => this.lista().reduce((t, p) => t + p.monto, 0));
+  totalCobradoFiltrado = computed(() => this.lista().filter(p => p.estado === 'Pagado').reduce((t, p) => t + p.monto, 0));
 
   nombreLocal(id: number): string {
     return localPorId(id)?.nombre ?? '—';
@@ -200,7 +200,7 @@ export class PagosComponent {
       hora,
       concepto: this.cobroConcepto,
       referencia: this.cobroReferencia,
-      origen: this.cobroReferencia.startsWith('PL-') ? 'Cita' : 'Cita',
+      origen: this.cobroReferencia.startsWith('PD-') ? 'Producto' : 'Cita',
       metodo: this.cobroMetodo as any,
       canal: 'En local',
       estado: 'Pagado',

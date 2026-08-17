@@ -71,7 +71,11 @@ function tratamientoVacio(): Tratamiento {
           <div class="campo"><label>Precio (S/)</label><input type="number" min="0" [ngModel]="borrador().precio" (ngModelChange)="editar('precio', Number($event))" name="precio"></div>
           <div class="campo"><label>Sesión (min)</label><input type="number" min="5" [ngModel]="borrador().duracionMin" (ngModelChange)="editar('duracionMin', Number($event))" name="duracion"></div>
           <div class="campo"><label>Limpieza cabina (min)</label><input type="number" min="0" [ngModel]="borrador().limpiezaMin" (ngModelChange)="editar('limpiezaMin', Number($event))" name="limpieza"></div>
-          <div class="campo"><label>Imagen</label><input [ngModel]="borrador().imagen" (ngModelChange)="editar('imagen', $event)" name="imagen" placeholder="img/trat-limpieza.jpg"></div>
+          <div class="campo">
+            <label>Imagen</label>
+            <input [ngModel]="borrador().imagen" (ngModelChange)="editar('imagen', $event)" name="imagen" placeholder="img/trat-limpieza.jpg">
+            <input type="file" accept="image/*" (change)="cargarImagen($event)">
+          </div>
           <div class="campo trat-form__ancho"><label>Resumen</label><input [ngModel]="borrador().resumen" (ngModelChange)="editar('resumen', $event)" name="resumen"></div>
           <div class="campo trat-form__ancho"><label>Descripción</label><textarea rows="3" [ngModel]="borrador().descripcion" (ngModelChange)="editar('descripcion', $event)" name="descripcion"></textarea></div>
           <label class="check"><input type="checkbox" [ngModel]="borrador().activo" (ngModelChange)="editar('activo', $event)" name="activo"> Activo en la web</label>
@@ -229,5 +233,13 @@ export class TratamientosAdminComponent {
     this.tratamientos.update(lista => lista.map(t => ids.has(t.id) ? { ...t, precio: Math.round(t.precio * factor) } : t));
     this.mostrarAjuste.set(false);
     this.porcentajeAjuste = 0;
+  }
+
+  cargarImagen(evento: Event): void {
+    const archivo = (evento.target as HTMLInputElement).files?.[0];
+    if (!archivo) { return; }
+    const lector = new FileReader();
+    lector.onload = () => this.editar('imagen', String(lector.result || ''));
+    lector.readAsDataURL(archivo);
   }
 }
