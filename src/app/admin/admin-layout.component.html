@@ -1,0 +1,65 @@
+<div class="admin" [class.admin--colapsado]="colapsado()">
+  <aside class="lateral">
+    <div class="lateral__logo">
+      <a routerLink="/admin/dashboard"><app-logo [compacto]="true"></app-logo></a>
+    </div>
+
+    <nav class="lateral__nav">
+      @for (g of grupos; track g) {
+        <div class="lateral__grupo">
+          <span class="lateral__grupo-titulo">{{ g }}</span>
+          @for (s of seccionesDe(g); track s.ruta) {
+            <a [routerLink]="s.ruta" routerLinkActive="activo" class="lateral__enlace">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path [attr.d]="s.icono"></path>
+              </svg>
+              <span>{{ s.texto }}</span>
+            </a>
+          }
+        </div>
+      }
+    </nav>
+
+    <div class="lateral__pie">
+      <a routerLink="/" class="lateral__salir">Ver sitio público</a>
+      <button type="button" class="lateral__salir lateral__salir--boton" (click)="cerrarSesion()">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <div class="contenido">
+    <header class="topbar">
+      <button class="topbar__toggle" (click)="colapsado.set(!colapsado())" aria-label="Contraer menú">
+        <span></span><span></span><span></span>
+      </button>
+
+      <div class="topbar__buscador">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6">
+          <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+        </svg>
+        <input type="search" placeholder="Buscar paciente, cita o código de operación">
+      </div>
+
+      <div class="topbar__acciones">
+        <div class="topbar__rol">
+          <label>Rol</label>
+          <select [value]="rol()" (change)="rol.set($any($event.target).value)">
+            <option>Administrador</option>
+            <option>Recepcionista</option>
+            <option>Especialista</option>
+          </select>
+        </div>
+        <div class="topbar__usuario">
+          <div class="topbar__avatar">{{ sesion.iniciales() }}</div>
+          <div>
+            <strong>{{ sesion.nombreCompleto() }}</strong>
+            <span>{{ rol() }}</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="lienzo">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

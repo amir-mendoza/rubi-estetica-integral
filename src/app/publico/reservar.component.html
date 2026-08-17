@@ -1,0 +1,307 @@
+<section class="cabecera-pagina">
+  <div class="contenedor">
+    <div class="miga"><a routerLink="/">Inicio</a> / Reservar cita</div>
+    <h1>Reservar cita</h1>
+    <p>
+      El sistema valida en tiempo real la disponibilidad de la especialista y de la cabina.
+      Al elegir un horario se bloquea por 10 minutos mientras completas tus datos.
+    </p>
+  </div>
+</section>
+
+<section class="seccion seccion--compacta">
+  <div class="contenedor">
+
+    @if (confirmado()) {
+      <!-- ============================================== Confirmación -->
+      <div class="confirmacion">
+        <span class="chip chip--ok chip--punto">
+          {{ metodoPago === 'Izipay' ? 'Pago confirmado por Izipay' : 'Reserva registrada' }}
+        </span>
+        <h2>Tu cita quedó {{ metodoPago === 'Izipay' ? 'pagada y confirmada' : 'registrada' }}</h2>
+        <p class="lead mx-auto texto-centro">
+          Código de reserva <strong>CT-1042</strong>. Te enviaremos la confirmación por WhatsApp al
+          {{ celular || 'número registrado' }}.
+        </p>
+
+        <div class="resumen-final">
+          <div class="dato"><span class="dato__label">Paciente</span><span class="dato__valor">{{ nombre }} {{ apellido }}</span></div>
+          <div class="dato"><span class="dato__label">Tratamiento</span><span class="dato__valor">{{ tratamiento()?.nombre }}</span></div>
+          <div class="dato"><span class="dato__label">Fecha</span><span class="dato__valor">{{ formatoFechaLarga(fecha()) }}</span></div>
+          <div class="dato"><span class="dato__label">Horario</span><span class="dato__valor">{{ slot()?.inicio }} — {{ slot()?.fin }}</span></div>
+          <div class="dato"><span class="dato__label">Sede</span><span class="dato__valor">{{ local()?.nombre }}</span></div>
+          <div class="dato"><span class="dato__label">Cabina</span><span class="dato__valor">{{ cabinaAsignada()?.nombre }}</span></div>
+          <div class="dato"><span class="dato__label">Especialista</span><span class="dato__valor">{{ especialistaAsignada()?.nombre }} {{ especialistaAsignada()?.apellido }}</span></div>
+          <div class="dato">
+            <span class="dato__label">Estado de pago</span>
+            <span class="dato__valor">{{ metodoPago === 'Izipay' ? 'Pagado · Izipay' : 'Pago en local' }}</span>
+          </div>
+        </div>
+
+        <div class="confirmacion__acciones">
+          <a routerLink="/" class="btn btn--linea">Volver al inicio</a>
+          <button class="btn btn--primario" (click)="reiniciar()">Reservar otra cita</button>
+        </div>
+      </div>
+
+    } @else {
+      <div class="reserva">
+        <!-- ============================================= Formulario -->
+        <div>
+          <ol class="pasos-barra">
+            @for (p of pasos; track p.n) {
+              <li [class.activo]="paso() === p.n" [class.hecho]="paso() > p.n" (click)="irA(p.n)">
+                <span class="pasos-barra__n">{{ p.n }}</span>
+                <span class="pasos-barra__t">{{ p.titulo }}</span>
+              </li>
+            }
+          </ol>
+
+          <!-- Paso 1: sede -->
+          @if (paso() === 1) {
+            <div class="bloque">
+              <h3>1. Elige la sede</h3>
+              <p>Selecciona el local donde deseas atenderte.</p>
+              <div class="grid grid-2">
+                @for (l of locales; track l.id) {
+                  <button class="opcion" [class.opcion--activa]="local()?.id === l.id" (click)="elegirLocal(l)">
+                    <img [src]="l.imagen" [alt]="l.nombre">
+                    <div>
+                      <strong>{{ l.nombre }}</strong>
+                      <span>{{ l.direccion }}</span>
+                      <span>{{ l.distrito }}</span>
+                    </div>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Paso 2: tratamiento -->
+          @if (paso() === 2) {
+            <div class="bloque">
+              <h3>2. Elige el tratamiento</h3>
+              <p>El tiempo total reservado incluye la preparación y limpieza de la cabina.</p>
+              <div class="lista-opciones">
+                @for (t of tratamientos; track t.id) {
+                  <button class="opcion opcion--fila" [class.opcion--activa]="tratamiento()?.id === t.id" (click)="elegirTratamiento(t)">
+                    <img [src]="t.imagen" [alt]="t.nombre">
+                    <div class="opcion__texto">
+                      <strong>{{ t.nombre }}</strong>
+                      <span>{{ t.resumen }}</span>
+                      <span class="opcion__meta">{{ t.duracionMin }} min + {{ t.limpiezaMin }} min de cabina</span>
+                    </div>
+                    <div class="opcion__precio">{{ soles(t.precio) }}</div>
+                  </button>
+                }
+              </div>
+              <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
+            </div>
+          }
+
+          <!-- Paso 3: especialista -->
+          @if (paso() === 3) {
+            <div class="bloque">
+              <h3>3. Elige la especialista</h3>
+              <p>Puedes elegir una profesional específica o dejar que el sistema asigne la primera disponible.</p>
+
+              <button class="opcion opcion--fila opcion--cualquiera"
+                      [class.opcion--activa]="cualquierEspecialista() && !especialista()"
+                      (click)="elegirEspecialista(null)">
+                <div class="opcion__texto">
+                  <strong>Cualquier especialista disponible</strong>
+                  <span>Recomendado: verás más horarios libres.</span>
+                </div>
+              </button>
+
+              <div class="lista-opciones" style="margin-top:16px">
+                @for (e of especialistasDisponibles(); track e.id) {
+                  <button class="opcion opcion--fila" [class.opcion--activa]="especialista()?.id === e.id" (click)="elegirEspecialista(e)">
+                    <img [src]="e.foto" [alt]="e.nombre">
+                    <div class="opcion__texto">
+                      <strong>{{ e.nombre }} {{ e.apellido }}</strong>
+                      <span>{{ e.especialidad }}</span>
+                      <span class="opcion__meta">{{ e.horario }}</span>
+                    </div>
+                  </button>
+                }
+                @if (!especialistasDisponibles().length) {
+                  <div class="aviso">No hay especialistas asignadas a este tratamiento en la sede elegida.</div>
+                }
+              </div>
+              <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
+            </div>
+          }
+
+          <!-- Paso 4: fecha y hora -->
+          @if (paso() === 4) {
+            <div class="bloque">
+              <h3>4. Elige fecha y hora</h3>
+              <p>Solo se muestran los horarios en los que hay cabina y especialista libres.</p>
+
+              <div class="dias">
+                @for (d of dias; track d.iso) {
+                  <button class="dia" [class.dia--activo]="fecha() === d.iso" (click)="elegirFecha(d.iso)">
+                    <span class="dia__nombre">{{ d.nombre }}</span>
+                    <span class="dia__num">{{ d.dia }}</span>
+                    <span class="dia__mes">{{ d.mes }}</span>
+                  </button>
+                }
+              </div>
+
+              @if (slot()) {
+                <div class="bloqueo">
+                  <div>
+                    <strong>Horario bloqueado temporalmente</strong>
+                    <span>Completa tu reserva antes de que se libere el horario.</span>
+                  </div>
+                  <span class="bloqueo__reloj">{{ cuentaRegresiva() }}</span>
+                </div>
+              }
+
+              <div class="horarios">
+                @for (s of slots(); track s.inicio) {
+                  <button class="horario"
+                          [class.horario--ocupado]="!s.disponible"
+                          [class.horario--activo]="slot()?.inicio === s.inicio"
+                          [disabled]="!s.disponible"
+                          [title]="s.disponible ? 'Disponible' : (s.motivo || 'No disponible')"
+                          (click)="elegirSlot(s)">
+                    <span>{{ s.inicio }}</span>
+                    <small>{{ s.disponible ? s.inicio + ' — ' + s.fin : s.motivo }}</small>
+                  </button>
+                }
+                @if (!slots().length) {
+                  <div class="aviso">La sede no atiende en la fecha seleccionada.</div>
+                }
+              </div>
+
+              <div class="acciones-paso">
+                <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
+                <button class="btn btn--primario btn--sm" [disabled]="!slot()" (click)="siguiente()">Continuar</button>
+              </div>
+            </div>
+          }
+
+          <!-- Paso 5: datos -->
+          @if (paso() === 5) {
+            <div class="bloque">
+              <h3>5. Tus datos</h3>
+              <p>Necesitamos estos datos para registrar tu historia clínica y confirmarte la cita.</p>
+              @if (sesion.autenticado()) {
+                <div class="aviso aviso--ok" style="margin-bottom:20px">
+                  Datos cargados desde tu cuenta ({{ sesion.usuario()?.correo }}). Puedes editarlos si algo cambió.
+                </div>
+              } @else {
+                <div class="aviso" style="margin-bottom:20px">
+                  ¿Ya tienes cuenta? <a routerLink="/ingresar" [queryParams]="{ volver: '/reservar' }">Ingresa</a>
+                  y estos campos se completarán automáticamente, o
+                  <a routerLink="/registro">crea tu cuenta</a>.
+                </div>
+              }
+              <div class="grid grid-2" style="gap:0 20px">
+                <div class="campo"><label>Nombre</label><input type="text" [(ngModel)]="nombre" placeholder="María"></div>
+                <div class="campo"><label>Apellidos</label><input type="text" [(ngModel)]="apellido" placeholder="López Rivera"></div>
+                <div class="campo"><label>DNI</label><input type="text" [(ngModel)]="dni" maxlength="8" placeholder="74859632"></div>
+                <div class="campo"><label>Celular</label><input type="tel" [(ngModel)]="celular" placeholder="987 654 321"></div>
+              </div>
+              <div class="campo"><label>Correo electrónico (opcional)</label><input type="email" [(ngModel)]="correo" placeholder="correo@ejemplo.com"></div>
+              <div class="campo">
+                <label>Observaciones (opcional)</label>
+                <textarea rows="3" [(ngModel)]="observaciones" placeholder="Alergias, tratamientos previos, medicación"></textarea>
+              </div>
+              <div class="acciones-paso">
+                <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
+                <button class="btn btn--primario btn--sm" [disabled]="!datosCompletos()" (click)="siguiente()">Continuar al pago</button>
+              </div>
+            </div>
+          }
+
+          <!-- Paso 6: pago -->
+          @if (paso() === 6) {
+            <div class="bloque">
+              <h3>6. Método de pago</h3>
+              <p>Puedes asegurar tu horario pagando en línea o reservar y pagar en el local.</p>
+
+              <button class="opcion opcion--fila" [class.opcion--activa]="metodoPago === 'Izipay'" (click)="metodoPago = 'Izipay'">
+                <div class="opcion__texto">
+                  <strong>Pagar en línea con Izipay</strong>
+                  <span>Tarjeta de crédito o débito. La cita se marca como pagada solo cuando Izipay confirma la operación.</span>
+                </div>
+                <div class="opcion__precio">{{ soles(tratamiento()?.precio || 0) }}</div>
+              </button>
+
+              <button class="opcion opcion--fila" [class.opcion--activa]="metodoPago === 'Local'" (click)="metodoPago = 'Local'">
+                <div class="opcion__texto">
+                  <strong>Pagar en el local</strong>
+                  <span>Tu cita queda reservada en estado pendiente de pago. Se libera si no asistes.</span>
+                </div>
+                <div class="opcion__precio">{{ soles(tratamiento()?.precio || 0) }}</div>
+              </button>
+
+              <div class="aviso" style="margin:22px 0">
+                Prototipo de demostración: no se ejecuta ningún cobro real ni se guardan datos.
+              </div>
+
+              <div class="acciones-paso">
+                <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
+                <button class="btn btn--primario" (click)="confirmar()">
+                  {{ metodoPago === 'Izipay' ? 'Pagar y confirmar cita' : 'Confirmar reserva' }}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- ================================================ Resumen -->
+        <aside class="resumen">
+          <div class="panel">
+            <h4>Resumen de tu reserva</h4>
+
+            <div class="resumen__fila"><span>Sede</span><strong>{{ local()?.nombre || '—' }}</strong></div>
+            <div class="resumen__fila"><span>Tratamiento</span><strong>{{ tratamiento()?.nombre || '—' }}</strong></div>
+            <div class="resumen__fila">
+              <span>Especialista</span>
+              <strong>
+                {{ especialista() ? especialista()?.nombre + ' ' + especialista()?.apellido
+                   : (cualquierEspecialista() ? 'Cualquiera disponible' : '—') }}
+              </strong>
+            </div>
+            <div class="resumen__fila"><span>Fecha</span><strong>{{ slot() ? formatoFechaLarga(fecha()) : '—' }}</strong></div>
+            <div class="resumen__fila">
+              <span>Horario</span>
+              <strong>{{ slot() ? slot()?.inicio + ' — ' + slot()?.fin : '—' }}</strong>
+            </div>
+            <div class="resumen__fila"><span>Cabina</span><strong>{{ cabinaAsignada()?.nombre || 'Por asignar' }}</strong></div>
+            <div class="resumen__fila">
+              <span>Tiempo reservado</span>
+              <strong>{{ bloqueoTotal() ? bloqueoTotal() + ' min' : '—' }}</strong>
+            </div>
+
+            <div class="resumen__total">
+              <span>Total</span>
+              <strong>{{ soles(tratamiento()?.precio || 0) }}</strong>
+            </div>
+
+            @if (tratamiento()) {
+              <p class="campo__ayuda" style="margin-top:12px">
+                Incluye {{ tratamiento()?.duracionMin }} min de sesión y
+                {{ tratamiento()?.limpiezaMin }} min de preparación de cabina.
+              </p>
+            }
+          </div>
+
+          <div class="panel" style="margin-top:20px">
+            <h4>Reglas de la agenda</h4>
+            <ul class="reglas">
+              <li>No se permiten dos citas cruzadas en la misma cabina.</li>
+              <li>No se permiten dos citas cruzadas con la misma especialista.</li>
+              <li>El horario elegido se bloquea 10 minutos mientras completas la reserva.</li>
+              <li>Fuera del horario del local no se muestran horarios disponibles.</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    }
+  </div>
+</section>

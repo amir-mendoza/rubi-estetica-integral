@@ -1,0 +1,158 @@
+<div class="cabecera-admin">
+  <div>
+    <h1>Calendario / Citas</h1>
+    <p>Selecciona un día del calendario para ver la lista de pacientes agendados, ordenada por hora.</p>
+  </div>
+  <div class="cabecera-admin__acciones">
+    <button class="btn btn--linea btn--sm" (click)="irHoy()">Ir a hoy</button>
+    <button class="btn btn--vino btn--sm">Registrar cita manual</button>
+  </div>
+</div>
+
+<div class="barra-filtros">
+  <div class="campo barra-filtros__crecer">
+    <label>Buscar</label>
+    <input type="search" placeholder="Paciente, DNI, celular o código de cita"
+           [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)">
+  </div>
+  <div class="campo">
+    <label>Local</label>
+    <select [ngModel]="filtroLocal()" (ngModelChange)="filtroLocal.set($event)">
+      <option>Todos</option>
+      @for (l of locales; track l.id) { <option>{{ l.nombre }}</option> }
+    </select>
+  </div>
+  <div class="campo">
+    <label>Especialista</label>
+    <select [ngModel]="filtroEspecialista()" (ngModelChange)="filtroEspecialista.set($event)">
+      <option>Todas</option>
+      @for (e of especialistas; track e.id) { <option>{{ e.nombre }} {{ e.apellido }}</option> }
+    </select>
+  </div>
+  <div class="campo">
+    <label>Estado de cita</label>
+    <select [ngModel]="filtroEstado()" (ngModelChange)="filtroEstado.set($event)">
+      @for (e of estados; track e) { <option>{{ e }}</option> }
+    </select>
+  </div>
+  <div class="campo">
+    <label>Estado de pago</label>
+    <select [ngModel]="filtroPago()" (ngModelChange)="filtroPago.set($event)">
+      @for (e of estadosPago; track e) { <option>{{ e }}</option> }
+    </select>
+  </div>
+</div>
+
+<div class="calendario-grid">
+  <!-- ============================================= Calendario mensual -->
+  <section class="panel calendario">
+    <header class="calendario__cabecera">
+      <button class="nav-mes" (click)="mesAnterior()" aria-label="Mes anterior">‹</button>
+      <h3>{{ titulo() }}</h3>
+      <button class="nav-mes" (click)="mesSiguiente()" aria-label="Mes siguiente">›</button>
+    </header>
+
+    <div class="calendario__semana">
+      @for (d of diasSemana; track d) { <span>{{ d }}</span> }
+    </div>
+
+    <div class="calendario__dias">
+      @for (c of celdas(); track c.iso) {
+        <button class="celda"
+                [class.celda--fuera]="!c.delMes"
+                [class.celda--hoy]="c.hoy"
+                [class.celda--activa]="diaSeleccionado() === c.iso"
+                (click)="diaSeleccionado.set(c.iso)">
+          <span class="celda__num">{{ c.dia }}</span>
+          @if (c.citas) {
+            <span class="celda__citas">{{ c.citas }} {{ c.citas === 1 ? 'cita' : 'citas' }}</span>
+            <span class="celda__monto">{{ soles(c.monto) }}</span>
+            <span class="celda__punto" [class.celda__punto--pendiente]="c.pendiente"></span>
+          }
+        </button>
+      }
+    </div>
+
+    <footer class="calendario__leyenda">
+      <span><i class="punto punto--ok"></i> Todo pagado</span>
+      <span><i class="punto punto--alerta"></i> Con pagos pendientes</span>
+      <span><i class="punto punto--hoy"></i> Día de hoy</span>
+    </footer>
+  </section>
+
+  <!-- ============================================ Detalle del día -->
+  <section class="dia-detalle">
+    <div class="panel resumen-dia">
+      <div>
+        <span class="dato__label">Día seleccionado</span>
+        <h3>{{ fechaLarga() }}</h3>
+      </div>
+      <div class="resumen-dia__montos">
+        <div><span>Agendado</span><strong>{{ soles(totalDia()) }}</strong></div>
+        <div><span>Pagado</span><strong style="color:var(--ok)">{{ soles(pagadoDia()) }}</strong></div>
+        <div><span>Pendiente</span><strong style="color:var(--alerta)">{{ soles(pendienteDia()) }}</strong></div>
+        <div><span>Cancelado</span><strong style="color:var(--error)">{{ soles(canceladoDia()) }}</strong></div>
+      </div>
+    </div>
+
+    @if (!citasDelDia().length) {
+      <div class="panel texto-centro" style="padding:48px">
+        <h4>Sin citas para este día</h4>
+        <p style="margin:0">No hay pacientes agendados con los filtros seleccionados.</p>
+      </div>
+    }
+
+    <div class="agenda">
+      @for (c of citasDelDia(); track c.id) {
+        <article class="cita" [class.cita--cancelada]="c.estado === 'Cancelada' || c.estado === 'No asistió'">
+          <div class="cita__hora">
+            <strong>{{ c.horaInicio }}</strong>
+            <span>{{ c.horaFin }}</span>
+            <small>{{ c.codigo }}</small>
+          </div>
+
+          <div class="cita__cuerpo">
+            <div class="cita__titulo">
+              <h4>{{ paciente(c.pacienteId)?.nombre }} {{ paciente(c.pacienteId)?.apellido }}</h4>
+              <span [class]="claseEstado(c.estado)">{{ c.estado }}</span>
+              <span [class]="claseEstadoPago(c.estadoPago)">{{ c.estadoPago }}</span>
+            </div>
+
+            <div class="cita__datos">
+              <div><span class="dato__label">DNI</span><span>{{ paciente(c.pacienteId)?.dni }}</span></div>
+              <div><span class="dato__label">Celular</span><span>{{ paciente(c.pacienteId)?.celular }}</span></div>
+              <div><span class="dato__label">Tratamiento</span><span>{{ tratamiento(c.tratamientoId)?.nombre }}</span></div>
+              <div><span class="dato__label">Especialista</span><span>{{ especialista(c.especialistaId) }}</span></div>
+              <div><span class="dato__label">Local</span><span>{{ local(c.localId) }}</span></div>
+              <div><span class="dato__label">Cabina</span><span>{{ cabina(c.habitacionId) }}</span></div>
+              <div><span class="dato__label">Método de pago</span><span>{{ c.metodoPago || 'Por definir' }}</span></div>
+              <div><span class="dato__label">Origen</span><span>{{ c.origen }}</span></div>
+            </div>
+
+            @if (c.notas) { <p class="cita__nota">{{ c.notas }}</p> }
+          </div>
+
+          <div class="cita__montos">
+            <div><span>Total</span><strong>{{ soles(c.montoTotal) }}</strong></div>
+            <div><span>Pagado</span><strong style="color:var(--ok)">{{ soles(c.montoPagado) }}</strong></div>
+            <div><span>Pendiente</span><strong style="color:var(--alerta)">{{ soles(c.montoTotal - c.montoPagado) }}</strong></div>
+            <button class="boton-icono" (click)="citaAbierta.set(citaAbierta()?.id === c.id ? null : c)">
+              {{ citaAbierta()?.id === c.id ? 'Ocultar trazabilidad' : 'Ver trazabilidad' }}
+            </button>
+          </div>
+
+          @if (citaAbierta()?.id === c.id) {
+            <div class="cita__traza">
+              <div><span class="dato__label">Registrada por</span><span>{{ c.registradaPor }}</span></div>
+              <div><span class="dato__label">Registrada el</span><span>{{ c.registradaEl }}</span></div>
+              <div><span class="dato__label">Confirmó el pago</span><span>{{ c.confirmadaPor || 'Pendiente de confirmación' }}</span></div>
+              <div><span class="dato__label">Código de operación</span><span>{{ c.codigoOperacion || '—' }}</span></div>
+              <div><span class="dato__label">Fecha y hora del pago</span><span>{{ c.pagadaEl || '—' }}</span></div>
+              <div><span class="dato__label">Estado del pago</span><span>{{ c.estadoPago }}</span></div>
+            </div>
+          }
+        </article>
+      }
+    </div>
+  </section>
+</div>

@@ -1,0 +1,86 @@
+:host { display: block; }
+
+.admin { display: grid; grid-template-columns: 268px 1fr; min-height: 100vh; background: #f7f4f6; }
+.admin--colapsado { grid-template-columns: 78px 1fr; }
+
+/* ------------------------------------------------------------- Lateral */
+.lateral {
+  background: var(--vino-900);
+  color: rgba(255, 255, 255, .72);
+  display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.lateral__logo { padding: 22px 22px 18px; border-bottom: 1px solid rgba(255,255,255,.1); }
+.lateral__logo :is(a) { display: inline-flex; color: #fff; }
+.lateral__logo ::ng-deep .logo { color: #fff; }
+.lateral__logo ::ng-deep .logo__bajada { color: rgba(255,255,255,.6); }
+
+.lateral__nav { padding: 18px 12px; flex: 1; }
+.lateral__grupo { margin-bottom: 22px; }
+.lateral__grupo-titulo {
+  display: block; padding: 0 12px 8px;
+  font-size: .6rem; letter-spacing: .22em; text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+}
+.lateral__enlace {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: var(--radio);
+  color: rgba(255,255,255,.75); font-size: .875rem;
+  white-space: nowrap;
+}
+.lateral__enlace svg { width: 18px; height: 18px; flex: none; }
+.lateral__enlace:hover { background: rgba(255,255,255,.07); color: #fff; }
+.lateral__enlace.activo { background: var(--magenta); color: #fff; }
+.lateral__pie { padding: 18px 22px; border-top: 1px solid rgba(255,255,255,.1); }
+.lateral__salir { display: block; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.6); }
+.lateral__salir:hover { color: #fff; }
+.lateral__salir--boton {
+  margin-top: 12px; background: none; border: none; padding: 0;
+  font-family: inherit; text-align: left; cursor: pointer;
+}
+
+.admin--colapsado .lateral__enlace span,
+.admin--colapsado .lateral__grupo-titulo,
+.admin--colapsado .lateral__pie,
+.admin--colapsado .lateral__logo ::ng-deep .logo__texto { display: none; }
+.admin--colapsado .lateral__enlace { justify-content: center; }
+
+/* -------------------------------------------------------------- Topbar */
+.contenido { display: flex; flex-direction: column; min-width: 0; }
+.topbar {
+  display: flex; align-items: center; gap: 20px;
+  padding: 0 28px; height: 72px;
+  background: #fff; border-bottom: 1px solid var(--linea);
+  position: sticky; top: 0; z-index: 20;
+}
+.topbar__toggle { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 4px; padding: 6px; }
+.topbar__toggle span { width: 18px; height: 1.5px; background: var(--vino); }
+.topbar__buscador {
+  display: flex; align-items: center; gap: 10px; flex: 1; max-width: 460px;
+  border: 1px solid var(--linea); border-radius: var(--radio); padding: 0 14px; height: 40px;
+  color: var(--gris-claro);
+}
+.topbar__buscador input { border: none; outline: none; flex: 1; font-family: inherit; font-size: .88rem; background: none; }
+.topbar__acciones { margin-left: auto; display: flex; align-items: center; gap: 26px; }
+.topbar__rol { display: flex; align-items: center; gap: 10px; }
+.topbar__rol label { font-size: .66rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris-claro); }
+.topbar__rol select {
+  border: 1px solid var(--linea); border-radius: var(--radio); padding: .45rem .7rem;
+  font-family: inherit; font-size: .82rem; color: var(--tinta); background: #fff; outline: none;
+}
+.topbar__usuario { display: flex; align-items: center; gap: 12px; }
+.topbar__usuario strong { display: block; font-size: .88rem; font-weight: 500; }
+.topbar__usuario span { font-size: .74rem; color: var(--gris-claro); }
+.topbar__avatar {
+  width: 38px; height: 38px; border-radius: 50%; background: var(--rosa); color: var(--vino);
+  display: flex; align-items: center; justify-content: center; font-size: .8rem; letter-spacing: .05em;
+}
+
+.lienzo { padding: 30px 28px 60px; min-width: 0; }
+
+@media (max-width: 1000px) {
+  .admin { grid-template-columns: 78px 1fr; }
+  .lateral__enlace span, .lateral__grupo-titulo, .lateral__pie { display: none; }
+  .lateral__enlace { justify-content: center; }
+  .topbar__buscador, .topbar__rol { display: none; }
+}

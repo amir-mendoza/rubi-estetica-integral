@@ -1,0 +1,101 @@
+.calendario-grid { display: grid; grid-template-columns: 460px 1fr; gap: 20px; align-items: start; }
+
+/* Calendario */
+.calendario { position: sticky; top: 96px; }
+.calendario__cabecera { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.calendario__cabecera h3 { margin: 0; font-size: 1.35rem; }
+.nav-mes {
+  background: none; border: 1px solid var(--linea); border-radius: var(--radio);
+  width: 32px; height: 32px; cursor: pointer; color: var(--vino); font-size: 1.1rem; line-height: 1;
+}
+.nav-mes:hover { border-color: var(--magenta); color: var(--magenta); }
+
+.calendario__semana { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 8px; }
+.calendario__semana span {
+  text-align: center; font-size: .64rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--gris-claro);
+}
+.calendario__dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+
+.celda {
+  position: relative; min-height: 66px; padding: 6px 4px 4px;
+  background: #fff; border: 1px solid var(--linea); border-radius: var(--radio);
+  cursor: pointer; font-family: inherit; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  transition: border-color .15s ease, background .15s ease;
+}
+.celda:hover { border-color: var(--magenta-300); }
+.celda--fuera { opacity: .38; }
+.celda__num { font-size: .92rem; color: var(--tinta); }
+.celda__citas { font-size: .62rem; color: var(--magenta); letter-spacing: .04em; }
+.celda__monto { font-size: .6rem; color: var(--gris-claro); }
+.celda__punto { width: 5px; height: 5px; border-radius: 50%; background: var(--ok); margin-top: auto; }
+.celda__punto--pendiente { background: var(--alerta); }
+.celda--hoy { border-color: var(--magenta); }
+.celda--hoy .celda__num { color: var(--magenta); font-weight: 500; }
+.celda--activa { background: var(--vino); border-color: var(--vino); }
+.celda--activa .celda__num, .celda--activa .celda__citas, .celda--activa .celda__monto { color: #fff; }
+
+.calendario__leyenda { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--linea); }
+.calendario__leyenda span { display: inline-flex; align-items: center; gap: 7px; font-size: .72rem; color: var(--gris-claro); }
+.punto { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.punto--ok { background: var(--ok); }
+.punto--alerta { background: var(--alerta); }
+.punto--hoy { background: var(--magenta); }
+
+/* Resumen del día */
+.resumen-dia { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
+.resumen-dia h3 { margin: 6px 0 0; font-size: 1.35rem; }
+.resumen-dia__montos { display: flex; gap: 30px; flex-wrap: wrap; }
+.resumen-dia__montos div { display: flex; flex-direction: column; gap: 2px; }
+.resumen-dia__montos span { font-size: .64rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris-claro); }
+.resumen-dia__montos strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.6rem; color: var(--vino); }
+
+/* Agenda */
+.agenda { display: grid; gap: 12px; }
+.cita {
+  display: grid; grid-template-columns: 104px 1fr 190px; gap: 20px;
+  background: #fff; border: 1px solid var(--linea); border-left: 3px solid var(--magenta);
+  border-radius: var(--radio-lg); padding: 18px 20px;
+}
+.cita--cancelada { border-left-color: var(--error); background: #fdfafa; }
+.cita__hora { display: flex; flex-direction: column; gap: 2px; }
+.cita__hora strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.6rem; color: var(--vino); line-height: 1; }
+.cita__hora span { font-size: .8rem; color: var(--gris-claro); }
+.cita__hora small { font-size: .66rem; color: var(--gris-claro); letter-spacing: .1em; margin-top: 6px; }
+
+.cita__titulo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.cita__titulo h4 { margin: 0; font-size: 1.2rem; }
+.cita__datos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 18px; }
+.cita__datos div { display: flex; flex-direction: column; gap: 1px; }
+.cita__datos span:last-child { font-size: .86rem; color: var(--tinta); }
+.cita__nota {
+  margin: 14px 0 0; padding: 10px 14px; background: var(--rosa-50);
+  border-radius: var(--radio); font-size: .84rem; color: var(--gris);
+}
+
+.cita__montos {
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
+  padding-left: 20px; border-left: 1px dashed var(--linea);
+}
+.cita__montos div { display: flex; justify-content: space-between; gap: 14px; width: 100%; font-size: .82rem; color: var(--gris); }
+.cita__montos strong { font-weight: 500; }
+.cita__montos .boton-icono { margin-top: auto; }
+
+.cita__traza {
+  grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--linea);
+}
+.cita__traza div { display: flex; flex-direction: column; gap: 2px; }
+.cita__traza span:last-child { font-size: .85rem; color: var(--tinta); }
+
+@media (max-width: 1400px) {
+  .calendario-grid { grid-template-columns: 1fr; }
+  .calendario { position: static; }
+}
+@media (max-width: 900px) {
+  .cita { grid-template-columns: 1fr; }
+  .cita__datos { grid-template-columns: repeat(2, 1fr); }
+  .cita__montos { align-items: flex-start; padding-left: 0; border-left: none; border-top: 1px dashed var(--linea); padding-top: 14px; }
+  .cita__traza { grid-template-columns: 1fr; }
+}
