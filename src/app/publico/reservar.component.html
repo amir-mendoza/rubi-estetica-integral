@@ -128,8 +128,8 @@
             <div class="bloque">
               <h3>3. Elige el día y la hora en la que llegarás</h3>
               <p>
-                Cada hora recibe un número limitado de pacientes. Cuando una hora llega a su
-                cupo se cierra y puedes elegir la siguiente.
+                Atendemos las 24 horas del día. Cada hora recibe hasta 10 pacientes: cuando una
+                hora llega a su cupo se cierra y puedes elegir la siguiente.
               </p>
 
               <div class="dias">
@@ -272,10 +272,7 @@
                   {{ local()?.nombre }} tiene {{ cabinasSede() }} cabinas y acepta
                   {{ cupoSede() }} citas por hora.
                 </li>
-                <li>
-                  Siempre {{ cabinasLibresSede() === 1 ? 'queda 1 cabina libre' : 'quedan ' + cabinasLibresSede() + ' cabinas libres' }}
-                  por hora para pacientes que llegan sin cita.
-                </li>
+                <li>Las dos sedes atienden las 24 horas, todos los días.</li>
               } @else {
                 <li>Cada sede acepta un número limitado de citas por hora.</li>
               }

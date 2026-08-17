@@ -49,23 +49,27 @@ import { LOCALES, cabinasDeSede, cupoDeSede } from '../data/datos';
           <div class="campo"><label>Duración del bloque horario</label>
             <select><option>60 minutos</option><option>90 minutos</option><option>30 minutos</option></select>
           </div>
+          <div class="campo"><label>Días entre sesiones de un plan multisesión</label>
+            <select><option>15 días</option><option>30 días</option><option>7 días</option></select>
+            <span class="campo__ayuda">Valor sugerido al programar la siguiente sesión de un plan.</span>
+          </div>
           <div class="campo"><label>Anticipación mínima para reservar en línea</label>
             <select><option>2 horas</option><option>1 hora</option><option>Mismo día sin restricción</option></select>
           </div>
           @for (l of locales; track l.id) {
             <div class="campo">
-              <label>Citas por bloque en {{ l.nombre }} ({{ cabinas(l.id) }} cabinas)</label>
-              <input type="number" [value]="cupo(l.id)" min="1" [max]="cabinas(l.id)">
+              <label>Pacientes por hora en {{ l.nombre }} ({{ cabinas(l.id) }} cabinas)</label>
+              <input type="number" [value]="cupo(l.id)" min="1" max="20">
               <span class="campo__ayuda">
-                Quedan {{ cabinas(l.id) - cupo(l.id) }} cabinas libres por hora para pacientes sin cita.
+                Al llegar a {{ cupo(l.id) }} reservas, esa hora se cierra y la paciente pasa a la siguiente.
               </span>
             </div>
           }
           <div class="interruptores">
             <label><input type="checkbox" checked> Cerrar el bloque horario al llegar a su cupo</label>
-            <label><input type="checkbox" checked> Reservar cabinas para atenciones sin cita</label>
+            <label><input type="checkbox" checked> Atención las 24 horas en ambas sedes</label>
             <label><input type="checkbox" checked> Asignar cabina y especialista en el local, al llegar la paciente</label>
-            <label><input type="checkbox"> Permitir sobreventa autorizada por administración</label>
+            <label><input type="checkbox" checked> Aceptar pacientes sin cita según disponibilidad del momento</label>
           </div>
         </div>
 
@@ -103,9 +107,7 @@ import { LOCALES, cabinasDeSede, cupoDeSede } from '../data/datos';
           <h4>Cobros en local</h4>
           <div class="interruptores">
             <label><input type="checkbox" checked> Efectivo (único método presencial habilitado)</label>
-            <label><input type="checkbox"> Yape</label>
-            <label><input type="checkbox"> Tarjeta POS</label>
-            <label><input type="checkbox"> Transferencia bancaria</label>
+            <label><input type="checkbox" checked> Registrar quién confirmó cada cobro en efectivo</label>
           </div>
           <div class="campo" style="margin-top:18px">
             <label>Adelanto requerido para reservar en línea</label>

@@ -1,6 +1,7 @@
 import {
   Cita, Especialista, EstadoCita, EstadoPago, Habitacion, Local, MetodoPago,
-  MovimientoPago, Paciente, Pedido, Producto, Tratamiento, Usuario
+  MovimientoPago, Paciente, Pedido, PlanSesiones, Producto, Promocion,
+  Tratamiento, Usuario
 } from './modelos';
 
 /* ============================================================== LOCALES === */
@@ -15,8 +16,7 @@ export const LOCALES: Local[] = [
     distrito: 'San Juan de Lurigancho, Lima',
     telefono: '945 189 720',
     horario: [
-      { dias: 'Lunes a sábado', apertura: '08:00', cierre: '20:00' },
-      { dias: 'Domingo', apertura: '12:00', cierre: '16:00' }
+      { dias: 'Todos los días', apertura: '00:00', cierre: '24:00' }
     ],
     imagen: 'img/local-1.jpg',
     mapa: 'https://www.google.com/maps/search/?api=1&query=-12.00423259951209,-77.01189597596573',
@@ -33,8 +33,7 @@ export const LOCALES: Local[] = [
     distrito: 'San Juan de Lurigancho, Lima',
     telefono: '945 189 721',
     horario: [
-      { dias: 'Lunes a sábado', apertura: '09:00', cierre: '20:00' },
-      { dias: 'Domingo', apertura: '12:00', cierre: '16:00' }
+      { dias: 'Todos los días', apertura: '00:00', cierre: '24:00' }
     ],
     imagen: 'img/local-2.jpg',
     mapa: 'https://www.google.com/maps/search/?api=1&query=-12.003582220477465,-77.01212351240744',
@@ -68,23 +67,18 @@ export const HABITACIONES: Habitacion[] = [
 
 /**
  * La paciente reserva un bloque horario (la hora a la que piensa llegar), no una
- * cabina ni una especialista. El cupo por bloque es menor al numero de cabinas
- * para dejar siempre espacio a quien llega sin cita.
+ * cabina ni una especialista. Las dos sedes atienden las 24 horas y cada bloque
+ * de una hora acepta hasta 10 pacientes; la especialista y la cabina se asignan
+ * en el local segun el orden de llegada.
  */
 export const AGENDA = {
   bloqueMin: 60,
-  /** Citas web que se aceptan por bloque horario en cada sede. */
-  cupoPorBloque: { 1: 4, 2: 8 } as Record<number, number>,
-  /** Cabinas que quedan libres en cada bloque para atenciones sin cita. */
-  reservaSinCita: { 1: 1, 2: 2 } as Record<number, number>
+  /** Citas que se aceptan por bloque horario en cada sede. */
+  cupoPorBloque: { 1: 10, 2: 10 } as Record<number, number>
 };
 
 export function cupoDeSede(localId: number): number {
-  return AGENDA.cupoPorBloque[localId] ?? 4;
-}
-
-export function reservaSinCita(localId: number): number {
-  return AGENDA.reservaSinCita[localId] ?? 1;
+  return AGENDA.cupoPorBloque[localId] ?? 10;
 }
 
 export function cabinasDeSede(localId: number): Habitacion[] {
@@ -620,6 +614,149 @@ export const PAGOS: MovimientoPago[] = [
   { id: 8, fecha: conDias(-1), hora: '09:40', concepto: 'Limpieza facial profunda · Diana Quiroz', referencia: 'CT-1010', origen: 'Cita', metodo: 'Izipay', canal: 'Online', estado: 'Pagado', monto: 120, localId: 1, registradoPor: 'Izipay (automático)', codigoOperacion: 'OP-481038' },
   { id: 9, fecha: conDias(-1), hora: '11:20', concepto: 'Lifting 360° Tens Booster · Ana Torres', referencia: 'CT-1011', origen: 'Cita', metodo: 'Efectivo', canal: 'En local', estado: 'Pagado', monto: 499, localId: 1, registradoPor: 'Recepción · Milagros', codigoOperacion: 'EF-77120' },
   { id: 10, fecha: conDias(-1), hora: '15:05', concepto: 'Drenaje linfático · Rosa Huamán', referencia: 'CT-1012', origen: 'Cita', metodo: 'Efectivo', canal: 'En local', estado: 'Pagado', monto: 90, localId: 2, registradoPor: 'Recepción · Jazmín', codigoOperacion: 'EF-00912' }
+];
+
+/* ========================================================= PROMOCIONES === */
+
+/**
+ * Promociones de ejemplo. En el panel se crean, editan y eliminan; las marcadas
+ * como destacadas alimentan el carrusel de la pagina de inicio.
+ */
+export const PROMOCIONES: Promocion[] = [
+  {
+    id: 1,
+    titulo: 'Plan facial luminosidad',
+    subtitulo: '4 sesiones personalizadas cada 15 días',
+    descripcion: 'Limpieza profunda, hidratación con ácido hialurónico, skin care de mantenimiento y peeling suave. La especialista define el orden según tu tipo de piel.',
+    categoria: 'Facial',
+    precioAntes: 480,
+    precio: 360,
+    sesiones: 4,
+    vigenciaDesde: conDias(-10),
+    vigenciaHasta: conDias(35),
+    imagen: 'img/trat-limpieza.jpg',
+    etiqueta: 'Multisesión',
+    destacada: true,
+    activa: true
+  },
+  {
+    id: 2,
+    titulo: 'Modelamiento corporal en 6 sesiones',
+    subtitulo: 'Hidrolipoclasia + drenaje linfático',
+    descripcion: 'Protocolo corporal progresivo con control de medidas en cada sesión y seguimiento por DNI en el sistema.',
+    categoria: 'Corporal',
+    precioAntes: 1200,
+    precio: 890,
+    sesiones: 6,
+    vigenciaDesde: conDias(-5),
+    vigenciaHasta: conDias(25),
+    imagen: 'img/trat-hidro.jpg',
+    etiqueta: 'Más solicitado',
+    destacada: true,
+    activa: true
+  },
+  {
+    id: 3,
+    titulo: 'HIFU 25D con evaluación gratuita',
+    subtitulo: 'Lifting sin cirugía en una sola sesión',
+    descripcion: 'Incluye valoración facial previa sin costo y protocolo de cuidados posteriores.',
+    categoria: 'Aparatología',
+    precioAntes: 450,
+    precio: 350,
+    sesiones: 1,
+    vigenciaDesde: conDias(-2),
+    vigenciaHasta: conDias(20),
+    imagen: 'img/trat-hifu.jpg',
+    etiqueta: 'Promoción del mes',
+    destacada: true,
+    activa: true
+  },
+  {
+    id: 4,
+    titulo: 'Botox full face en dos zonas',
+    subtitulo: 'Aplicación médica con control a los 15 días',
+    descripcion: 'Realizado por médico estético colegiado. Incluye cita de control incluida en el precio.',
+    categoria: 'Medicina estética',
+    precioAntes: 850,
+    precio: 700,
+    sesiones: 2,
+    vigenciaDesde: conDias(-20),
+    vigenciaHasta: conDias(10),
+    imagen: 'img/trat-botox.jpg',
+    etiqueta: 'Medicina estética',
+    destacada: false,
+    activa: true
+  }
+];
+
+/* =================================================== PLANES MULTISESION === */
+
+/**
+ * Planes de sesiones personalizadas. Cada plan pertenece a una paciente
+ * identificada por DNI y avanza sesion por sesion con el intervalo de dias que
+ * indique la especialista.
+ */
+export const PLANES: PlanSesiones[] = [
+  {
+    id: 1,
+    codigo: 'PL-3001',
+    pacienteId: 1,
+    dni: '74859632',
+    nombre: 'Plan facial luminosidad',
+    localId: 1,
+    intervaloDias: 15,
+    inicio: conDias(-30),
+    precioTotal: 360,
+    pagado: 270,
+    estado: 'En curso',
+    notas: 'Piel sensible: se reemplazó el peeling por hidratación reforzada.',
+    sesiones: [
+      { numero: 1, tratamientoId: 1, procedimiento: 'Limpieza facial profunda', fecha: conDias(-30), estado: 'Atendida', observaciones: 'Buena tolerancia. Sin descamación.' },
+      { numero: 2, tratamientoId: 8, procedimiento: 'Hidratación con ácido hialurónico', fecha: conDias(-15), estado: 'Atendida', observaciones: 'Mejora visible de luminosidad.' },
+      { numero: 3, tratamientoId: 7, procedimiento: 'Skin care de mantenimiento', fecha: conDias(0), estado: 'En proceso' },
+      { numero: 4, tratamientoId: 9, procedimiento: 'Peeling suave', fecha: conDias(15), estado: 'Programada' }
+    ]
+  },
+  {
+    id: 2,
+    codigo: 'PL-3002',
+    pacienteId: 5,
+    dni: '09823471',
+    nombre: 'Modelamiento corporal 6 sesiones',
+    localId: 2,
+    intervaloDias: 15,
+    inicio: conDias(-45),
+    precioTotal: 890,
+    pagado: 890,
+    estado: 'En curso',
+    sesiones: [
+      { numero: 1, tratamientoId: 5, procedimiento: 'Hidrolipoclasia', fecha: conDias(-45), estado: 'Atendida', observaciones: 'Medidas iniciales registradas.' },
+      { numero: 2, tratamientoId: 6, procedimiento: 'Drenaje linfático', fecha: conDias(-30), estado: 'Atendida' },
+      { numero: 3, tratamientoId: 5, procedimiento: 'Hidrolipoclasia', fecha: conDias(-15), estado: 'Atendida', observaciones: '-3 cm de cintura.' },
+      { numero: 4, tratamientoId: 6, procedimiento: 'Drenaje linfático', fecha: conDias(2), estado: 'Programada' },
+      { numero: 5, tratamientoId: 10, procedimiento: 'Lifting 360° Tens Booster', estado: 'Pendiente' },
+      { numero: 6, tratamientoId: 6, procedimiento: 'Drenaje linfático de cierre', estado: 'Pendiente' }
+    ]
+  },
+  {
+    id: 3,
+    codigo: 'PL-3003',
+    pacienteId: 4,
+    dni: '73920145',
+    nombre: 'Protocolo antiacné',
+    localId: 1,
+    intervaloDias: 30,
+    inicio: conDias(-60),
+    precioTotal: 540,
+    pagado: 180,
+    estado: 'Pausado',
+    notas: 'La paciente pidió retomar después de su viaje.',
+    sesiones: [
+      { numero: 1, tratamientoId: 1, procedimiento: 'Limpieza facial profunda', fecha: conDias(-60), estado: 'Atendida' },
+      { numero: 2, tratamientoId: 9, procedimiento: 'Peeling facial', fecha: conDias(-30), estado: 'No asistió', observaciones: 'No asistió, se reprogramará.' },
+      { numero: 3, tratamientoId: 8, procedimiento: 'Dermapen', estado: 'Pendiente' }
+    ]
+  }
 ];
 
 /* ============================================================= AYUDANTES == */

@@ -31,6 +31,8 @@ export const routes: Routes = [
       { path: 'dashboard', loadComponent: () => import('./admin/dashboard.component').then(m => m.DashboardComponent) },
       { path: 'calendario', loadComponent: () => import('./admin/calendario.component').then(m => m.CalendarioComponent) },
       { path: 'pacientes', loadComponent: () => import('./admin/pacientes.component').then(m => m.PacientesComponent) },
+      { path: 'sesiones', loadComponent: () => import('./admin/sesiones.component').then(m => m.SesionesComponent) },
+      { path: 'promociones', loadComponent: () => import('./admin/promociones-admin.component').then(m => m.PromocionesAdminComponent) },
       { path: 'productos', loadComponent: () => import('./admin/productos-admin.component').then(m => m.ProductosAdminComponent) },
       { path: 'tratamientos', loadComponent: () => import('./admin/tratamientos-admin.component').then(m => m.TratamientosAdminComponent) },
       { path: 'especialistas', loadComponent: () => import('./admin/especialistas-admin.component').then(m => m.EspecialistasAdminComponent) },

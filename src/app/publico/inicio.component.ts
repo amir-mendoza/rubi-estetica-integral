@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ESPECIALISTAS, LOCALES, PRODUCTOS, TRATAMIENTOS, soles } from '../data/datos';
+import { PromoCarruselComponent } from './promo-carrusel.component';
 
 @Component({
   selector: 'app-inicio',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PromoCarruselComponent],
   templateUrl: './inicio.component.html',
   styleUrl: './inicio.component.scss'
 })
@@ -38,7 +39,7 @@ export class InicioComponent {
   pasos = [
     { n: '01', titulo: 'Elige tu sede', texto: 'Las Flores de Primavera 1522 o 1544, según te quede más cerca.' },
     { n: '02', titulo: 'Elige el tratamiento', texto: 'Verás la duración real y el precio antes de continuar.' },
-    { n: '03', titulo: 'Elige especialista y horario', texto: 'Solo se muestran horarios y cabinas realmente disponibles.' },
+    { n: '03', titulo: 'Elige el día y la hora de llegada', texto: 'Atendemos las 24 horas; cada hora recibe hasta 10 pacientes.' },
     { n: '04', titulo: 'Confirma y paga', texto: 'Paga en línea con Izipay o reserva y paga en el local.' }
   ];
 

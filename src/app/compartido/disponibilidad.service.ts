@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AGENDA, CITAS, LOCALES, aISO, cabinasDeSede, cupoDeSede, reservaSinCita } from '../data/datos';
+import { AGENDA, CITAS, LOCALES, aISO, cabinasDeSede, cupoDeSede } from '../data/datos';
 import { Cita, Local } from '../data/modelos';
 
 /**
@@ -32,9 +32,10 @@ export class DisponibilidadService {
   horarioDelDia(local: Local, fechaISO: string): { apertura: number; cierre: number } | null {
     const [a, m, d] = fechaISO.split('-').map(Number);
     const dia = new Date(a, m - 1, d).getDay(); // 0 = domingo
-    const bloque = dia === 0
+    const general = local.horario.find(h => h.dias.toLowerCase().includes('todos'));
+    const bloque = general ?? (dia === 0
       ? local.horario.find(h => h.dias.toLowerCase().includes('domingo'))
-      : local.horario.find(h => !h.dias.toLowerCase().includes('domingo'));
+      : local.horario.find(h => !h.dias.toLowerCase().includes('domingo')));
     if (!bloque) { return null; }
     return { apertura: aMinutos(bloque.apertura), cierre: aMinutos(bloque.cierre) };
   }
@@ -50,12 +51,10 @@ export class DisponibilidadService {
 
   cupo(local: Local): number { return cupoDeSede(local.id); }
   cabinas(local: Local): number { return cabinasDeSede(local.id).length; }
-  reservaLibre(local: Local): number { return reservaSinCita(local.id); }
 
   /**
-   * Bloques del dia. Cada bloque acepta un numero limitado de citas web para que
-   * siempre queden cabinas libres para las pacientes que llegan sin cita. Al
-   * llenarse el cupo, el bloque se cierra y la paciente pasa al siguiente.
+   * Bloques del dia. Cada bloque acepta hasta 10 pacientes por sede; al llenarse
+   * el cupo el bloque se cierra y la paciente pasa a la siguiente hora.
    */
   bloques(fechaISO: string, local: Local): Bloque[] {
     const horario = this.horarioDelDia(local, fechaISO);

@@ -87,11 +87,6 @@ export class ReservarComponent {
     return l ? this.disponibilidad.cabinas(l) : 0;
   });
 
-  cabinasLibresSede = computed(() => {
-    const l = this.local();
-    return l ? this.disponibilidad.reservaLibre(l) : 0;
-  });
-
   duracionEstimada = computed(() => {
     const t = this.tratamiento();
     return t ? t.duracionMin : 0;

@@ -198,6 +198,73 @@ export interface Usuario {
   localId?: number;
 }
 
+/**
+ * Promocion publicada desde el panel. Las destacadas alimentan el carrusel de
+ * la pagina de inicio.
+ */
+export interface Promocion {
+  id: number;
+  titulo: string;
+  subtitulo: string;
+  descripcion: string;
+  categoria: CategoriaTratamiento | 'General';
+  precioAntes?: number;
+  precio?: number;
+  sesiones?: number;
+  vigenciaDesde: string;
+  vigenciaHasta: string;
+  imagen: string;
+  etiqueta: string;
+  destacada: boolean;
+  activa: boolean;
+}
+
+/** Avance de una sesion dentro de un plan multisesion. */
+export type EstadoSesion =
+  | 'Pendiente'
+  | 'Programada'
+  | 'En proceso'
+  | 'Atendida'
+  | 'No asistió'
+  | 'Reprogramada';
+
+export const ESTADOS_SESION: EstadoSesion[] = [
+  'Pendiente', 'Programada', 'En proceso', 'Atendida', 'No asistió', 'Reprogramada'
+];
+
+export interface SesionPlan {
+  numero: number;
+  tratamientoId: number;
+  /** Nombre del procedimiento de esa sesion: limpieza, skin care, peeling, etc. */
+  procedimiento: string;
+  fecha?: string;
+  estado: EstadoSesion;
+  observaciones?: string;
+}
+
+export type EstadoPlan = 'En curso' | 'Finalizado' | 'Pausado';
+
+/**
+ * Plan de sesiones personalizadas de una paciente: se identifica por DNI y cada
+ * sesion se programa cada cierto numero de dias segun indique la especialista.
+ */
+export interface PlanSesiones {
+  id: number;
+  codigo: string;
+  pacienteId: number;
+  dni: string;
+  nombre: string;
+  localId: number;
+  /** Dias entre una sesion y la siguiente (15, 30, etc.). */
+  intervaloDias: number;
+  inicio: string;
+  precioTotal: number;
+  pagado: number;
+  estado: EstadoPlan;
+  sesiones: SesionPlan[];
+  notas?: string;
+}
+
 export interface MovimientoPago {
   id: number;
   fecha: string;
