@@ -25,7 +25,7 @@ import { HOY_ISO, LOCALES, PAGOS, localPorId, soles } from '../data/datos';
         <span class="kpi__nota">Confirmado por Izipay o caja</span>
       </div>
       <div class="kpi"><span class="kpi__label">Online (Izipay)</span><span class="kpi__valor">{{ soles(online) }}</span><span class="kpi__nota">Confirmado por webhook</span></div>
-      <div class="kpi"><span class="kpi__label">En local</span><span class="kpi__valor">{{ soles(local) }}</span><span class="kpi__nota">Efectivo, Yape y POS</span></div>
+      <div class="kpi"><span class="kpi__label">En local</span><span class="kpi__valor">{{ soles(local) }}</span><span class="kpi__nota">Cobros en efectivo en recepción</span></div>
       <div class="kpi"><span class="kpi__label">Pendiente</span><span class="kpi__valor" style="color:var(--alerta)">{{ soles(pendiente) }}</span><span class="kpi__nota">Por cobrar en caja</span></div>
       <div class="kpi"><span class="kpi__label">Reembolsos</span><span class="kpi__valor" style="color:var(--error)">{{ soles(reembolsos) }}</span><span class="kpi__nota">Devoluciones registradas</span></div>
     </div>
@@ -46,7 +46,7 @@ import { HOY_ISO, LOCALES, PAGOS, localPorId, soles } from '../data/datos';
         <label>Método</label>
         <select [ngModel]="metodo()" (ngModelChange)="metodo.set($event)">
           <option>Todos</option><option>Izipay</option><option>Efectivo</option>
-          <option>Yape</option><option>Tarjeta POS</option><option>Transferencia</option>
+
         </select>
       </div>
       <div class="campo">

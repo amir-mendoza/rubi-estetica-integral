@@ -59,10 +59,35 @@
   border-radius: var(--radio-lg); padding: 18px 20px;
 }
 .cita--cancelada { border-left-color: var(--error); background: #fdfafa; }
-.cita__hora { display: flex; flex-direction: column; gap: 2px; }
-.cita__hora strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.6rem; color: var(--vino); line-height: 1; }
-.cita__hora span { font-size: .8rem; color: var(--gris-claro); }
-.cita__hora small { font-size: .66rem; color: var(--gris-claro); letter-spacing: .1em; margin-top: 6px; }
+.cita__orden { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.cita__posicion {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 50%; background: var(--vino); color: #fff;
+  font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.15rem;
+}
+.cita__orden strong { font-size: 1rem; color: var(--tinta); font-weight: 500; }
+.cita__orden small { font-size: .66rem; color: var(--gris-claro); letter-spacing: .1em; }
+
+/* Ocupacion por bloque horario */
+.ocupacion { display: grid; gap: 10px; margin-bottom: 12px; }
+.ocupacion__lista { display: flex; flex-wrap: wrap; gap: 8px; }
+.ocupacion__bloque {
+  border: 1px solid var(--linea); border-radius: 999px; padding: 5px 12px;
+  font-size: .76rem; color: var(--gris); background: var(--rosa-50);
+}
+.ocupacion__bloque--lleno { border-color: var(--alerta); color: var(--alerta); background: #fffaf2; }
+
+/* Acciones de recepcion */
+.cita__acciones { margin-top: 14px; display: grid; gap: 6px; }
+.cita__botones { display: flex; flex-wrap: wrap; gap: 6px; }
+.accion {
+  border: 1px solid var(--linea); border-radius: 999px; background: #fff;
+  padding: 6px 12px; font-family: inherit; font-size: .74rem; color: var(--gris); cursor: pointer;
+}
+.accion:hover { border-color: var(--magenta-300); color: var(--magenta); }
+.accion--activa { background: var(--vino); border-color: var(--vino); color: #fff; }
+.cobro { font-size: .76rem; color: var(--gris); }
+.cobro--ok { color: var(--ok); }
 
 .cita__titulo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .cita__titulo h4 { margin: 0; font-size: 1.2rem; }

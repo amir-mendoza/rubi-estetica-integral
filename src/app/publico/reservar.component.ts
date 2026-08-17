@@ -1,12 +1,16 @@
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
-  ESPECIALISTAS, HABITACIONES, LOCALES, TRATAMIENTOS, formatoFechaLarga, soles
+  ETIQUETAS_TRATAMIENTO, LOCALES, TRATAMIENTOS, formatoFechaLarga, soles
 } from '../data/datos';
-import { Especialista, Local, Tratamiento } from '../data/modelos';
-import { DisponibilidadService, Slot } from '../compartido/disponibilidad.service';
+import { CategoriaTratamiento, Local, Tratamiento } from '../data/modelos';
+import { Bloque, DisponibilidadService } from '../compartido/disponibilidad.service';
 import { SesionService } from '../compartido/sesion.service';
+
+const CATEGORIAS: (CategoriaTratamiento | 'Todos')[] = [
+  'Todos', 'Facial', 'Corporal', 'Aparatología', 'Medicina estética'
+];
 
 @Component({
   selector: 'app-reservar',
@@ -15,7 +19,7 @@ import { SesionService } from '../compartido/sesion.service';
   templateUrl: './reservar.component.html',
   styleUrl: './reservar.component.scss'
 })
-export class ReservarComponent implements OnDestroy {
+export class ReservarComponent {
   private disponibilidad = inject(DisponibilidadService);
   private ruta = inject(ActivatedRoute);
   readonly sesion = inject(SesionService);
@@ -24,19 +28,19 @@ export class ReservarComponent implements OnDestroy {
   formatoFechaLarga = formatoFechaLarga;
 
   locales = LOCALES;
-  tratamientos = TRATAMIENTOS.filter(t => t.activo);
+  categorias = CATEGORIAS;
+  etiquetas = ETIQUETAS_TRATAMIENTO;
   dias = this.disponibilidad.proximosDias(14);
 
   paso = signal(1);
   local = signal<Local | null>(null);
   tratamiento = signal<Tratamiento | null>(null);
-  especialista = signal<Especialista | null>(null);
-  cualquierEspecialista = signal(false);
+  categoria = signal<CategoriaTratamiento | 'Todos'>('Todos');
+  etiqueta = signal<string>('Todas');
+  busqueda = signal('');
   fecha = signal<string>(this.dias[0].iso);
-  slot = signal<Slot | null>(null);
+  bloque = signal<Bloque | null>(null);
   confirmado = signal(false);
-  segundos = signal(600);
-  private temporizador?: ReturnType<typeof setInterval>;
 
   // Datos de la paciente: se precargan si hay una sesión iniciada.
   nombre = this.sesion.usuario()?.nombre ?? '';
@@ -50,136 +54,104 @@ export class ReservarComponent implements OnDestroy {
   pasos = [
     { n: 1, titulo: 'Sede' },
     { n: 2, titulo: 'Tratamiento' },
-    { n: 3, titulo: 'Especialista' },
-    { n: 4, titulo: 'Fecha y hora' },
-    { n: 5, titulo: 'Tus datos' },
-    { n: 6, titulo: 'Pago' }
+    { n: 3, titulo: 'Fecha y hora' },
+    { n: 4, titulo: 'Tus datos' },
+    { n: 5, titulo: 'Pago' }
   ];
 
-  especialistasDisponibles = computed<Especialista[]>(() => {
+  tratamientosFiltrados = computed<Tratamiento[]>(() => {
+    const cat = this.categoria();
+    const etq = this.etiqueta();
+    const texto = this.busqueda().trim().toLowerCase();
+    return TRATAMIENTOS.filter(t => {
+      if (!t.activo) { return false; }
+      if (cat !== 'Todos' && t.categoria !== cat) { return false; }
+      if (etq !== 'Todas' && !t.etiquetas.includes(etq)) { return false; }
+      if (texto && !`${t.nombre} ${t.resumen}`.toLowerCase().includes(texto)) { return false; }
+      return true;
+    });
+  });
+
+  bloques = computed<Bloque[]>(() => {
     const l = this.local();
-    const t = this.tratamiento();
-    if (!l || !t) { return []; }
-    return ESPECIALISTAS.filter(e => e.activa && e.locales.includes(l.id) && e.tratamientos.includes(t.id));
+    return l ? this.disponibilidad.bloques(this.fecha(), l) : [];
   });
 
-  slots = computed<Slot[]>(() => {
+  cupoSede = computed(() => {
     const l = this.local();
+    return l ? this.disponibilidad.cupo(l) : 0;
+  });
+
+  cabinasSede = computed(() => {
+    const l = this.local();
+    return l ? this.disponibilidad.cabinas(l) : 0;
+  });
+
+  cabinasLibresSede = computed(() => {
+    const l = this.local();
+    return l ? this.disponibilidad.reservaLibre(l) : 0;
+  });
+
+  duracionEstimada = computed(() => {
     const t = this.tratamiento();
-    if (!l || !t) { return []; }
-    return this.disponibilidad.slots(
-      this.fecha(), l, t, this.especialistasDisponibles(), this.especialista()
-    );
-  });
-
-  cabinaAsignada = computed(() => {
-    const id = this.slot()?.habitacionId;
-    return HABITACIONES.find(h => h.id === id) ?? null;
-  });
-
-  especialistaAsignada = computed<Especialista | null>(() => {
-    if (this.especialista()) { return this.especialista(); }
-    const id = this.slot()?.especialistaId;
-    return ESPECIALISTAS.find(e => e.id === id) ?? null;
-  });
-
-  bloqueoTotal = computed(() => {
-    const t = this.tratamiento();
-    return t ? t.duracionMin + t.limpiezaMin : 0;
+    return t ? t.duracionMin : 0;
   });
 
   datosCompletos(): boolean {
     return !!(this.nombre && this.apellido && this.dni && this.celular);
   }
 
-  cuentaRegresiva = computed(() => {
-    const s = this.segundos();
-    return `${`${Math.floor(s / 60)}`.padStart(2, '0')}:${`${s % 60}`.padStart(2, '0')}`;
-  });
-
   constructor() {
     const q = this.ruta.snapshot.queryParamMap;
     const localId = Number(q.get('local'));
     const tratId = Number(q.get('tratamiento'));
-    const espId = Number(q.get('especialista'));
 
     if (localId) { this.local.set(LOCALES.find(l => l.id === localId) ?? null); }
     if (tratId) { this.tratamiento.set(TRATAMIENTOS.find(t => t.id === tratId) ?? null); }
-    if (espId) {
-      const e = ESPECIALISTAS.find(x => x.id === espId) ?? null;
-      this.especialista.set(e);
-      if (e && !this.local()) { this.local.set(LOCALES.find(l => l.id === e.locales[0]) ?? null); }
-    }
-    if (this.local() && this.tratamiento()) { this.paso.set(this.especialista() ? 4 : 3); }
+    if (this.local() && this.tratamiento()) { this.paso.set(3); }
     else if (this.local()) { this.paso.set(2); }
-  }
-
-  ngOnDestroy(): void {
-    this.detenerTemporizador();
   }
 
   elegirLocal(l: Local): void {
     this.local.set(l);
-    this.especialista.set(null);
-    this.slot.set(null);
+    this.bloque.set(null);
     this.paso.set(2);
   }
 
   elegirTratamiento(t: Tratamiento): void {
     this.tratamiento.set(t);
-    this.especialista.set(null);
-    this.slot.set(null);
+    this.bloque.set(null);
     this.paso.set(3);
   }
 
-  elegirEspecialista(e: Especialista | null): void {
-    this.especialista.set(e);
-    this.cualquierEspecialista.set(e === null);
-    this.slot.set(null);
-    this.paso.set(4);
+  elegirCategoria(c: CategoriaTratamiento | 'Todos'): void {
+    this.categoria.set(c);
+    this.etiqueta.set('Todas');
+  }
+
+  elegirEtiqueta(e: string): void {
+    this.etiqueta.set(this.etiqueta() === e ? 'Todas' : e);
   }
 
   elegirFecha(iso: string): void {
     this.fecha.set(iso);
-    this.slot.set(null);
-    this.detenerTemporizador();
+    this.bloque.set(null);
   }
 
-  elegirSlot(s: Slot): void {
-    if (!s.disponible) { return; }
-    this.slot.set(s);
-    this.iniciarTemporizador();
-  }
-
-  private iniciarTemporizador(): void {
-    this.detenerTemporizador();
-    this.segundos.set(600);
-    this.temporizador = setInterval(() => {
-      const restante = this.segundos() - 1;
-      if (restante <= 0) {
-        this.segundos.set(0);
-        this.slot.set(null);
-        this.detenerTemporizador();
-      } else {
-        this.segundos.set(restante);
-      }
-    }, 1000);
-  }
-
-  private detenerTemporizador(): void {
-    if (this.temporizador) { clearInterval(this.temporizador); this.temporizador = undefined; }
+  elegirBloque(b: Bloque): void {
+    if (!b.disponible) { return; }
+    this.bloque.set(b);
   }
 
   irA(n: number): void {
     if (n < this.paso()) { this.paso.set(n); }
   }
 
-  siguiente(): void { this.paso.set(Math.min(this.paso() + 1, 6)); }
+  siguiente(): void { this.paso.set(Math.min(this.paso() + 1, 5)); }
   anterior(): void { this.paso.set(Math.max(this.paso() - 1, 1)); }
 
   confirmar(): void {
     this.confirmado.set(true);
-    this.detenerTemporizador();
   }
 
   reiniciar(): void {
@@ -187,8 +159,10 @@ export class ReservarComponent implements OnDestroy {
     this.paso.set(1);
     this.local.set(null);
     this.tratamiento.set(null);
-    this.especialista.set(null);
-    this.slot.set(null);
+    this.bloque.set(null);
+    this.categoria.set('Todos');
+    this.etiqueta.set('Todas');
+    this.busqueda.set('');
     const u = this.sesion.usuario();
     this.nombre = u?.nombre ?? '';
     this.apellido = u?.apellido ?? '';

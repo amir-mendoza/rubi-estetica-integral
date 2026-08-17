@@ -1,17 +1,21 @@
 import { Injectable } from '@angular/core';
-import { CITAS, HABITACIONES, LOCALES, aISO } from '../data/datos';
-import { Cita, Especialista, Local, Tratamiento } from '../data/modelos';
+import { AGENDA, CITAS, LOCALES, aISO, cabinasDeSede, cupoDeSede, reservaSinCita } from '../data/datos';
+import { Cita, Local } from '../data/modelos';
 
-export interface Slot {
+/**
+ * Bloque horario de la agenda. La paciente reserva la hora a la que piensa
+ * llegar; la cabina y la especialista se asignan en el local al momento de la
+ * atencion.
+ */
+export interface Bloque {
   inicio: string;
   fin: string;
+  cupo: number;
+  reservados: number;
+  libres: number;
   disponible: boolean;
   motivo?: string;
-  habitacionId?: number;
-  especialistaId?: number;
 }
-
-const PASO_MINUTOS = 30;
 
 export function aMinutos(hora: string): number {
   const [h, m] = hora.split(':').map(Number);
@@ -20,11 +24,6 @@ export function aMinutos(hora: string): number {
 
 export function aHora(minutos: number): string {
   return `${`${Math.floor(minutos / 60)}`.padStart(2, '0')}:${`${minutos % 60}`.padStart(2, '0')}`;
-}
-
-/** Dos rangos se cruzan si inicioA < finB y finA > inicioB. */
-export function seCruzan(iniA: number, finA: number, iniB: number, finB: number): boolean {
-  return iniA < finB && finA > iniB;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -49,57 +48,42 @@ export class DisponibilidadService {
     );
   }
 
+  cupo(local: Local): number { return cupoDeSede(local.id); }
+  cabinas(local: Local): number { return cabinasDeSede(local.id).length; }
+  reservaLibre(local: Local): number { return reservaSinCita(local.id); }
+
   /**
-   * Calcula los slots del día. Un horario queda libre solo si existe al menos una
-   * cabina disponible y la especialista elegida no tiene otra cita cruzada.
+   * Bloques del dia. Cada bloque acepta un numero limitado de citas web para que
+   * siempre queden cabinas libres para las pacientes que llegan sin cita. Al
+   * llenarse el cupo, el bloque se cierra y la paciente pasa al siguiente.
    */
-  slots(
-    fechaISO: string,
-    local: Local,
-    tratamiento: Tratamiento,
-    especialistas: Especialista[],
-    especialistaElegida: Especialista | null
-  ): Slot[] {
+  bloques(fechaISO: string, local: Local): Bloque[] {
     const horario = this.horarioDelDia(local, fechaISO);
     if (!horario) { return []; }
 
-    const bloqueo = tratamiento.duracionMin + tratamiento.limpiezaMin;
-    const cabinas = HABITACIONES.filter(h => h.localId === local.id && h.activa);
+    const cupo = this.cupo(local);
     const citas = this.citasDe(fechaISO, local.id);
-    const candidatas = especialistaElegida ? [especialistaElegida] : especialistas;
+    const salida: Bloque[] = [];
 
-    const resultado: Slot[] = [];
-    for (let inicio = horario.apertura; inicio + bloqueo <= horario.cierre; inicio += PASO_MINUTOS) {
-      const fin = inicio + bloqueo;
+    for (let inicio = horario.apertura; inicio + AGENDA.bloqueMin <= horario.cierre; inicio += AGENDA.bloqueMin) {
+      const fin = inicio + AGENDA.bloqueMin;
+      const reservados = citas.filter(c => {
+        const h = aMinutos(c.horaInicio);
+        return h >= inicio && h < fin;
+      }).length;
+      const libres = Math.max(cupo - reservados, 0);
 
-      const cabinaLibre = cabinas.find(cab =>
-        !citas.some(c =>
-          c.habitacionId === cab.id &&
-          seCruzan(inicio, fin, aMinutos(c.horaInicio), aMinutos(c.horaFin))
-        )
-      );
-
-      const especialistaLibre = candidatas.find(e =>
-        !citas.some(c =>
-          c.especialistaId === e.id &&
-          seCruzan(inicio, fin, aMinutos(c.horaInicio), aMinutos(c.horaFin))
-        )
-      );
-
-      let motivo: string | undefined;
-      if (!cabinaLibre) { motivo = 'Cabinas ocupadas'; }
-      else if (!especialistaLibre) { motivo = 'Especialista ocupada'; }
-
-      resultado.push({
+      salida.push({
         inicio: aHora(inicio),
         fin: aHora(fin),
-        disponible: !!cabinaLibre && !!especialistaLibre,
-        motivo,
-        habitacionId: cabinaLibre?.id,
-        especialistaId: especialistaLibre?.id
+        cupo,
+        reservados,
+        libres,
+        disponible: libres > 0,
+        motivo: libres > 0 ? undefined : 'Cupo completo en esta hora'
       });
     }
-    return resultado;
+    return salida;
   }
 
   /** Próximos días disponibles para el selector de fechas del prototipo. */

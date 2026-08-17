@@ -4,14 +4,21 @@
  * de la segunda etapa: uuidGlobal, localId, timestamps).
  */
 
+/**
+ * La cita se agenda por bloque horario: la paciente reserva la hora en la que
+ * piensa llegar y en recepcion se controla su avance con estos estados.
+ */
 export type EstadoCita =
-  | 'Pendiente'
-  | 'Confirmada'
-  | 'Pagada'
+  | 'Programada'
+  | 'En proceso'
   | 'Atendida'
+  | 'No asistió'
   | 'Cancelada'
-  | 'Reprogramada'
-  | 'No asistió';
+  | 'Reprogramada';
+
+export const ESTADOS_CITA: EstadoCita[] = [
+  'Programada', 'En proceso', 'Atendida', 'No asistió', 'Cancelada', 'Reprogramada'
+];
 
 export type EstadoPago =
   | 'Pendiente'
@@ -58,6 +65,13 @@ export interface Local {
   activo: boolean;
 }
 
+/** Familias de tratamiento que se usan como filtros rapidos en la web. */
+export type CategoriaTratamiento =
+  | 'Facial'
+  | 'Corporal'
+  | 'Aparatología'
+  | 'Medicina estética';
+
 export interface Habitacion {
   id: number;
   nombre: string;
@@ -83,7 +97,9 @@ export interface Especialista {
 export interface Tratamiento {
   id: number;
   nombre: string;
-  categoria: 'Facial' | 'Corporal' | 'Aparatología' | 'Medicina estética';
+  categoria: CategoriaTratamiento;
+  /** Etiquetas de filtro rapido: limpieza, hidratación, reafirmante, etc. */
+  etiquetas: string[];
   resumen: string;
   descripcion: string;
   beneficios: string[];
@@ -132,9 +148,11 @@ export interface Cita {
   horaFin: string;        // HH:mm
   pacienteId: number;
   tratamientoId: number;
-  especialistaId: number;
+  /** Se asigna en el local al momento de la atencion, no al reservar. */
+  especialistaId?: number;
   localId: number;
-  habitacionId: number;
+  /** Se asigna en el local al momento de la atencion, no al reservar. */
+  habitacionId?: number;
   estado: EstadoCita;
   estadoPago: EstadoPago;
   metodoPago?: MetodoPago;

@@ -1,7 +1,10 @@
 <div class="cabecera-admin">
   <div>
     <h1>Calendario / Citas</h1>
-    <p>Selecciona un día del calendario para ver la lista de pacientes agendados, ordenada por hora.</p>
+    <p>
+      Selecciona un día para ver la lista de atención en orden de llegada. Desde aquí
+      recepción cambia el estado de cada paciente y registra los cobros en efectivo.
+    </p>
   </div>
   <div class="cabecera-admin__acciones">
     <button class="btn btn--linea btn--sm" (click)="irHoy()">Ir a hoy</button>
@@ -20,13 +23,6 @@
     <select [ngModel]="filtroLocal()" (ngModelChange)="filtroLocal.set($event)">
       <option>Todos</option>
       @for (l of locales; track l.id) { <option>{{ l.nombre }}</option> }
-    </select>
-  </div>
-  <div class="campo">
-    <label>Especialista</label>
-    <select [ngModel]="filtroEspecialista()" (ngModelChange)="filtroEspecialista.set($event)">
-      <option>Todas</option>
-      @for (e of especialistas; track e.id) { <option>{{ e.nombre }} {{ e.apellido }}</option> }
     </select>
   </div>
   <div class="campo">
@@ -95,7 +91,20 @@
       </div>
     </div>
 
-    @if (!citasDelDia().length) {
+    @if (bloquesDelDia().length) {
+      <div class="panel ocupacion">
+        <span class="dato__label">Ocupación por hora</span>
+        <div class="ocupacion__lista">
+          @for (b of bloquesDelDia(); track b.hora) {
+            <span class="ocupacion__bloque" [class.ocupacion__bloque--lleno]="b.total >= b.cupo">
+              {{ b.hora }} · {{ b.total }}/{{ b.cupo }}
+            </span>
+          }
+        </div>
+      </div>
+    }
+
+    @if (!listaDelDia().length) {
       <div class="panel texto-centro" style="padding:48px">
         <h4>Sin citas para este día</h4>
         <p style="margin:0">No hay pacientes agendados con los filtros seleccionados.</p>
@@ -103,52 +112,75 @@
     }
 
     <div class="agenda">
-      @for (c of citasDelDia(); track c.id) {
-        <article class="cita" [class.cita--cancelada]="c.estado === 'Cancelada' || c.estado === 'No asistió'">
-          <div class="cita__hora">
-            <strong>{{ c.horaInicio }}</strong>
-            <span>{{ c.horaFin }}</span>
-            <small>{{ c.codigo }}</small>
+      @for (f of listaDelDia(); track f.cita.id) {
+        <article class="cita"
+                 [class.cita--cancelada]="f.cita.estado === 'Cancelada' || f.cita.estado === 'No asistió'">
+          <div class="cita__orden">
+            <span class="cita__posicion">{{ f.orden }}</span>
+            <strong>{{ f.cita.horaInicio }}</strong>
+            <small>{{ f.cita.codigo }}</small>
           </div>
 
           <div class="cita__cuerpo">
             <div class="cita__titulo">
-              <h4>{{ paciente(c.pacienteId)?.nombre }} {{ paciente(c.pacienteId)?.apellido }}</h4>
-              <span [class]="claseEstado(c.estado)">{{ c.estado }}</span>
-              <span [class]="claseEstadoPago(c.estadoPago)">{{ c.estadoPago }}</span>
+              <h4>{{ paciente(f.cita.pacienteId)?.nombre }} {{ paciente(f.cita.pacienteId)?.apellido }}</h4>
+              <span [class]="claseEstado(f.cita.estado)">{{ f.cita.estado }}</span>
+              <span [class]="claseEstadoPago(f.cita.estadoPago)">{{ f.cita.estadoPago }}</span>
             </div>
 
             <div class="cita__datos">
-              <div><span class="dato__label">DNI</span><span>{{ paciente(c.pacienteId)?.dni }}</span></div>
-              <div><span class="dato__label">Celular</span><span>{{ paciente(c.pacienteId)?.celular }}</span></div>
-              <div><span class="dato__label">Tratamiento</span><span>{{ tratamiento(c.tratamientoId)?.nombre }}</span></div>
-              <div><span class="dato__label">Especialista</span><span>{{ especialista(c.especialistaId) }}</span></div>
-              <div><span class="dato__label">Local</span><span>{{ local(c.localId) }}</span></div>
-              <div><span class="dato__label">Cabina</span><span>{{ cabina(c.habitacionId) }}</span></div>
-              <div><span class="dato__label">Método de pago</span><span>{{ c.metodoPago || 'Por definir' }}</span></div>
-              <div><span class="dato__label">Origen</span><span>{{ c.origen }}</span></div>
+              <div><span class="dato__label">DNI</span><span>{{ paciente(f.cita.pacienteId)?.dni }}</span></div>
+              <div><span class="dato__label">Celular</span><span>{{ paciente(f.cita.pacienteId)?.celular }}</span></div>
+              <div><span class="dato__label">Tratamiento</span><span>{{ tratamiento(f.cita.tratamientoId)?.nombre }}</span></div>
+              <div><span class="dato__label">Local</span><span>{{ local(f.cita.localId) }}</span></div>
+              <div><span class="dato__label">Cabina</span><span>{{ cabina(f.cita.habitacionId) }}</span></div>
+              <div><span class="dato__label">Especialista</span><span>{{ especialista(f.cita.especialistaId) }}</span></div>
+              <div><span class="dato__label">Método de pago</span><span>{{ f.cita.metodoPago || 'Por definir' }}</span></div>
+              <div><span class="dato__label">Origen</span><span>{{ f.cita.origen }}</span></div>
             </div>
 
-            @if (c.notas) { <p class="cita__nota">{{ c.notas }}</p> }
+            <div class="cita__acciones">
+              <span class="dato__label">Cambiar estado</span>
+              <div class="cita__botones">
+                @for (e of estadosCita; track e) {
+                  <button class="accion"
+                          [class.accion--activa]="f.cita.estado === e"
+                          (click)="cambiarEstado(f.cita, e)">{{ e }}</button>
+                }
+              </div>
+            </div>
+
+            @if (f.cita.notas) { <p class="cita__nota">{{ f.cita.notas }}</p> }
           </div>
 
           <div class="cita__montos">
-            <div><span>Total</span><strong>{{ soles(c.montoTotal) }}</strong></div>
-            <div><span>Pagado</span><strong style="color:var(--ok)">{{ soles(c.montoPagado) }}</strong></div>
-            <div><span>Pendiente</span><strong style="color:var(--alerta)">{{ soles(c.montoTotal - c.montoPagado) }}</strong></div>
-            <button class="boton-icono" (click)="citaAbierta.set(citaAbierta()?.id === c.id ? null : c)">
-              {{ citaAbierta()?.id === c.id ? 'Ocultar trazabilidad' : 'Ver trazabilidad' }}
+            <div><span>Total</span><strong>{{ soles(f.cita.montoTotal) }}</strong></div>
+            <div><span>Pagado</span><strong style="color:var(--ok)">{{ soles(f.cita.montoPagado) }}</strong></div>
+            <div><span>Pendiente</span><strong style="color:var(--alerta)">{{ soles(f.cita.montoTotal - f.cita.montoPagado) }}</strong></div>
+
+            @if (f.cita.estadoPago === 'Pagado') {
+              <span class="cobro cobro--ok">
+                Pagado con {{ f.cita.metodoPago }}
+              </span>
+            } @else if (f.cita.estado !== 'Cancelada') {
+              <button class="btn btn--vino btn--sm" (click)="registrarPagoEfectivo(f.cita)">
+                Registrar pago en efectivo
+              </button>
+            }
+
+            <button class="boton-icono" (click)="citaAbierta.set(citaAbierta() === f.cita.id ? null : f.cita.id)">
+              {{ citaAbierta() === f.cita.id ? 'Ocultar trazabilidad' : 'Ver trazabilidad' }}
             </button>
           </div>
 
-          @if (citaAbierta()?.id === c.id) {
+          @if (citaAbierta() === f.cita.id) {
             <div class="cita__traza">
-              <div><span class="dato__label">Registrada por</span><span>{{ c.registradaPor }}</span></div>
-              <div><span class="dato__label">Registrada el</span><span>{{ c.registradaEl }}</span></div>
-              <div><span class="dato__label">Confirmó el pago</span><span>{{ c.confirmadaPor || 'Pendiente de confirmación' }}</span></div>
-              <div><span class="dato__label">Código de operación</span><span>{{ c.codigoOperacion || '—' }}</span></div>
-              <div><span class="dato__label">Fecha y hora del pago</span><span>{{ c.pagadaEl || '—' }}</span></div>
-              <div><span class="dato__label">Estado del pago</span><span>{{ c.estadoPago }}</span></div>
+              <div><span class="dato__label">Registrada por</span><span>{{ f.cita.registradaPor }}</span></div>
+              <div><span class="dato__label">Registrada el</span><span>{{ f.cita.registradaEl }}</span></div>
+              <div><span class="dato__label">Confirmó el pago</span><span>{{ f.cita.confirmadaPor || 'Pendiente de confirmación' }}</span></div>
+              <div><span class="dato__label">Código de operación</span><span>{{ f.cita.codigoOperacion || '—' }}</span></div>
+              <div><span class="dato__label">Fecha y hora del pago</span><span>{{ f.cita.pagadaEl || '—' }}</span></div>
+              <div><span class="dato__label">Estado del pago</span><span>{{ f.cita.estadoPago }}</span></div>
             </div>
           }
         </article>

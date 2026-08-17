@@ -39,8 +39,8 @@ export class DashboardComponent {
 
   // ---- Conteos de citas de hoy
   atendidas = this.citasHoy.filter(c => c.estado === 'Atendida').length;
-  confirmadas = this.citasHoy.filter(c => c.estado === 'Confirmada' || c.estado === 'Pagada').length;
-  pendientes = this.citasHoy.filter(c => c.estado === 'Pendiente').length;
+  enProceso = this.citasHoy.filter(c => c.estado === 'En proceso').length;
+  programadas = this.citasHoy.filter(c => c.estado === 'Programada').length;
   canceladas = this.citasHoy.filter(c => c.estado === 'Cancelada' || c.estado === 'No asistió').length;
 
   // ---- Desgloses del mes
@@ -85,9 +85,8 @@ export class DashboardComponent {
   claseEstado(c: Cita): string {
     switch (c.estado) {
       case 'Atendida': return 'chip chip--ok';
-      case 'Pagada':
-      case 'Confirmada': return 'chip chip--info';
-      case 'Pendiente': return 'chip chip--alerta';
+      case 'En proceso': return 'chip chip--info';
+      case 'Programada': return 'chip chip--alerta';
       default: return 'chip chip--error';
     }
   }

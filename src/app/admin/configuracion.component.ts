@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LOCALES } from '../data/datos';
+import { LOCALES, cabinasDeSede, cupoDeSede } from '../data/datos';
 
 @Component({
   selector: 'app-configuracion',
@@ -46,19 +46,25 @@ import { LOCALES } from '../data/datos';
       <div class="grid-config">
         <div class="panel">
           <h4>Reglas de la agenda</h4>
-          <div class="campo"><label>Intervalo entre horarios</label>
-            <select><option>30 minutos</option><option>15 minutos</option><option>60 minutos</option></select>
-          </div>
-          <div class="campo"><label>Bloqueo temporal del horario al reservar</label>
-            <select><option>10 minutos</option><option>5 minutos</option><option>15 minutos</option></select>
+          <div class="campo"><label>Duración del bloque horario</label>
+            <select><option>60 minutos</option><option>90 minutos</option><option>30 minutos</option></select>
           </div>
           <div class="campo"><label>Anticipación mínima para reservar en línea</label>
             <select><option>2 horas</option><option>1 hora</option><option>Mismo día sin restricción</option></select>
           </div>
+          @for (l of locales; track l.id) {
+            <div class="campo">
+              <label>Citas por bloque en {{ l.nombre }} ({{ cabinas(l.id) }} cabinas)</label>
+              <input type="number" [value]="cupo(l.id)" min="1" [max]="cabinas(l.id)">
+              <span class="campo__ayuda">
+                Quedan {{ cabinas(l.id) - cupo(l.id) }} cabinas libres por hora para pacientes sin cita.
+              </span>
+            </div>
+          }
           <div class="interruptores">
-            <label><input type="checkbox" checked> Validar cruce de horarios por cabina</label>
-            <label><input type="checkbox" checked> Validar cruce de horarios por especialista</label>
-            <label><input type="checkbox" checked> Sumar el tiempo de limpieza al bloqueo de la cabina</label>
+            <label><input type="checkbox" checked> Cerrar el bloque horario al llegar a su cupo</label>
+            <label><input type="checkbox" checked> Reservar cabinas para atenciones sin cita</label>
+            <label><input type="checkbox" checked> Asignar cabina y especialista en el local, al llegar la paciente</label>
             <label><input type="checkbox"> Permitir sobreventa autorizada por administración</label>
           </div>
         </div>
@@ -96,9 +102,9 @@ import { LOCALES } from '../data/datos';
         <div class="panel">
           <h4>Cobros en local</h4>
           <div class="interruptores">
-            <label><input type="checkbox" checked> Efectivo</label>
-            <label><input type="checkbox" checked> Yape</label>
-            <label><input type="checkbox" checked> Tarjeta POS</label>
+            <label><input type="checkbox" checked> Efectivo (único método presencial habilitado)</label>
+            <label><input type="checkbox"> Yape</label>
+            <label><input type="checkbox"> Tarjeta POS</label>
             <label><input type="checkbox"> Transferencia bancaria</label>
           </div>
           <div class="campo" style="margin-top:18px">
@@ -180,6 +186,8 @@ import { LOCALES } from '../data/datos';
 })
 export class ConfiguracionComponent {
   locales = LOCALES;
+  cupo = cupoDeSede;
+  cabinas = (localId: number) => cabinasDeSede(localId).length;
   pestanas = ['Negocio', 'Agenda', 'Pagos', 'Usuarios', 'Sincronización'];
   pestana = signal('Negocio');
 

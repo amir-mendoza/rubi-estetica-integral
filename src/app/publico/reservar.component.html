@@ -3,8 +3,8 @@
     <div class="miga"><a routerLink="/">Inicio</a> / Reservar cita</div>
     <h1>Reservar cita</h1>
     <p>
-      El sistema valida en tiempo real la disponibilidad de la especialista y de la cabina.
-      Al elegir un horario se bloquea por 10 minutos mientras completas tus datos.
+      Elige tu tratamiento y la hora a la que planeas llegar. En el local te recibimos
+      y asignamos la cabina y la especialista disponible en ese momento.
     </p>
   </div>
 </section>
@@ -28,10 +28,9 @@
           <div class="dato"><span class="dato__label">Paciente</span><span class="dato__valor">{{ nombre }} {{ apellido }}</span></div>
           <div class="dato"><span class="dato__label">Tratamiento</span><span class="dato__valor">{{ tratamiento()?.nombre }}</span></div>
           <div class="dato"><span class="dato__label">Fecha</span><span class="dato__valor">{{ formatoFechaLarga(fecha()) }}</span></div>
-          <div class="dato"><span class="dato__label">Horario</span><span class="dato__valor">{{ slot()?.inicio }} — {{ slot()?.fin }}</span></div>
+          <div class="dato"><span class="dato__label">Hora de llegada</span><span class="dato__valor">{{ bloque()?.inicio }}</span></div>
           <div class="dato"><span class="dato__label">Sede</span><span class="dato__valor">{{ local()?.nombre }}</span></div>
-          <div class="dato"><span class="dato__label">Cabina</span><span class="dato__valor">{{ cabinaAsignada()?.nombre }}</span></div>
-          <div class="dato"><span class="dato__label">Especialista</span><span class="dato__valor">{{ especialistaAsignada()?.nombre }} {{ especialistaAsignada()?.apellido }}</span></div>
+          <div class="dato"><span class="dato__label">Cabina y especialista</span><span class="dato__valor">Se asignan al llegar</span></div>
           <div class="dato">
             <span class="dato__label">Estado de pago</span>
             <span class="dato__valor">{{ metodoPago === 'Izipay' ? 'Pagado · Izipay' : 'Pago en local' }}</span>
@@ -77,67 +76,61 @@
             </div>
           }
 
-          <!-- Paso 2: tratamiento -->
+          <!-- Paso 2: tratamiento con filtros rápidos -->
           @if (paso() === 2) {
             <div class="bloque">
               <h3>2. Elige el tratamiento</h3>
-              <p>El tiempo total reservado incluye la preparación y limpieza de la cabina.</p>
+              <p>Filtra por tipo de tratamiento para encontrarlo más rápido.</p>
+
+              <div class="filtros">
+                @for (c of categorias; track c) {
+                  <button class="filtro" [class.filtro--activo]="categoria() === c" (click)="elegirCategoria(c)">
+                    {{ c }}
+                  </button>
+                }
+              </div>
+
+              <div class="filtros filtros--suaves">
+                @for (e of etiquetas; track e) {
+                  <button class="filtro filtro--chip" [class.filtro--activo]="etiqueta() === e" (click)="elegirEtiqueta(e)">
+                    {{ e }}
+                  </button>
+                }
+              </div>
+
+              <div class="campo campo--busqueda">
+                <input type="search" placeholder="Buscar tratamiento"
+                       [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)">
+              </div>
+
               <div class="lista-opciones">
-                @for (t of tratamientos; track t.id) {
+                @for (t of tratamientosFiltrados(); track t.id) {
                   <button class="opcion opcion--fila" [class.opcion--activa]="tratamiento()?.id === t.id" (click)="elegirTratamiento(t)">
                     <img [src]="t.imagen" [alt]="t.nombre">
                     <div class="opcion__texto">
                       <strong>{{ t.nombre }}</strong>
                       <span>{{ t.resumen }}</span>
-                      <span class="opcion__meta">{{ t.duracionMin }} min + {{ t.limpiezaMin }} min de cabina</span>
+                      <span class="opcion__meta">{{ t.categoria }} · duración aproximada {{ t.duracionMin }} min</span>
                     </div>
                     <div class="opcion__precio">{{ soles(t.precio) }}</div>
                   </button>
                 }
+                @if (!tratamientosFiltrados().length) {
+                  <div class="aviso">No hay tratamientos con esos filtros. Prueba con otra categoría.</div>
+                }
               </div>
               <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
             </div>
           }
 
-          <!-- Paso 3: especialista -->
+          <!-- Paso 3: fecha y bloque horario -->
           @if (paso() === 3) {
             <div class="bloque">
-              <h3>3. Elige la especialista</h3>
-              <p>Puedes elegir una profesional específica o dejar que el sistema asigne la primera disponible.</p>
-
-              <button class="opcion opcion--fila opcion--cualquiera"
-                      [class.opcion--activa]="cualquierEspecialista() && !especialista()"
-                      (click)="elegirEspecialista(null)">
-                <div class="opcion__texto">
-                  <strong>Cualquier especialista disponible</strong>
-                  <span>Recomendado: verás más horarios libres.</span>
-                </div>
-              </button>
-
-              <div class="lista-opciones" style="margin-top:16px">
-                @for (e of especialistasDisponibles(); track e.id) {
-                  <button class="opcion opcion--fila" [class.opcion--activa]="especialista()?.id === e.id" (click)="elegirEspecialista(e)">
-                    <img [src]="e.foto" [alt]="e.nombre">
-                    <div class="opcion__texto">
-                      <strong>{{ e.nombre }} {{ e.apellido }}</strong>
-                      <span>{{ e.especialidad }}</span>
-                      <span class="opcion__meta">{{ e.horario }}</span>
-                    </div>
-                  </button>
-                }
-                @if (!especialistasDisponibles().length) {
-                  <div class="aviso">No hay especialistas asignadas a este tratamiento en la sede elegida.</div>
-                }
-              </div>
-              <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
-            </div>
-          }
-
-          <!-- Paso 4: fecha y hora -->
-          @if (paso() === 4) {
-            <div class="bloque">
-              <h3>4. Elige fecha y hora</h3>
-              <p>Solo se muestran los horarios en los que hay cabina y especialista libres.</p>
+              <h3>3. Elige el día y la hora en la que llegarás</h3>
+              <p>
+                Cada hora recibe un número limitado de pacientes. Cuando una hora llega a su
+                cupo se cierra y puedes elegir la siguiente.
+              </p>
 
               <div class="dias">
                 @for (d of dias; track d.iso) {
@@ -149,44 +142,39 @@
                 }
               </div>
 
-              @if (slot()) {
-                <div class="bloqueo">
-                  <div>
-                    <strong>Horario bloqueado temporalmente</strong>
-                    <span>Completa tu reserva antes de que se libere el horario.</span>
-                  </div>
-                  <span class="bloqueo__reloj">{{ cuentaRegresiva() }}</span>
-                </div>
-              }
-
               <div class="horarios">
-                @for (s of slots(); track s.inicio) {
+                @for (b of bloques(); track b.inicio) {
                   <button class="horario"
-                          [class.horario--ocupado]="!s.disponible"
-                          [class.horario--activo]="slot()?.inicio === s.inicio"
-                          [disabled]="!s.disponible"
-                          [title]="s.disponible ? 'Disponible' : (s.motivo || 'No disponible')"
-                          (click)="elegirSlot(s)">
-                    <span>{{ s.inicio }}</span>
-                    <small>{{ s.disponible ? s.inicio + ' — ' + s.fin : s.motivo }}</small>
+                          [class.horario--ocupado]="!b.disponible"
+                          [class.horario--activo]="bloque()?.inicio === b.inicio"
+                          [disabled]="!b.disponible"
+                          [title]="b.disponible ? 'Quedan ' + b.libres + ' cupos' : (b.motivo || 'No disponible')"
+                          (click)="elegirBloque(b)">
+                    <span>{{ b.inicio }}</span>
+                    <small>{{ b.disponible ? b.libres + ' de ' + b.cupo + ' cupos' : b.motivo }}</small>
                   </button>
                 }
-                @if (!slots().length) {
+                @if (!bloques().length) {
                   <div class="aviso">La sede no atiende en la fecha seleccionada.</div>
                 }
               </div>
 
+              <div class="aviso" style="margin-top:18px">
+                La hora que elijas es tu hora de llegada. La atención empieza en cuanto se
+                libere una cabina, según el orden de llegada de ese bloque.
+              </div>
+
               <div class="acciones-paso">
                 <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
-                <button class="btn btn--primario btn--sm" [disabled]="!slot()" (click)="siguiente()">Continuar</button>
+                <button class="btn btn--primario btn--sm" [disabled]="!bloque()" (click)="siguiente()">Continuar</button>
               </div>
             </div>
           }
 
-          <!-- Paso 5: datos -->
-          @if (paso() === 5) {
+          <!-- Paso 4: datos -->
+          @if (paso() === 4) {
             <div class="bloque">
-              <h3>5. Tus datos</h3>
+              <h3>4. Tus datos</h3>
               <p>Necesitamos estos datos para registrar tu historia clínica y confirmarte la cita.</p>
               @if (sesion.autenticado()) {
                 <div class="aviso aviso--ok" style="margin-bottom:20px">
@@ -217,11 +205,11 @@
             </div>
           }
 
-          <!-- Paso 6: pago -->
-          @if (paso() === 6) {
+          <!-- Paso 5: pago -->
+          @if (paso() === 5) {
             <div class="bloque">
-              <h3>6. Método de pago</h3>
-              <p>Puedes asegurar tu horario pagando en línea o reservar y pagar en el local.</p>
+              <h3>5. Método de pago</h3>
+              <p>Puedes pagar en línea con Izipay o pagar en efectivo en el local.</p>
 
               <button class="opcion opcion--fila" [class.opcion--activa]="metodoPago === 'Izipay'" (click)="metodoPago = 'Izipay'">
                 <div class="opcion__texto">
@@ -233,8 +221,8 @@
 
               <button class="opcion opcion--fila" [class.opcion--activa]="metodoPago === 'Local'" (click)="metodoPago = 'Local'">
                 <div class="opcion__texto">
-                  <strong>Pagar en el local</strong>
-                  <span>Tu cita queda reservada en estado pendiente de pago. Se libera si no asistes.</span>
+                  <strong>Pagar en efectivo en el local</strong>
+                  <span>Tu cita queda registrada como pendiente de pago y recepción la marca como pagada al cobrarte.</span>
                 </div>
                 <div class="opcion__precio">{{ soles(tratamiento()?.precio || 0) }}</div>
               </button>
@@ -260,44 +248,39 @@
 
             <div class="resumen__fila"><span>Sede</span><strong>{{ local()?.nombre || '—' }}</strong></div>
             <div class="resumen__fila"><span>Tratamiento</span><strong>{{ tratamiento()?.nombre || '—' }}</strong></div>
+            <div class="resumen__fila"><span>Fecha</span><strong>{{ bloque() ? formatoFechaLarga(fecha()) : '—' }}</strong></div>
+            <div class="resumen__fila"><span>Hora de llegada</span><strong>{{ bloque()?.inicio || '—' }}</strong></div>
+            <div class="resumen__fila"><span>Cabina</span><strong>Se asigna al llegar</strong></div>
+            <div class="resumen__fila"><span>Especialista</span><strong>La disponible al llegar</strong></div>
             <div class="resumen__fila">
-              <span>Especialista</span>
-              <strong>
-                {{ especialista() ? especialista()?.nombre + ' ' + especialista()?.apellido
-                   : (cualquierEspecialista() ? 'Cualquiera disponible' : '—') }}
-              </strong>
-            </div>
-            <div class="resumen__fila"><span>Fecha</span><strong>{{ slot() ? formatoFechaLarga(fecha()) : '—' }}</strong></div>
-            <div class="resumen__fila">
-              <span>Horario</span>
-              <strong>{{ slot() ? slot()?.inicio + ' — ' + slot()?.fin : '—' }}</strong>
-            </div>
-            <div class="resumen__fila"><span>Cabina</span><strong>{{ cabinaAsignada()?.nombre || 'Por asignar' }}</strong></div>
-            <div class="resumen__fila">
-              <span>Tiempo reservado</span>
-              <strong>{{ bloqueoTotal() ? bloqueoTotal() + ' min' : '—' }}</strong>
+              <span>Duración aproximada</span>
+              <strong>{{ duracionEstimada() ? duracionEstimada() + ' min' : '—' }}</strong>
             </div>
 
             <div class="resumen__total">
               <span>Total</span>
               <strong>{{ soles(tratamiento()?.precio || 0) }}</strong>
             </div>
-
-            @if (tratamiento()) {
-              <p class="campo__ayuda" style="margin-top:12px">
-                Incluye {{ tratamiento()?.duracionMin }} min de sesión y
-                {{ tratamiento()?.limpiezaMin }} min de preparación de cabina.
-              </p>
-            }
           </div>
 
           <div class="panel" style="margin-top:20px">
-            <h4>Reglas de la agenda</h4>
+            <h4>Cómo funciona la agenda</h4>
             <ul class="reglas">
-              <li>No se permiten dos citas cruzadas en la misma cabina.</li>
-              <li>No se permiten dos citas cruzadas con la misma especialista.</li>
-              <li>El horario elegido se bloquea 10 minutos mientras completas la reserva.</li>
-              <li>Fuera del horario del local no se muestran horarios disponibles.</li>
+              <li>Reservas la hora a la que llegarás, no una cabina ni una especialista.</li>
+              @if (local()) {
+                <li>
+                  {{ local()?.nombre }} tiene {{ cabinasSede() }} cabinas y acepta
+                  {{ cupoSede() }} citas por hora.
+                </li>
+                <li>
+                  Siempre {{ cabinasLibresSede() === 1 ? 'queda 1 cabina libre' : 'quedan ' + cabinasLibresSede() + ' cabinas libres' }}
+                  por hora para pacientes que llegan sin cita.
+                </li>
+              } @else {
+                <li>Cada sede acepta un número limitado de citas por hora.</li>
+              }
+              <li>Cuando una hora llega a su cupo se cierra y se ofrece la siguiente.</li>
+              <li>La especialista se asigna en el local según disponibilidad.</li>
             </ul>
           </div>
         </aside>

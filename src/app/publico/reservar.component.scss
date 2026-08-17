@@ -61,18 +61,18 @@
 .dia__num { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.5rem; color: inherit; }
 .dia__mes { font-size: .68rem; color: var(--gris-claro); }
 
-/* Bloqueo temporal */
-.bloqueo {
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  background: var(--rosa-50); border: 1px solid var(--rosa); border-radius: var(--radio-lg);
-  padding: 14px 20px; margin-bottom: 20px;
+/* Filtros de tratamiento */
+.filtros { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.filtros--suaves { margin-bottom: 18px; }
+.filtro {
+  border: 1px solid var(--linea); border-radius: 999px; background: #fff;
+  padding: 8px 16px; font-family: inherit; font-size: .8rem; color: var(--gris);
+  cursor: pointer; letter-spacing: .02em;
 }
-.bloqueo strong { display: block; font-size: .92rem; color: var(--vino); font-weight: 500; }
-.bloqueo span { font-size: .8rem; color: var(--gris); }
-.bloqueo__reloj {
-  font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.8rem;
-  color: var(--magenta) !important; font-variant-numeric: tabular-nums;
-}
+.filtro:hover { border-color: var(--magenta-300); color: var(--magenta); }
+.filtro--chip { background: var(--rosa-50); border-color: var(--rosa); font-size: .74rem; }
+.filtro--activo { background: var(--vino); border-color: var(--vino); color: #fff; }
+.campo--busqueda { margin-bottom: 20px; }
 
 /* Horarios */
 .horarios { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; }
