@@ -1,10 +1,22 @@
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
-  CITAS, ESPECIALISTAS, HOY_ISO, LOCALES, MESES, PAGOS, TRATAMIENTOS, aISO, soles
+  CITAS, HOY_ISO, LOCALES, MESES, PEDIDOS, PRODUCTOS, TRATAMIENTOS,
+  aISO, localPorId, pacientePorId, soles, tratamientoPorId
 } from '../../data/datos';
+import { Cita, Pedido } from '../../data/modelos';
 
-interface Fila { etiqueta: string; citas: number; vendido: number; pagado: number; pendiente: number; }
+type GrupoCaja = 'Todos' | 'Atendidos pagados' | 'Atendidos con saldo' | 'Pendientes por atender' | 'Cancelados';
+
+interface ResumenPeriodo {
+  etiqueta: string;
+  desde: string;
+  hasta: string;
+  atenciones: number;
+  productos: number;
+  cobrado: number;
+  pendiente: number;
+}
 
 @Component({
   selector: 'app-reportes',
@@ -14,7 +26,7 @@ interface Fila { etiqueta: string; citas: number; vendido: number; pagado: numbe
     <div class="cabecera-admin">
       <div>
         <h1>Reportes</h1>
-        <p>Ingresos y ventas por periodo, local, tratamiento y especialista.</p>
+        <p>Registro de caja y atención para reemplazar el cuaderno: pacientes, tratamientos, pagos, deuda y ventas por periodo.</p>
       </div>
       <div class="cabecera-admin__acciones">
         <button class="btn btn--linea btn--sm">Descargar PDF</button>
@@ -39,53 +51,119 @@ interface Fila { etiqueta: string; citas: number; vendido: number; pagado: numbe
           @for (l of locales; track l.id) { <option>{{ l.nombre }}</option> }
         </select>
       </div>
+      <div class="campo">
+        <label>Estado de caja</label>
+        <select [ngModel]="grupo()" (ngModelChange)="grupo.set($event)">
+          @for (g of grupos; track g) { <option>{{ g }}</option> }
+        </select>
+      </div>
       <div class="campo barra-filtros__crecer">
-        <label>Referencia</label>
-        <input type="text" [value]="tituloPeriodo()" readonly>
+        <label>Buscar</label>
+        <input type="search" placeholder="Paciente, tratamiento, código o celular" [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)">
       </div>
     </div>
 
-    <div class="kpis kpis-5">
-      <div class="kpi kpi--acento"><span class="kpi__label">Monto vendido</span><span class="kpi__valor">{{ soles(vendido()) }}</span><span class="kpi__nota">{{ citasPeriodo().length }} citas del periodo</span></div>
-      <div class="kpi"><span class="kpi__label">Monto pagado</span><span class="kpi__valor" style="color:var(--ok)">{{ soles(pagado()) }}</span><span class="kpi__nota">Cobrado y confirmado</span></div>
-      <div class="kpi"><span class="kpi__label">Monto pendiente</span><span class="kpi__valor" style="color:var(--alerta)">{{ soles(pendiente()) }}</span><span class="kpi__nota">Por cobrar en local</span></div>
-      <div class="kpi"><span class="kpi__label">Monto cancelado</span><span class="kpi__valor" style="color:var(--error)">{{ soles(cancelado()) }}</span><span class="kpi__nota">Citas anuladas o no asistidas</span></div>
-      <div class="kpi"><span class="kpi__label">Ganancia estimada</span><span class="kpi__valor">{{ soles(ganancia()) }}</span><span class="kpi__nota">62 % del monto cobrado</span></div>
+    <div class="resumen-rapido">
+      @for (r of resumenes(); track r.etiqueta) {
+        <div class="kpi kpi--acento">
+          <span class="kpi__label">{{ r.etiqueta }}</span>
+          <span class="kpi__valor">{{ soles(r.cobrado) }}</span>
+          <span class="kpi__nota">{{ r.atenciones }} atenciones · {{ r.productos }} pedidos · pendiente {{ soles(r.pendiente) }}</span>
+        </div>
+      }
     </div>
 
-    <div class="grid-dos">
+    <div class="kpis kpis-5">
+      <div class="kpi kpi--acento"><span class="kpi__label">Cobrado total</span><span class="kpi__valor">{{ soles(cobradoTotal()) }}</span><span class="kpi__nota">Atenciones + productos pagados</span></div>
+      <div class="kpi"><span class="kpi__label">Atenciones cobradas</span><span class="kpi__valor" style="color:var(--ok)">{{ soles(cobradoAtenciones()) }}</span><span class="kpi__nota">{{ atendidosPagados().length }} pacientes atendidos y pagados</span></div>
+      <div class="kpi"><span class="kpi__label">Productos vendidos</span><span class="kpi__valor">{{ soles(cobradoProductos()) }}</span><span class="kpi__nota">{{ pedidosPeriodo().length }} pedidos en el periodo</span></div>
+      <div class="kpi"><span class="kpi__label">Pendiente por cobrar</span><span class="kpi__valor" style="color:var(--alerta)">{{ soles(pendienteTotal()) }}</span><span class="kpi__nota">Saldo de citas y pedidos</span></div>
+      <div class="kpi"><span class="kpi__label">Atendidos con deuda</span><span class="kpi__valor" style="color:var(--error)">{{ atendidosConSaldo().length }}</span><span class="kpi__nota">Ya atendidos, falta completar pago</span></div>
+    </div>
+
+    <div class="tabla-panel">
+      <div class="tabla-panel__cabecera">
+        <div>
+          <h3>Cuaderno de caja: atenciones y pagos</h3>
+          <span class="dato__label">{{ tituloPeriodo() }} · {{ citasCaja().length }} registros</span>
+        </div>
+        <span class="chip chip--info">Web + Recepción + WhatsApp</span>
+      </div>
+      <div class="tabla-envoltura">
+        <table class="tabla tabla-caja">
+          <thead>
+            <tr>
+              <th>Fecha / hora</th><th>Paciente</th><th>Tratamiento</th><th>Origen</th><th>Estado</th>
+              <th class="num">Total</th><th class="num">Pagado</th><th class="num">Falta</th><th>Registro</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of citasCaja(); track c.id) {
+              <tr>
+                <td><div class="mini-dato"><strong>{{ c.fecha }}</strong><span>{{ c.horaInicio }} · {{ c.codigo }}</span></div></td>
+                <td>
+                  <div class="mini-dato">
+                    <strong>{{ paciente(c)?.nombre }} {{ paciente(c)?.apellido }}</strong>
+                    <span>DNI {{ paciente(c)?.dni }} · {{ paciente(c)?.celular }}</span>
+                  </div>
+                </td>
+                <td>{{ tratamiento(c)?.nombre }}</td>
+                <td><span [class]="claseOrigen(c.origen)">{{ c.origen }}</span></td>
+                <td>
+                  <div class="estado-stack">
+                    <span [class]="claseAtencion(c)">{{ estadoCaja(c) }}</span>
+                    <small>{{ c.estado }} · {{ c.estadoPago }}</small>
+                  </div>
+                </td>
+                <td class="num">{{ soles(c.montoTotal) }}</td>
+                <td class="num" style="color:var(--ok)">{{ soles(c.montoPagado) }}</td>
+                <td class="num" [style.color]="saldoCita(c) > 0 ? 'var(--alerta)' : 'var(--ok)'">{{ soles(saldoCita(c)) }}</td>
+                <td><small>{{ c.registradaPor }}<br>{{ local(c.localId) }}</small></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="9" class="vacio">No hay registros con los filtros seleccionados.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid-dos" style="margin-top:20px">
       <div class="tabla-panel">
-        <div class="tabla-panel__cabecera"><h3>Por local</h3></div>
+        <div class="tabla-panel__cabecera"><h3>Citas agendadas por la web</h3><span class="dato__label">{{ citasWeb().length }} registros</span></div>
         <div class="tabla-envoltura">
           <table class="tabla">
-            <thead><tr><th>Local</th><th class="num">Citas</th><th class="num">Vendido</th><th class="num">Pagado</th><th class="num">Pendiente</th></tr></thead>
+            <thead><tr><th>Paciente</th><th>Tratamiento</th><th>Fecha</th><th class="num">Pagado</th><th class="num">Falta</th></tr></thead>
             <tbody>
-              @for (f of porLocal(); track f.etiqueta) {
+              @for (c of citasWeb(); track c.id) {
                 <tr>
-                  <td>{{ f.etiqueta }}</td><td class="num">{{ f.citas }}</td>
-                  <td class="num">{{ soles(f.vendido) }}</td>
-                  <td class="num" style="color:var(--ok)">{{ soles(f.pagado) }}</td>
-                  <td class="num" style="color:var(--alerta)">{{ soles(f.pendiente) }}</td>
+                  <td>{{ paciente(c)?.nombre }} {{ paciente(c)?.apellido }}</td>
+                  <td>{{ tratamiento(c)?.nombre }}</td>
+                  <td>{{ c.fecha }} {{ c.horaInicio }}</td>
+                  <td class="num">{{ soles(c.montoPagado) }}</td>
+                  <td class="num">{{ soles(saldoCita(c)) }}</td>
                 </tr>
-              }
+              } @empty { <tr><td colspan="5" class="vacio">Sin citas web en el periodo.</td></tr> }
             </tbody>
           </table>
         </div>
       </div>
 
       <div class="tabla-panel">
-        <div class="tabla-panel__cabecera"><h3>Por método de pago</h3></div>
+        <div class="tabla-panel__cabecera"><h3>Citas registradas en recepción/local</h3><span class="dato__label">{{ citasRecepcion().length }} registros</span></div>
         <div class="tabla-envoltura">
           <table class="tabla">
-            <thead><tr><th>Método</th><th>Canal</th><th class="num">Movimientos</th><th class="num">Monto</th></tr></thead>
+            <thead><tr><th>Paciente</th><th>Tratamiento</th><th>Origen</th><th class="num">Pagado</th><th class="num">Falta</th></tr></thead>
             <tbody>
-              @for (m of porMetodo(); track m.metodo) {
+              @for (c of citasRecepcion(); track c.id) {
                 <tr>
-                  <td>{{ m.metodo }}</td><td>{{ m.canal }}</td>
-                  <td class="num">{{ m.cantidad }}</td>
-                  <td class="num">{{ soles(m.monto) }}</td>
+                  <td>{{ paciente(c)?.nombre }} {{ paciente(c)?.apellido }}</td>
+                  <td>{{ tratamiento(c)?.nombre }}</td>
+                  <td>{{ c.origen }}</td>
+                  <td class="num">{{ soles(c.montoPagado) }}</td>
+                  <td class="num">{{ soles(saldoCita(c)) }}</td>
                 </tr>
-              }
+              } @empty { <tr><td colspan="5" class="vacio">Sin citas de recepción en el periodo.</td></tr> }
             </tbody>
           </table>
         </div>
@@ -94,34 +172,40 @@ interface Fila { etiqueta: string; citas: number; vendido: number; pagado: numbe
 
     <div class="grid-dos" style="margin-top:20px">
       <div class="tabla-panel">
-        <div class="tabla-panel__cabecera"><h3>Por tratamiento</h3></div>
+        <div class="tabla-panel__cabecera">
+          <div><h3>Ventas de productos</h3><span class="dato__label">{{ pedidosPeriodo().length }} pedidos · {{ soles(cobradoProductos()) }} cobrado</span></div>
+        </div>
         <div class="tabla-envoltura">
           <table class="tabla">
-            <thead><tr><th>Tratamiento</th><th class="num">Sesiones</th><th class="num">Vendido</th><th class="num">Pagado</th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Cliente</th><th>Productos</th><th>Estado</th><th class="num">Total</th><th class="num">Pagado</th></tr></thead>
             <tbody>
-              @for (f of porTratamiento(); track f.etiqueta) {
+              @for (p of pedidosPeriodo(); track p.id) {
                 <tr>
-                  <td>{{ f.etiqueta }}</td><td class="num">{{ f.citas }}</td>
-                  <td class="num">{{ soles(f.vendido) }}</td>
-                  <td class="num" style="color:var(--ok)">{{ soles(f.pagado) }}</td>
+                  <td>{{ p.fecha }}<br><small>{{ p.codigo }}</small></td>
+                  <td>{{ p.cliente }}<br><small>{{ p.celular }}</small></td>
+                  <td>{{ productosPedido(p) }}</td>
+                  <td><span [class]="p.estadoPago === 'Pagado' ? 'chip chip--ok' : 'chip chip--alerta'">{{ p.estadoPago }}</span></td>
+                  <td class="num">{{ soles(p.total) }}</td>
+                  <td class="num">{{ soles(p.pagado) }}</td>
                 </tr>
-              }
+              } @empty { <tr><td colspan="6" class="vacio">Sin ventas de productos en el periodo.</td></tr> }
             </tbody>
           </table>
         </div>
       </div>
 
       <div class="tabla-panel">
-        <div class="tabla-panel__cabecera"><h3>Por especialista</h3></div>
+        <div class="tabla-panel__cabecera"><h3>Resumen por tratamiento</h3></div>
         <div class="tabla-envoltura">
           <table class="tabla">
-            <thead><tr><th>Especialista</th><th class="num">Atenciones</th><th class="num">Vendido</th><th class="num">Pagado</th></tr></thead>
+            <thead><tr><th>Tratamiento</th><th class="num">Citas</th><th class="num">Cobrado</th><th class="num">Pendiente</th></tr></thead>
             <tbody>
-              @for (f of porEspecialista(); track f.etiqueta) {
+              @for (f of porTratamiento(); track f.nombre) {
                 <tr>
-                  <td>{{ f.etiqueta }}</td><td class="num">{{ f.citas }}</td>
-                  <td class="num">{{ soles(f.vendido) }}</td>
+                  <td>{{ f.nombre }}</td>
+                  <td class="num">{{ f.cantidad }}</td>
                   <td class="num" style="color:var(--ok)">{{ soles(f.pagado) }}</td>
+                  <td class="num" style="color:var(--alerta)">{{ soles(f.pendiente) }}</td>
                 </tr>
               }
             </tbody>
@@ -131,17 +215,25 @@ interface Fila { etiqueta: string; citas: number; vendido: number; pagado: numbe
     </div>
   `,
   styles: [`
+    .resumen-rapido { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 18px; }
     .kpis-5 { grid-template-columns: repeat(5, 1fr); margin-bottom: 22px; }
     .grid-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
-    @media (max-width: 1400px) { .kpis-5 { grid-template-columns: repeat(3, 1fr); } }
+    .tabla-caja td { vertical-align: top; }
+    .estado-stack { display: grid; gap: 4px; justify-items: start; }
+    .estado-stack small { color: var(--gris-claro); font-size: .72rem; }
+    .vacio { text-align: center; color: var(--gris-claro); padding: 24px 0; }
+    @media (max-width: 1400px) { .kpis-5 { grid-template-columns: repeat(3, 1fr); } .resumen-rapido { grid-template-columns: 1fr; } }
     @media (max-width: 1100px) { .grid-dos { grid-template-columns: 1fr; } .kpis-5 { grid-template-columns: repeat(2, 1fr); } }
   `]
 })
 export class ReportesComponent {
   soles = soles;
   locales = LOCALES;
-  periodo = signal('mes');
+  grupos: GrupoCaja[] = ['Todos', 'Atendidos pagados', 'Atendidos con saldo', 'Pendientes por atender', 'Cancelados'];
+  periodo = signal('hoy');
   sede = signal('Todos');
+  grupo = signal<GrupoCaja>('Todos');
+  busqueda = signal('');
 
   tituloPeriodo = computed(() => {
     const [a, m] = HOY_ISO.split('-').map(Number);
@@ -153,59 +245,131 @@ export class ReportesComponent {
     }
   });
 
-  citasPeriodo = computed(() => {
-    const sede = this.sede();
-    return CITAS.filter(c => {
-      if (sede !== 'Todos' && LOCALES.find(l => l.id === c.localId)?.nombre !== sede) { return false; }
-      switch (this.periodo()) {
-        case 'hoy': return c.fecha === HOY_ISO;
-        case 'semana': return this.ultimos(7).includes(c.fecha);
-        case 'mes': return c.fecha.slice(0, 7) === HOY_ISO.slice(0, 7);
-        default: return true;
-      }
-    });
+  citasPeriodo = computed(() => this.filtrarCitas(CITAS));
+  pedidosPeriodo = computed(() => this.filtrarPedidos(PEDIDOS));
+
+  citasCaja = computed(() => {
+    const texto = this.busqueda().trim().toLowerCase();
+    return this.citasPeriodo()
+      .filter(c => this.coincideGrupo(c))
+      .filter(c => {
+        if (!texto) { return true; }
+        const p = pacientePorId(c.pacienteId);
+        const t = tratamientoPorId(c.tratamientoId);
+        return `${p?.nombre} ${p?.apellido} ${p?.dni} ${p?.celular} ${t?.nombre} ${c.codigo}`.toLowerCase().includes(texto);
+      })
+      .sort((a, b) => `${b.fecha} ${b.horaInicio}`.localeCompare(`${a.fecha} ${a.horaInicio}`));
   });
 
-  private validas = computed(() => this.citasPeriodo().filter(c => c.estado !== 'Cancelada' && c.estado !== 'No asistió'));
+  atendidosPagados = computed(() => this.citasPeriodo().filter(c => c.estado === 'Atendida' && this.saldoCita(c) === 0));
+  atendidosConSaldo = computed(() => this.citasPeriodo().filter(c => c.estado === 'Atendida' && this.saldoCita(c) > 0));
+  citasWeb = computed(() => this.citasPeriodo().filter(c => c.origen === 'Web'));
+  citasRecepcion = computed(() => this.citasPeriodo().filter(c => c.origen !== 'Web'));
 
-  vendido = computed(() => this.validas().reduce((t, c) => t + c.montoTotal, 0));
-  pagado = computed(() => this.validas().reduce((t, c) => t + c.montoPagado, 0));
-  pendiente = computed(() => this.vendido() - this.pagado());
-  cancelado = computed(() =>
-    this.citasPeriodo().filter(c => c.estado === 'Cancelada' || c.estado === 'No asistió').reduce((t, c) => t + c.montoTotal, 0)
-  );
-  ganancia = computed(() => Math.round(this.pagado() * 0.62));
-
-  porLocal = computed<Fila[]>(() =>
-    LOCALES.map(l => this.fila(l.nombre, this.validas().filter(c => c.localId === l.id))).filter(f => f.citas > 0)
-  );
-
-  porTratamiento = computed<Fila[]>(() =>
-    TRATAMIENTOS.map(t => this.fila(t.nombre, this.validas().filter(c => c.tratamientoId === t.id)))
-      .filter(f => f.citas > 0).sort((a, b) => b.vendido - a.vendido)
+  cobradoAtenciones = computed(() => this.citasPeriodo().reduce((t, c) => t + c.montoPagado, 0));
+  cobradoProductos = computed(() => this.pedidosPeriodo().reduce((t, p) => t + p.pagado, 0));
+  cobradoTotal = computed(() => this.cobradoAtenciones() + this.cobradoProductos());
+  pendienteTotal = computed(() =>
+    this.citasPeriodo().reduce((t, c) => t + this.saldoCita(c), 0) +
+    this.pedidosPeriodo().reduce((t, p) => t + Math.max(p.total - p.pagado, 0), 0)
   );
 
-  porEspecialista = computed<Fila[]>(() =>
-    ESPECIALISTAS.map(e => this.fila(`${e.nombre} ${e.apellido}`, this.validas().filter(c => c.especialistaId === e.id)))
-      .filter(f => f.citas > 0).sort((a, b) => b.vendido - a.vendido)
-  );
+  resumenes = computed<ResumenPeriodo[]>(() => [
+    this.resumen('Hoy', HOY_ISO, HOY_ISO),
+    this.resumen('Últimos 7 días', this.ultimos(7)[0], HOY_ISO),
+    this.resumen('Mes en curso', `${HOY_ISO.slice(0, 7)}-01`, HOY_ISO)
+  ]);
 
-  porMetodo = computed(() => {
-    const mapa = new Map<string, { metodo: string; canal: string; cantidad: number; monto: number }>();
-    for (const p of PAGOS) {
-      if (p.estado !== 'Pagado') { continue; }
-      const actual = mapa.get(p.metodo) ?? { metodo: p.metodo, canal: p.canal, cantidad: 0, monto: 0 };
-      actual.cantidad++;
-      actual.monto += p.monto;
-      mapa.set(p.metodo, actual);
+  porTratamiento = computed(() => TRATAMIENTOS.map(t => {
+    const citas = this.citasPeriodo().filter(c => c.tratamientoId === t.id);
+    return {
+      nombre: t.nombre,
+      cantidad: citas.length,
+      pagado: citas.reduce((sum, c) => sum + c.montoPagado, 0),
+      pendiente: citas.reduce((sum, c) => sum + this.saldoCita(c), 0)
+    };
+  }).filter(f => f.cantidad > 0).sort((a, b) => b.pagado - a.pagado));
+
+  paciente(c: Cita) { return pacientePorId(c.pacienteId); }
+  tratamiento(c: Cita) { return tratamientoPorId(c.tratamientoId); }
+  local(id: number): string { return localPorId(id)?.nombre ?? '—'; }
+
+  saldoCita(c: Cita): number {
+    if (c.estado === 'Cancelada' || c.estado === 'No asistió' || c.estadoPago === 'Reembolsado') { return 0; }
+    return Math.max(c.montoTotal - c.montoPagado, 0);
+  }
+
+  estadoCaja(c: Cita): string {
+    if (c.estado === 'Cancelada' || c.estado === 'No asistió') { return 'Cancelado / no asistió'; }
+    if (c.estado === 'Atendida' && this.saldoCita(c) === 0) { return 'Atendido y pagado'; }
+    if (c.estado === 'Atendida' && this.saldoCita(c) > 0) { return 'Atendido con saldo'; }
+    if (this.saldoCita(c) > 0) { return 'Pendiente por atender/cobrar'; }
+    return 'Reservado pagado';
+  }
+
+  claseAtencion(c: Cita): string {
+    const estado = this.estadoCaja(c);
+    if (estado === 'Atendido y pagado' || estado === 'Reservado pagado') { return 'chip chip--ok chip--punto'; }
+    if (estado === 'Atendido con saldo' || estado === 'Pendiente por atender/cobrar') { return 'chip chip--alerta chip--punto'; }
+    return 'chip chip--error chip--punto';
+  }
+
+  claseOrigen(origen: string): string {
+    if (origen === 'Web') { return 'chip chip--info'; }
+    if (origen === 'Recepción') { return 'chip'; }
+    return 'chip chip--alerta';
+  }
+
+  productosPedido(pedido: Pedido): string {
+    return pedido.items.map(item => {
+      const producto = PRODUCTOS.find(p => p.id === item.productoId);
+      return `${item.cantidad} x ${producto?.nombre ?? 'Producto'}`;
+    }).join(', ');
+  }
+
+  private coincideGrupo(c: Cita): boolean {
+    switch (this.grupo()) {
+      case 'Atendidos pagados': return c.estado === 'Atendida' && this.saldoCita(c) === 0;
+      case 'Atendidos con saldo': return c.estado === 'Atendida' && this.saldoCita(c) > 0;
+      case 'Pendientes por atender': return c.estado !== 'Atendida' && c.estado !== 'Cancelada' && c.estado !== 'No asistió';
+      case 'Cancelados': return c.estado === 'Cancelada' || c.estado === 'No asistió';
+      default: return true;
     }
-    return [...mapa.values()].sort((a, b) => b.monto - a.monto);
-  });
+  }
 
-  private fila(etiqueta: string, citas: typeof CITAS): Fila {
-    const vendido = citas.reduce((t, c) => t + c.montoTotal, 0);
-    const pagado = citas.reduce((t, c) => t + c.montoPagado, 0);
-    return { etiqueta, citas: citas.length, vendido, pagado, pendiente: vendido - pagado };
+  private filtrarCitas(citas: Cita[]): Cita[] {
+    const sede = this.sede();
+    return citas.filter(c => {
+      if (sede !== 'Todos' && this.local(c.localId) !== sede) { return false; }
+      return this.enPeriodo(c.fecha);
+    });
+  }
+
+  private filtrarPedidos(pedidos: Pedido[]): Pedido[] {
+    return pedidos.filter(p => this.enPeriodo(p.fecha));
+  }
+
+  private enPeriodo(fecha: string): boolean {
+    switch (this.periodo()) {
+      case 'hoy': return fecha === HOY_ISO;
+      case 'semana': return this.ultimos(7).includes(fecha);
+      case 'mes': return fecha.slice(0, 7) === HOY_ISO.slice(0, 7);
+      default: return true;
+    }
+  }
+
+  private resumen(etiqueta: string, desde: string, hasta: string): ResumenPeriodo {
+    const citas = CITAS.filter(c => c.fecha >= desde && c.fecha <= hasta);
+    const pedidos = PEDIDOS.filter(p => p.fecha >= desde && p.fecha <= hasta);
+    return {
+      etiqueta,
+      desde,
+      hasta,
+      atenciones: citas.length,
+      productos: pedidos.length,
+      cobrado: citas.reduce((t, c) => t + c.montoPagado, 0) + pedidos.reduce((t, p) => t + p.pagado, 0),
+      pendiente: citas.reduce((t, c) => t + this.saldoCita(c), 0) + pedidos.reduce((t, p) => t + Math.max(p.total - p.pagado, 0), 0)
+    };
   }
 
   private ultimos(dias: number): string[] {
