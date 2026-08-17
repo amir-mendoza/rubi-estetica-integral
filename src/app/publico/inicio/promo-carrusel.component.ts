@@ -76,8 +76,8 @@ import { PromocionesService } from '../../compartido/promociones.service';
                   </div>
 
                   <div class="promo__acciones">
-                    <a routerLink="/reservar" class="btn btn--primario">Reservar promocion</a>
-                    <a routerLink="/tratamientos" class="btn btn--linea">Ver tratamientos</a>
+                    <a routerLink="/reservar" [queryParams]="{ promo: p.id }" class="btn btn--primario">Reservar promocion</a>
+                    <a [href]="whatsappPromo(p)" target="_blank" rel="noopener" class="btn btn--linea">Consultar por WhatsApp</a>
                   </div>
                 </div>
               </article>
@@ -153,6 +153,8 @@ import { PromocionesService } from '../../compartido/promociones.service';
       min-height: 430px;
       overflow: hidden;
       background: #fff;
+      display: grid;
+      place-items: center;
     }
     .promo__arte::after {
       content: '';
@@ -163,9 +165,10 @@ import { PromocionesService } from '../../compartido/promociones.service';
     }
     .promo__arte img {
       width: 100%;
-      height: 100%;
+      height: auto;
+      max-height: min(74vh, 680px);
       object-fit: contain;
-      padding: 10px;
+      padding: 14px;
     }
     .promo__sello {
       position: absolute;
@@ -403,7 +406,8 @@ import { PromocionesService } from '../../compartido/promociones.service';
       }
       .promo--activa { display: grid; }
       .promociones__marco { min-height: 0; }
-      .promo__arte { min-height: 300px; }
+      .promo__arte { min-height: 0; }
+      .promo__arte img { max-height: none; }
       .promo__contenido { padding: 34px 28px 58px; }
       .promo h3 { max-width: 14ch; }
       .promociones__lista { grid-template-columns: 1fr; }
@@ -413,7 +417,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
       .promociones__encabezado { display: block; }
       .promociones__controles { margin-top: 18px; }
       .promo__datos { grid-template-columns: 1fr; }
-      .promo__arte { min-height: 260px; }
+      .promo__arte { min-height: 0; }
       .promo__sello {
         width: 86px;
         height: 86px;
@@ -453,5 +457,11 @@ export class PromoCarruselComponent implements OnInit, OnDestroy {
   anterior(): void {
     const total = this.promos().length;
     if (total) { this.indice.set((this.indice() - 1 + total) % total); }
+  }
+
+  whatsappPromo(promo: { titulo: string; precio?: number }): string {
+    const precio = promo.precio ? ` a ${soles(promo.precio)}` : '';
+    const texto = `Hola, quiero consultar y reservar la promocion ${promo.titulo}${precio}.`;
+    return `https://wa.me/51945189720?text=${encodeURIComponent(texto)}`;
   }
 }

@@ -4,9 +4,10 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   ETIQUETAS_TRATAMIENTO, LOCALES, TRATAMIENTOS, formatoFechaLarga, soles
 } from '../../data/datos';
-import { CategoriaTratamiento, Local, Tratamiento } from '../../data/modelos';
+import { CategoriaTratamiento, Local, Promocion, Tratamiento } from '../../data/modelos';
 import { Bloque, DisponibilidadService } from '../../compartido/disponibilidad.service';
 import { SesionService } from '../../compartido/sesion.service';
+import { PromocionesService } from '../../compartido/promociones.service';
 
 const CATEGORIAS: (CategoriaTratamiento | 'Todos')[] = [
   'Todos', 'Facial', 'Corporal', 'Aparatología', 'Medicina estética'
@@ -23,6 +24,7 @@ export class ReservarComponent {
   private disponibilidad = inject(DisponibilidadService);
   private ruta = inject(ActivatedRoute);
   readonly sesion = inject(SesionService);
+  private promociones = inject(PromocionesService);
 
   soles = soles;
   formatoFechaLarga = formatoFechaLarga;
@@ -35,6 +37,7 @@ export class ReservarComponent {
   paso = signal(1);
   local = signal<Local | null>(null);
   tratamiento = signal<Tratamiento | null>(null);
+  promocion = signal<Promocion | null>(null);
   categoria = signal<CategoriaTratamiento | 'Todos'>('Todos');
   etiqueta = signal<string>('Todas');
   busqueda = signal('');
@@ -92,6 +95,8 @@ export class ReservarComponent {
     return t ? t.duracionMin : 0;
   });
 
+  totalReserva = computed(() => this.promocion()?.precio ?? this.tratamiento()?.precio ?? 0);
+
   datosCompletos(): boolean {
     return !!(this.nombre && this.apellido && this.dni && this.celular);
   }
@@ -100,6 +105,20 @@ export class ReservarComponent {
     const q = this.ruta.snapshot.queryParamMap;
     const localId = Number(q.get('local'));
     const tratId = Number(q.get('tratamiento'));
+    const promoId = Number(q.get('promo'));
+
+    if (promoId) {
+      const promo = this.promociones.porId(promoId);
+      if (promo) {
+        this.promocion.set(promo);
+        const tratamientoId = promo.sesionesDetalle?.find(s => !!s.tratamientoId)?.tratamientoId;
+        const tratamiento = tratamientoId ? TRATAMIENTOS.find(t => t.id === tratamientoId) : undefined;
+        if (tratamiento) {
+          this.tratamiento.set(tratamiento);
+          this.categoria.set(tratamiento.categoria);
+        }
+      }
+    }
 
     if (localId) { this.local.set(LOCALES.find(l => l.id === localId) ?? null); }
     if (tratId) { this.tratamiento.set(TRATAMIENTOS.find(t => t.id === tratId) ?? null); }
@@ -115,6 +134,7 @@ export class ReservarComponent {
 
   elegirTratamiento(t: Tratamiento): void {
     this.tratamiento.set(t);
+    this.promocion.set(null);
     this.bloque.set(null);
     this.paso.set(3);
   }
@@ -154,6 +174,7 @@ export class ReservarComponent {
     this.paso.set(1);
     this.local.set(null);
     this.tratamiento.set(null);
+    this.promocion.set(null);
     this.bloque.set(null);
     this.categoria.set('Todos');
     this.etiqueta.set('Todas');
@@ -165,5 +186,13 @@ export class ReservarComponent {
     this.celular = u?.celular ?? '';
     this.correo = u?.correo ?? '';
     this.observaciones = '';
+  }
+
+  whatsappReserva(): string {
+    const promo = this.promocion();
+    const t = this.tratamiento();
+    const detalle = promo ? `la promocion ${promo.titulo}` : `el tratamiento ${t?.nombre ?? ''}`;
+    const texto = `Hola, quiero reservar ${detalle}. Mi nombre es ${this.nombre || ''} ${this.apellido || ''}.`;
+    return `https://wa.me/51945189720?text=${encodeURIComponent(texto)}`;
   }
 }

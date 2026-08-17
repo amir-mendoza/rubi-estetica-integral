@@ -26,6 +26,9 @@
 
         <div class="resumen-final">
           <div class="dato"><span class="dato__label">Paciente</span><span class="dato__valor">{{ nombre }} {{ apellido }}</span></div>
+          @if (promocion()) {
+            <div class="dato"><span class="dato__label">Promoción</span><span class="dato__valor">{{ promocion()?.titulo }}</span></div>
+          }
           <div class="dato"><span class="dato__label">Tratamiento</span><span class="dato__valor">{{ tratamiento()?.nombre }}</span></div>
           <div class="dato"><span class="dato__label">Fecha</span><span class="dato__valor">{{ formatoFechaLarga(fecha()) }}</span></div>
           <div class="dato"><span class="dato__label">Hora de llegada</span><span class="dato__valor">{{ bloque()?.inicio }}</span></div>
@@ -61,6 +64,17 @@
             <div class="bloque">
               <h3>1. Elige la sede</h3>
               <p>Selecciona el local donde deseas atenderte.</p>
+              @if (promocion()) {
+                <div class="promo-reserva">
+                  <img [src]="promocion()?.imagen" [alt]="promocion()?.titulo">
+                  <div>
+                    <span class="dato__label">Promoción seleccionada</span>
+                    <strong>{{ promocion()?.titulo }}</strong>
+                    <p>{{ promocion()?.subtitulo }}</p>
+                    <b>{{ soles(totalReserva()) }}</b>
+                  </div>
+                </div>
+              }
               <div class="grid grid-2">
                 @for (l of locales; track l.id) {
                   <button class="opcion" [class.opcion--activa]="local()?.id === l.id" (click)="elegirLocal(l)">
@@ -216,7 +230,7 @@
                   <strong>Pagar en línea con Izipay</strong>
                   <span>Tarjeta de crédito o débito. La cita se marca como pagada solo cuando Izipay confirma la operación.</span>
                 </div>
-                <div class="opcion__precio">{{ soles(tratamiento()?.precio || 0) }}</div>
+                <div class="opcion__precio">{{ soles(totalReserva()) }}</div>
               </button>
 
               <button class="opcion opcion--fila" [class.opcion--activa]="metodoPago === 'Local'" (click)="metodoPago = 'Local'">
@@ -224,8 +238,12 @@
                   <strong>Pagar en efectivo en el local</strong>
                   <span>Tu cita queda registrada como pendiente de pago y recepción la marca como pagada al cobrarte.</span>
                 </div>
-                <div class="opcion__precio">{{ soles(tratamiento()?.precio || 0) }}</div>
+                <div class="opcion__precio">{{ soles(totalReserva()) }}</div>
               </button>
+
+              <a class="btn btn--linea btn--sm" [href]="whatsappReserva()" target="_blank" rel="noopener">
+                Coordinar esta reserva por WhatsApp
+              </a>
 
               <div class="aviso" style="margin:22px 0">
                 Prototipo de demostración: no se ejecuta ningún cobro real ni se guardan datos.
@@ -247,6 +265,9 @@
             <h4>Resumen de tu reserva</h4>
 
             <div class="resumen__fila"><span>Sede</span><strong>{{ local()?.nombre || '—' }}</strong></div>
+            @if (promocion()) {
+              <div class="resumen__fila"><span>Promoción</span><strong>{{ promocion()?.titulo }}</strong></div>
+            }
             <div class="resumen__fila"><span>Tratamiento</span><strong>{{ tratamiento()?.nombre || '—' }}</strong></div>
             <div class="resumen__fila"><span>Fecha</span><strong>{{ bloque() ? formatoFechaLarga(fecha()) : '—' }}</strong></div>
             <div class="resumen__fila"><span>Hora de llegada</span><strong>{{ bloque()?.inicio || '—' }}</strong></div>
@@ -259,7 +280,7 @@
 
             <div class="resumen__total">
               <span>Total</span>
-              <strong>{{ soles(tratamiento()?.precio || 0) }}</strong>
+              <strong>{{ soles(totalReserva()) }}</strong>
             </div>
           </div>
 

@@ -79,8 +79,9 @@ import { PlanesService } from '../../compartido/planes.service';
               <input type="email" [ngModel]="formCorreo()" (ngModelChange)="formCorreo.set($event)" name="formCorreo" placeholder="correo@ejemplo.com">
             </div>
             <div class="campo">
-              <label>Sede del Plan</label>
+              <label>Sede del plan (opcional)</label>
               <select [ngModel]="formLocalId()" (ngModelChange)="formLocalId.set(Number($event))" name="formLocalId">
+                <option [value]="0">Por definir / se decide al reservar</option>
                 @for (l of locales; track l.id) {
                   <option [value]="l.id">{{ l.nombre }}</option>
                 }
@@ -251,11 +252,14 @@ import { PlanesService } from '../../compartido/planes.service';
           @if (plan.notas) { <p class="plan__notas">{{ plan.notas }}</p> }
           <div class="plan__acciones">
             <button class="btn btn--linea btn--sm" (click)="planes.programarSiguiente(plan.id)">
-              Programar siguiente sesión
+              Programar siguiente sesión según intervalo
             </button>
             @if (plan.precioTotal - plan.pagado > 0) {
               <button class="btn btn--vino btn--sm" (click)="cobrar(plan)">
-                Registrar pago en efectivo de una sesión
+                Cobrar cuota sugerida en recepción
+              </button>
+              <button class="btn btn--linea btn--sm" (click)="cobrarSaldo(plan)">
+                Marcar saldo completo pagado
               </button>
             }
           </div>
@@ -341,7 +345,7 @@ export class SesionesComponent {
   formApellido = signal('');
   formCelular = signal('');
   formCorreo = signal('');
-  formLocalId = signal(1);
+  formLocalId = signal(0);
   formBaseCarga = signal('Personalizado');
   formNombrePlan = signal('');
   formIntervaloDias = signal(15);
@@ -364,7 +368,7 @@ export class SesionesComponent {
   constructor(public planes: PlanesService) {}
 
   sede(id: number): string {
-    return LOCALES.find(l => l.id === id)?.nombre ?? '—';
+    return id ? (LOCALES.find(l => l.id === id)?.nombre ?? '—') : 'Por definir';
   }
 
   dni(pacienteId: number): string {
@@ -372,8 +376,13 @@ export class SesionesComponent {
   }
 
   cobrar(plan: PlanSesiones): void {
-    const cuota = Math.round(plan.precioTotal / plan.sesiones.length);
+    const saldo = plan.precioTotal - plan.pagado;
+    const cuota = Math.min(saldo, Math.round(plan.precioTotal / plan.sesiones.length));
     this.planes.registrarPago(plan.id, cuota);
+  }
+
+  cobrarSaldo(plan: PlanSesiones): void {
+    this.planes.registrarPago(plan.id, plan.precioTotal - plan.pagado);
   }
 
   claseEstadoPlan(estado: string): string {

@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LOCALES, cabinasDeSede, cupoDeSede } from '../../data/datos';
+import { MarcaService } from '../../compartido/marca.service';
 
 @Component({
   selector: 'app-configuracion',
@@ -38,6 +39,60 @@ import { LOCALES, cabinasDeSede, cupoDeSede } from '../../data/datos';
           <div class="campo"><label>TikTok</label><input type="text" value="@rubiesteticaintegral"></div>
           <div class="campo"><label>Facebook</label><input type="text" value="Rubí Estética Integral"></div>
           <div class="campo"><label>WhatsApp de reservas</label><input type="text" value="+51 945 189 720"></div>
+        </div>
+      </div>
+    }
+
+    @if (pestana() === 'Marca') {
+      <div class="grid-config">
+        <div class="panel">
+          <h4>Logo principal de la web</h4>
+          <div class="marca-preview marca-preview--web">
+            <img [src]="marca.logoSitio()" alt="Logo actual de Rubí">
+          </div>
+          <div class="campo">
+            <label>Ruta o URL del logo</label>
+            <input type="text" [ngModel]="logoRuta()" (ngModelChange)="logoRuta.set($event)" placeholder="img/logo-rubi-transparente.png">
+            <span class="campo__ayuda">Usa PNG transparente para que se vea bien sobre fondo blanco, vino o cualquier sección.</span>
+          </div>
+          <div class="campo">
+            <label>Cargar logo desde tu equipo</label>
+            <input type="file" accept="image/*" (change)="cargarLogo($event)">
+          </div>
+          <div class="acciones-marca">
+            <button class="btn btn--vino btn--sm" (click)="guardarLogo()">Guardar logo web</button>
+            <button class="btn btn--linea btn--sm" (click)="logoRuta.set('img/logo-rubi-transparente.png'); guardarLogo()">Usar logo oficial</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h4>Icono de pestaña / favicon</h4>
+          <div class="marca-preview marca-preview--favicon">
+            <img [src]="marca.faviconSitio()" alt="Favicon actual">
+            <span>Vista aproximada del icono que aparece en la pestaña del navegador.</span>
+          </div>
+          <div class="campo">
+            <label>Ruta o URL del favicon</label>
+            <input type="text" [ngModel]="faviconRuta()" (ngModelChange)="faviconRuta.set($event)" placeholder="favicon.svg">
+            <span class="campo__ayuda">Recomendado: imagen cuadrada PNG/SVG de 32x32 o 64x64.</span>
+          </div>
+          <div class="campo">
+            <label>Cargar icono desde tu equipo</label>
+            <input type="file" accept="image/*" (change)="cargarFavicon($event)">
+          </div>
+          <div class="acciones-marca">
+            <button class="btn btn--vino btn--sm" (click)="guardarFavicon()">Guardar favicon</button>
+            <button class="btn btn--linea btn--sm" (click)="faviconRuta.set('favicon.svg'); guardarFavicon()">Usar favicon actual</button>
+          </div>
+        </div>
+
+        <div class="panel marca-nota">
+          <h4>Cómo se guardará luego</h4>
+          <p>
+            En este prototipo se guarda en el navegador para probar el flujo. Cuando conectemos Spring Boot,
+            estas imágenes se subirán al backend, se guardará su URL en MySQL y toda la web leerá esa configuración.
+          </p>
+          <button class="btn btn--linea btn--sm" (click)="restablecerMarca()">Restablecer marca por defecto</button>
         </div>
       </div>
     }
@@ -183,15 +238,57 @@ import { LOCALES, cabinasDeSede, cupoDeSede } from '../../data/datos';
     .horario-config__fila { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
     .horario-config__fila span { font-size: .84rem; color: var(--gris); }
     .horario-config__fila input { border: 1px solid var(--linea); border-radius: var(--radio); padding: .45rem .6rem; font-family: inherit; font-size: .84rem; }
+    .marca-preview {
+      display: grid;
+      place-items: center;
+      min-height: 138px;
+      margin: 16px 0 20px;
+      border: 1px dashed var(--linea);
+      border-radius: var(--radio-lg);
+      background:
+        linear-gradient(45deg, #f7f4f6 25%, transparent 25%),
+        linear-gradient(-45deg, #f7f4f6 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f7f4f6 75%),
+        linear-gradient(-45deg, transparent 75%, #f7f4f6 75%);
+      background-size: 24px 24px;
+      background-position: 0 0, 0 12px, 12px -12px, -12px 0;
+    }
+    .marca-preview--web img { max-width: min(360px, 86%); max-height: 90px; object-fit: contain; }
+    .marca-preview--favicon {
+      grid-template-columns: 72px 1fr;
+      gap: 16px;
+      justify-items: start;
+      padding: 20px;
+      min-height: 112px;
+    }
+    .marca-preview--favicon img {
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: var(--sombra);
+    }
+    .marca-preview--favicon span { color: var(--gris); font-size: .86rem; }
+    .acciones-marca { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .marca-nota { grid-column: 1 / -1; }
+    .marca-nota p { max-width: 78ch; }
     @media (max-width: 1100px) { .grid-config { grid-template-columns: 1fr; } }
   `]
 })
 export class ConfiguracionComponent {
+  constructor(public marca: MarcaService) {
+    this.logoRuta.set(this.marca.logoSitio());
+    this.faviconRuta.set(this.marca.faviconSitio());
+  }
+
   locales = LOCALES;
   cupo = cupoDeSede;
   cabinas = (localId: number) => cabinasDeSede(localId).length;
-  pestanas = ['Negocio', 'Agenda', 'Pagos', 'Usuarios', 'Sincronización'];
+  pestanas = ['Negocio', 'Marca', 'Agenda', 'Pagos', 'Usuarios', 'Sincronización'];
   pestana = signal('Negocio');
+  logoRuta = signal('');
+  faviconRuta = signal('');
 
   usuarios = [
     { nombre: 'Rubí Salazar', usuario: 'rubi.admin', rol: 'Administradora', local: 'Ambas sedes', permisos: 'Acceso total' },
@@ -200,4 +297,41 @@ export class ConfiguracionComponent {
     { nombre: 'Ana Torres', usuario: 'ana.especialista', rol: 'Especialista', local: 'Sede Las Flores 1522', permisos: 'Sus citas y observaciones' },
     { nombre: 'Lucía Ramos', usuario: 'lucia.especialista', rol: 'Especialista', local: 'Sede Las Flores 1544', permisos: 'Sus citas y observaciones' }
   ];
+
+  guardarLogo(): void {
+    this.marca.cambiarLogo(this.logoRuta());
+  }
+
+  guardarFavicon(): void {
+    this.marca.cambiarFavicon(this.faviconRuta());
+  }
+
+  cargarLogo(evento: Event): void {
+    this.cargarImagen(evento, ruta => {
+      this.logoRuta.set(ruta);
+      this.guardarLogo();
+    });
+  }
+
+  cargarFavicon(evento: Event): void {
+    this.cargarImagen(evento, ruta => {
+      this.faviconRuta.set(ruta);
+      this.guardarFavicon();
+    });
+  }
+
+  restablecerMarca(): void {
+    this.marca.restablecer();
+    this.logoRuta.set(this.marca.logoSitio());
+    this.faviconRuta.set(this.marca.faviconSitio());
+  }
+
+  private cargarImagen(evento: Event, listo: (ruta: string) => void): void {
+    const input = evento.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+    if (!archivo) { return; }
+    const lector = new FileReader();
+    lector.onload = () => listo(String(lector.result || ''));
+    lector.readAsDataURL(archivo);
+  }
 }

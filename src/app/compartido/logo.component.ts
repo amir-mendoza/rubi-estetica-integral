@@ -1,11 +1,12 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
+import { MarcaService } from './marca.service';
 
 @Component({
   selector: 'app-logo',
   standalone: true,
   template: `
     <span class="logo" [class.logo--claro]="claro" [class.logo--sm]="compacto">
-      <img src="img/logo-rubi-oficial.png" alt="Rubí Estética Integral">
+      <img [src]="marca.logoSitio()" alt="Rubí Estética Integral">
     </span>
   `,
   styles: [`
@@ -28,12 +29,12 @@ import { Component, Input } from '@angular/core';
       height: 72px;
       padding: 8px;
       border-radius: var(--radio);
-      background: #fff;
     }
     .logo--sm { width: 150px; height: 46px; }
   `]
 })
 export class LogoComponent {
+  marca = inject(MarcaService);
   @Input() claro = false;
   @Input() compacto = false;
 }

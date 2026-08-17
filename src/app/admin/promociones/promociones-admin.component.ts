@@ -146,8 +146,23 @@ function promocionVacia(): Promocion {
             <select [ngModel]="borrador().imagen" (ngModelChange)="editar('imagen', $event)" name="imagen">
               @for (i of imagenes; track i.ruta) { <option [value]="i.ruta">{{ i.nombre }}</option> }
             </select>
-            <span class="campo__ayuda">Imágenes referenciales del prototipo. Después se cargarán las fotos reales.</span>
+            <span class="campo__ayuda">Puedes elegir una imagen guardada o pegar una ruta/URL. En Spring Boot esto será una subida real al servidor.</span>
           </div>
+
+          <div class="promo-form__fila">
+            <div class="campo">
+              <label>Ruta o URL personalizada</label>
+              <input placeholder="img/nueva-promo.jpg o https://..."
+                     [ngModel]="imagenPersonalizada()" (ngModelChange)="imagenPersonalizada.set($event)" name="imagenPersonalizada">
+            </div>
+            <div class="campo">
+              <label>Subir imagen de prueba</label>
+              <input type="file" accept="image/*" (change)="subirImagen($event)">
+            </div>
+          </div>
+          <button type="button" class="btn btn--linea btn--sm" (click)="usarImagenPersonalizada()" [disabled]="!imagenPersonalizada().trim()">
+            Usar esta imagen
+          </button>
 
           <div class="interruptores">
             <label>
@@ -176,7 +191,7 @@ function promocionVacia(): Promocion {
           <span class="dato__label">Así se verá en el carrusel</span>
         </div>
         <div class="vista-previa">
-          <img class="img-cobertura" [src]="borrador().imagen" [alt]="borrador().titulo || 'Vista previa'">
+          <img [src]="borrador().imagen" [alt]="borrador().titulo || 'Vista previa'">
           <div class="vista-previa__velo"></div>
           <div class="vista-previa__texto">
             <span class="vista-previa__etiqueta">{{ borrador().etiqueta || 'Etiqueta' }}</span>
@@ -263,7 +278,7 @@ function promocionVacia(): Promocion {
     .interruptores { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; font-size: .84rem; color: var(--gris); }
     .interruptores label { display: flex; align-items: center; gap: 9px; }
     .vista-previa { position: relative; margin: 20px 22px 24px; height: 260px; border-radius: var(--radio-lg); overflow: hidden; }
-    .vista-previa img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .vista-previa img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #fff; padding: 10px; }
     .vista-previa__velo { position: absolute; inset: 0; background: linear-gradient(100deg, rgba(77,13,39,.92), rgba(110,19,56,.35)); }
     .vista-previa__texto { position: relative; padding: 26px; color: #fff; }
     .vista-previa__texto h4 { color: #fff; margin-bottom: 6px; }
@@ -298,11 +313,20 @@ export class PromocionesAdminComponent {
     { nombre: 'Drenaje linfático', ruta: 'img/trat-drenaje.jpg' },
     { nombre: 'Tens Booster', ruta: 'img/trat-tens.jpg' },
     { nombre: 'Dermapen', ruta: 'img/trat-dermapen.jpg' },
-    { nombre: 'Plasma rico en plaquetas', ruta: 'img/trat-plasma.jpg' }
+    { nombre: 'Plasma rico en plaquetas', ruta: 'img/trat-plasma.jpg' },
+    { nombre: 'Promo Botox + HIFU', ruta: 'img/promo-botox-hifu.jpg' },
+    { nombre: 'Promo reducción de medidas', ruta: 'img/promo-reduce-medidas.jpg' },
+    { nombre: 'Promo HIFU + PDRN', ruta: 'img/promo-hifu-pdrn.jpg' },
+    { nombre: 'Promo lifting 360', ruta: 'img/promo-lifting-360.jpg' },
+    { nombre: 'Promo HIFU + cóctel', ruta: 'img/promo-hifu-coctel.jpg' },
+    { nombre: 'Promo Tens Booster', ruta: 'img/promo-tens-booster.jpg' },
+    { nombre: 'Promo limpieza profunda', ruta: 'img/promo-limpieza-profunda.jpg' },
+    { nombre: 'Promo plasma + colágeno', ruta: 'img/promo-plasma-colageno.jpg' }
   ];
 
   borrador = signal<Promocion>(promocionVacia());
   aviso = signal('');
+  imagenPersonalizada = signal('');
 
   lista = computed(() => this.promociones.promociones());
   activas = computed(() => this.lista().filter(p => p.activa).length);
@@ -322,7 +346,26 @@ export class PromocionesAdminComponent {
 
   cargar(p: Promocion): void {
     this.borrador.set({ ...p });
+    this.imagenPersonalizada.set(p.imagen);
     this.aviso.set('');
+  }
+
+  usarImagenPersonalizada(): void {
+    this.editar('imagen', this.imagenPersonalizada().trim());
+  }
+
+  subirImagen(evento: Event): void {
+    const input = evento.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+    if (!archivo) { return; }
+    const lector = new FileReader();
+    lector.onload = () => {
+      const imagen = String(lector.result || '');
+      this.imagenPersonalizada.set(imagen);
+      this.editar('imagen', imagen);
+      this.aviso.set('Imagen cargada para vista previa. En producción se guardará en el servidor.');
+    };
+    lector.readAsDataURL(archivo);
   }
 
   guardar(): void {
