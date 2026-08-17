@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { LogoComponent } from '../../compartido/logo.component';
 import { SesionService } from '../../compartido/sesion.service';
@@ -17,12 +17,14 @@ interface Seccion {
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss'
 })
-export class AdminLayoutComponent {
+export class AdminLayoutComponent implements OnInit, OnDestroy {
   readonly sesion = inject(SesionService);
   private router = inject(Router);
 
   colapsado = signal(false);
   rol = signal<'Administrador' | 'Recepcionista' | 'Especialista'>('Administrador');
+  ahora = signal(new Date());
+  private reloj?: ReturnType<typeof setInterval>;
 
   secciones: Seccion[] = [
     { ruta: '/admin/dashboard', texto: 'Dashboard', icono: 'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z', grupo: 'Operación' },
@@ -44,6 +46,32 @@ export class AdminLayoutComponent {
 
   seccionesDe(grupo: Seccion['grupo']): Seccion[] {
     return this.secciones.filter(s => s.grupo === grupo);
+  }
+
+  ngOnInit(): void {
+    this.reloj = setInterval(() => this.ahora.set(new Date()), 1000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.reloj) { clearInterval(this.reloj); }
+  }
+
+  fechaActual(): string {
+    return new Intl.DateTimeFormat('es-PE', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    }).format(this.ahora());
+  }
+
+  horaActual(): string {
+    return new Intl.DateTimeFormat('es-PE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).format(this.ahora());
   }
 
   cerrarSesion(): void {

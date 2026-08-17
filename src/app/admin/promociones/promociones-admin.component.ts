@@ -1,6 +1,6 @@
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HOY_ISO, soles } from '../../data/datos';
+import { HOY_ISO, TRATAMIENTOS, soles } from '../../data/datos';
 import { CategoriaTratamiento, Promocion } from '../../data/modelos';
 import { PromocionesService } from '../../compartido/promociones.service';
 
@@ -124,8 +124,47 @@ function promocionVacia(): Promocion {
             <div class="campo">
               <label>Sesiones</label>
               <input type="number" min="1"
-                     [ngModel]="borrador().sesiones" (ngModelChange)="editar('sesiones', $event)" name="sesiones">
+                     [ngModel]="borrador().sesiones" (ngModelChange)="actualizarCantidadSesiones($event)" name="sesiones">
             </div>
+          </div>
+
+          <div class="sesiones-editor">
+            <div class="sesiones-editor__cabecera">
+              <div>
+                <span class="dato__label">Detalle de sesiones</span>
+                <h4>Qué incluye cada sesión</h4>
+              </div>
+              <button type="button" class="btn btn--linea btn--sm" (click)="agregarSesion()">Agregar sesión</button>
+            </div>
+
+            @for (s of sesionesDetalle(); track $index; let i = $index) {
+              <div class="sesion-edit">
+                <div class="sesion-edit__numero">{{ i + 1 }}</div>
+                <div class="campo">
+                  <label>Título de la sesión</label>
+                  <input [ngModel]="s.titulo" (ngModelChange)="editarSesion(i, 'titulo', $event)"
+                         name="sesionTitulo_{{ i }}" placeholder="Sesión 1 · Hidrolipoclasia">
+                </div>
+                <div class="campo">
+                  <label>Tratamiento relacionado</label>
+                  <select [ngModel]="s.tratamientoId || 0" (ngModelChange)="editarSesionTratamiento(i, $event)"
+                          name="sesionTratamiento_{{ i }}">
+                    <option [value]="0">Sin tratamiento específico</option>
+                    @for (t of tratamientos; track t.id) { <option [value]="t.id">{{ t.nombre }}</option> }
+                  </select>
+                </div>
+                <div class="campo sesion-edit__descripcion">
+                  <label>Breve descripción</label>
+                  <textarea rows="2" [ngModel]="s.descripcion" (ngModelChange)="editarSesion(i, 'descripcion', $event)"
+                            name="sesionDescripcion_{{ i }}" placeholder="Qué se realiza y para qué sirve"></textarea>
+                </div>
+                <button type="button" class="boton-icono boton-icono--peligro" (click)="eliminarSesion(i)">Eliminar</button>
+              </div>
+            } @empty {
+              <div class="sesiones-editor__vacio">
+                Agrega al menos una sesión si la promoción incluye pasos o tratamientos diferentes.
+              </div>
+            }
           </div>
 
           <div class="promo-form__fila">
@@ -276,6 +315,43 @@ function promocionVacia(): Promocion {
     .promo-form__fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
     .promo-form__acciones { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
     .promo-form__aviso { font-size: .8rem; color: var(--ok); }
+    .sesiones-editor {
+      margin: 18px 0;
+      padding: 18px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      background: var(--rosa-50);
+    }
+    .sesiones-editor__cabecera {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .sesiones-editor__cabecera h4 { margin: 2px 0 0; }
+    .sesion-edit {
+      display: grid;
+      grid-template-columns: 34px minmax(170px, 1fr) minmax(170px, .8fr) 72px;
+      gap: 12px;
+      align-items: end;
+      padding: 14px 0;
+      border-top: 1px dashed var(--linea);
+    }
+    .sesion-edit__numero {
+      width: 30px; height: 30px; border-radius: 50%;
+      display: grid; place-items: center; align-self: center;
+      background: var(--magenta); color: #fff; font-size: .8rem; font-weight: 700;
+    }
+    .sesion-edit__descripcion { grid-column: 2 / 4; }
+    .sesiones-editor__vacio {
+      border: 1px dashed var(--linea);
+      border-radius: var(--radio);
+      padding: 14px;
+      color: var(--gris);
+      font-size: .86rem;
+      background: #fff;
+    }
     .interruptores { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; font-size: .84rem; color: var(--gris); }
     .interruptores label { display: flex; align-items: center; gap: 9px; }
     .vista-previa {
@@ -321,10 +397,16 @@ function promocionVacia(): Promocion {
     .vacio { text-align: center; color: var(--gris-claro); padding: 26px 0; }
     @media (max-width: 1200px) { .kpis-4 { grid-template-columns: repeat(2, 1fr); } .promo-columnas { grid-template-columns: 1fr; } }
     @media (max-width: 720px) { .vista-previa { grid-template-columns: 1fr; } }
+    @media (max-width: 760px) {
+      .sesiones-editor__cabecera { align-items: flex-start; flex-direction: column; }
+      .sesion-edit { grid-template-columns: 34px 1fr; }
+      .sesion-edit__descripcion { grid-column: 2; }
+    }
   `]
 })
 export class PromocionesAdminComponent {
   soles = soles;
+  tratamientos = TRATAMIENTOS;
   categorias: Categoria[] = ['Facial', 'Corporal', 'Aparatología', 'Medicina estética', 'General'];
 
   imagenes = [
@@ -363,13 +445,63 @@ export class PromocionesAdminComponent {
     this.borrador.update(p => ({ ...p, [campo]: valor }));
   }
 
+  sesionesDetalle(): NonNullable<Promocion['sesionesDetalle']> {
+    return this.borrador().sesionesDetalle ?? [];
+  }
+
+  actualizarCantidadSesiones(valor: string | number): void {
+    const cantidad = Math.max(1, Number(valor) || 1);
+    this.borrador.update(p => {
+      const actuales = p.sesionesDetalle ?? [];
+      const sesionesDetalle = Array.from({ length: cantidad }, (_, i) => actuales[i] ?? {
+        titulo: `Sesión ${i + 1}`,
+        descripcion: '',
+        tratamientoId: undefined
+      });
+      return { ...p, sesiones: cantidad, sesionesDetalle };
+    });
+  }
+
+  agregarSesion(): void {
+    this.borrador.update(p => {
+      const sesionesDetalle = [...(p.sesionesDetalle ?? []), {
+        titulo: `Sesión ${(p.sesionesDetalle?.length ?? 0) + 1}`,
+        descripcion: '',
+        tratamientoId: undefined
+      }];
+      return { ...p, sesiones: sesionesDetalle.length, sesionesDetalle };
+    });
+  }
+
+  eliminarSesion(index: number): void {
+    this.borrador.update(p => {
+      const sesionesDetalle = (p.sesionesDetalle ?? []).filter((_, i) => i !== index);
+      return { ...p, sesiones: Math.max(1, sesionesDetalle.length || 1), sesionesDetalle };
+    });
+  }
+
+  editarSesion(index: number, campo: 'titulo' | 'descripcion', valor: string): void {
+    this.borrador.update(p => ({
+      ...p,
+      sesionesDetalle: (p.sesionesDetalle ?? []).map((s, i) => i === index ? { ...s, [campo]: valor } : s)
+    }));
+  }
+
+  editarSesionTratamiento(index: number, valor: string | number): void {
+    const tratamientoId = Number(valor) || undefined;
+    this.borrador.update(p => ({
+      ...p,
+      sesionesDetalle: (p.sesionesDetalle ?? []).map((s, i) => i === index ? { ...s, tratamientoId } : s)
+    }));
+  }
+
   nueva(): void {
     this.borrador.set(promocionVacia());
     this.aviso.set('');
   }
 
   cargar(p: Promocion): void {
-    this.borrador.set({ ...p });
+    this.borrador.set({ ...p, sesionesDetalle: p.sesionesDetalle?.map(s => ({ ...s })) });
     this.imagenPersonalizada.set(p.imagen);
     this.aviso.set('');
   }

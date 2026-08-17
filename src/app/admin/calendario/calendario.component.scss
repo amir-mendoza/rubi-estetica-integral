@@ -1,24 +1,24 @@
-.calendario-grid { display: grid; grid-template-columns: 460px 1fr; gap: 20px; align-items: start; }
+.calendario-grid { display: grid; grid-template-columns: minmax(520px, .9fr) 1.35fr; gap: 24px; align-items: start; }
 
 /* Calendario */
 .calendario { position: sticky; top: 96px; }
 .calendario__cabecera { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-.calendario__cabecera h3 { margin: 0; font-size: 1.35rem; }
+.calendario__cabecera h3 { margin: 0; font-size: 1.55rem; }
 .nav-mes {
   background: none; border: 1px solid var(--linea); border-radius: var(--radio);
   width: 32px; height: 32px; cursor: pointer; color: var(--vino); font-size: 1.1rem; line-height: 1;
 }
 .nav-mes:hover { border-color: var(--magenta); color: var(--magenta); }
 
-.calendario__semana { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 8px; }
+.calendario__semana { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 8px; }
 .calendario__semana span {
-  text-align: center; font-size: .64rem; letter-spacing: .14em;
+  text-align: center; font-size: .7rem; letter-spacing: .14em;
   text-transform: uppercase; color: var(--gris-claro);
 }
-.calendario__dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.calendario__dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
 
 .celda {
-  position: relative; min-height: 66px; padding: 6px 4px 4px;
+  position: relative; min-height: 82px; padding: 9px 6px 7px;
   background: #fff; border: 1px solid var(--linea); border-radius: var(--radio);
   cursor: pointer; font-family: inherit; text-align: center;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -26,13 +26,13 @@
 }
 .celda:hover { border-color: var(--magenta-300); }
 .celda--fuera { opacity: .38; }
-.celda__num { font-size: .92rem; color: var(--tinta); }
-.celda__citas { font-size: .62rem; color: var(--magenta); letter-spacing: .04em; }
-.celda__monto { font-size: .6rem; color: var(--gris-claro); }
-.celda__punto { width: 5px; height: 5px; border-radius: 50%; background: var(--ok); margin-top: auto; }
+.celda__num { font-size: 1.08rem; color: var(--tinta); font-weight: 700; }
+.celda__citas { font-size: .72rem; color: var(--magenta); letter-spacing: .02em; font-weight: 600; }
+.celda__monto { font-size: .68rem; color: var(--gris-claro); font-weight: 600; }
+.celda__punto { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); margin-top: auto; }
 .celda__punto--pendiente { background: var(--alerta); }
 .celda--hoy { border-color: var(--magenta); }
-.celda--hoy .celda__num { color: var(--magenta); font-weight: 500; }
+.celda--hoy .celda__num { color: var(--magenta); font-weight: 800; }
 .celda--activa { background: var(--vino); border-color: var(--vino); }
 .celda--activa .celda__num, .celda--activa .celda__citas, .celda--activa .celda__monto { color: #fff; }
 

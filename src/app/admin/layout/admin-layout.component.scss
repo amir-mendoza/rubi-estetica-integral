@@ -62,6 +62,25 @@
 }
 .topbar__buscador input { border: none; outline: none; flex: 1; font-family: inherit; font-size: .88rem; background: none; }
 .topbar__acciones { margin-left: auto; display: flex; align-items: center; gap: 26px; }
+.topbar__reloj {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+  padding-right: 2px;
+}
+.topbar__reloj span {
+  color: var(--gris-claro);
+  font-size: .66rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.topbar__reloj strong {
+  color: var(--vino);
+  font-size: .98rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
 .topbar__rol { display: flex; align-items: center; gap: 10px; }
 .topbar__rol label { font-size: .66rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris-claro); }
 .topbar__rol select {
@@ -82,5 +101,5 @@
   .admin { grid-template-columns: 78px 1fr; }
   .lateral__enlace span, .lateral__grupo-titulo, .lateral__pie { display: none; }
   .lateral__enlace { justify-content: center; }
-  .topbar__buscador, .topbar__rol { display: none; }
+  .topbar__buscador, .topbar__rol, .topbar__reloj { display: none; }
 }

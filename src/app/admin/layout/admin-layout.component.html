@@ -40,6 +40,10 @@
       </div>
 
       <div class="topbar__acciones">
+        <div class="topbar__reloj">
+          <span>{{ fechaActual() }}</span>
+          <strong>{{ horaActual() }}</strong>
+        </div>
         <div class="topbar__rol">
           <label>Rol</label>
           <select [value]="rol()" (change)="rol.set($any($event.target).value)">
