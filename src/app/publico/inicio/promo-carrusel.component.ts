@@ -127,7 +127,6 @@ import { PromocionesService } from '../../compartido/promociones.service';
     }
     .promociones__marco {
       position: relative;
-      min-height: 430px;
       border: 1px solid var(--linea);
       border-radius: var(--radio-lg);
       background: #fff;
@@ -135,26 +134,21 @@ import { PromocionesService } from '../../compartido/promociones.service';
       overflow: hidden;
     }
     .promo {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      grid-template-columns: minmax(320px, .95fr) minmax(0, 1.05fr);
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity .45s ease, visibility .45s ease;
+      display: none;
+      grid-template-columns: minmax(300px, 470px) minmax(0, 1fr);
+      align-items: stretch;
     }
     .promo--activa {
-      opacity: 1;
-      visibility: visible;
-      z-index: 1;
+      display: grid;
     }
     .promo__arte {
       position: relative;
-      min-height: 430px;
-      overflow: hidden;
+      min-height: 0;
+      overflow: visible;
       background: #fff;
       display: grid;
       place-items: center;
+      padding: 18px;
     }
     .promo__arte::after {
       content: '';
@@ -166,9 +160,9 @@ import { PromocionesService } from '../../compartido/promociones.service';
     .promo__arte img {
       width: 100%;
       height: auto;
-      max-height: min(74vh, 680px);
+      max-height: min(78vh, 720px);
       object-fit: contain;
-      padding: 14px;
+      padding: 0;
     }
     .promo__sello {
       position: absolute;
@@ -192,7 +186,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
     }
     .promo__contenido {
       align-self: center;
-      padding: 52px;
+      padding: 52px 52px 34px;
     }
     .promo__etiqueta {
       display: inline-flex;
@@ -335,12 +329,10 @@ import { PromocionesService } from '../../compartido/promociones.service';
       color: #fff;
     }
     .promo__puntos {
-      position: absolute;
-      right: 34px;
-      bottom: 24px;
-      z-index: 2;
       display: flex;
+      justify-content: center;
       gap: 9px;
+      padding: 0 24px 28px;
     }
     .promo__puntos button {
       width: 34px;
@@ -401,17 +393,13 @@ import { PromocionesService } from '../../compartido/promociones.service';
       .promociones__encabezado { align-items: flex-start; }
       .promo {
         grid-template-columns: 1fr;
-        position: relative;
-        display: none;
       }
-      .promo--activa { display: grid; }
-      .promociones__marco { min-height: 0; }
       .promo__arte { min-height: 0; }
       .promo__arte img { max-height: none; }
-      .promo__contenido { padding: 34px 28px 58px; }
+      .promo__contenido { padding: 34px 28px 24px; }
       .promo h3 { max-width: 14ch; }
       .promociones__lista { grid-template-columns: 1fr; }
-      .promo__puntos { left: 28px; right: auto; bottom: 28px; }
+      .promo__puntos { justify-content: flex-start; padding-left: 28px; }
     }
     @media (max-width: 640px) {
       .promociones__encabezado { display: block; }
@@ -425,7 +413,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
         bottom: 16px;
         font-size: .66rem;
       }
-      .promo__contenido { padding: 28px 22px 58px; }
+      .promo__contenido { padding: 28px 22px 24px; }
       .promo__acciones .btn { width: 100%; }
     }
   `]

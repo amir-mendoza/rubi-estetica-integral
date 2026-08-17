@@ -191,8 +191,9 @@ function promocionVacia(): Promocion {
           <span class="dato__label">Así se verá en el carrusel</span>
         </div>
         <div class="vista-previa">
-          <img [src]="borrador().imagen" [alt]="borrador().titulo || 'Vista previa'">
-          <div class="vista-previa__velo"></div>
+          <div class="vista-previa__imagen">
+            <img [src]="borrador().imagen" [alt]="borrador().titulo || 'Vista previa'">
+          </div>
           <div class="vista-previa__texto">
             <span class="vista-previa__etiqueta">{{ borrador().etiqueta || 'Etiqueta' }}</span>
             <h4>{{ borrador().titulo || 'Título de la promoción' }}</h4>
@@ -277,19 +278,41 @@ function promocionVacia(): Promocion {
     .promo-form__aviso { font-size: .8rem; color: var(--ok); }
     .interruptores { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; font-size: .84rem; color: var(--gris); }
     .interruptores label { display: flex; align-items: center; gap: 9px; }
-    .vista-previa { position: relative; margin: 20px 22px 24px; height: 260px; border-radius: var(--radio-lg); overflow: hidden; }
-    .vista-previa img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #fff; padding: 10px; }
-    .vista-previa__velo { position: absolute; inset: 0; background: linear-gradient(100deg, rgba(77,13,39,.92), rgba(110,19,56,.35)); }
-    .vista-previa__texto { position: relative; padding: 26px; color: #fff; }
-    .vista-previa__texto h4 { color: #fff; margin-bottom: 6px; }
-    .vista-previa__texto p { color: rgba(255,255,255,.8); font-size: .88rem; }
+    .vista-previa {
+      display: grid;
+      grid-template-columns: minmax(220px, .9fr) minmax(0, 1fr);
+      gap: 0;
+      margin: 20px 22px 24px;
+      min-height: 300px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      overflow: hidden;
+      background: #fff;
+    }
+    .vista-previa__imagen {
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: var(--rosa-50);
+    }
+    .vista-previa img {
+      width: 100%;
+      max-height: 360px;
+      object-fit: contain;
+      border-radius: var(--radio);
+      background: #fff;
+    }
+    .vista-previa__texto { padding: 28px; color: var(--tinta); align-self: center; }
+    .vista-previa__texto h4 { color: var(--vino); margin-bottom: 6px; }
+    .vista-previa__texto p { color: var(--gris); font-size: .88rem; }
     .vista-previa__etiqueta {
-      display: inline-block; border: 1px solid rgba(255,255,255,.5); border-radius: 999px;
+      display: inline-block; border: 1px solid rgba(176,27,114,.3); border-radius: 999px;
       padding: 4px 12px; font-size: .64rem; letter-spacing: .16em; text-transform: uppercase; margin-bottom: 14px;
+      color: var(--magenta);
     }
     .vista-previa__precio { display: flex; align-items: baseline; gap: 10px; }
-    .vista-previa__precio strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.7rem; }
-    .vista-previa__precio s { color: rgba(255,255,255,.65); font-size: .84rem; }
+    .vista-previa__precio strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.7rem; color: var(--magenta); }
+    .vista-previa__precio s { color: var(--gris-claro); font-size: .84rem; }
     .fila-prod { display: flex; gap: 12px; align-items: center; }
     .fila-prod img { width: 52px; height: 40px; border-radius: var(--radio); object-fit: cover; background: var(--rosa-50); }
     .estados-promo { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
@@ -297,6 +320,7 @@ function promocionVacia(): Promocion {
     .boton-icono--peligro { color: var(--error); }
     .vacio { text-align: center; color: var(--gris-claro); padding: 26px 0; }
     @media (max-width: 1200px) { .kpis-4 { grid-template-columns: repeat(2, 1fr); } .promo-columnas { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) { .vista-previa { grid-template-columns: 1fr; } }
   `]
 })
 export class PromocionesAdminComponent {
