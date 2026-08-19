@@ -37,7 +37,7 @@
 }
 .cabecera__logo { display: inline-flex; flex: none; }
 
-.navegacion { display: flex; gap: 30px; min-width: 0; }
+.navegacion { display: flex; gap: 30px; flex: none; }
 .navegacion a {
   position: relative;
   font-size: .82rem;
@@ -218,6 +218,11 @@
 }
 
 /* ------------------------------------------------------------- Responsive */
+@media (max-width: 1480px) {
+  .cabecera__interior { gap: 20px; }
+  .navegacion { gap: 22px; }
+  .navegacion a { font-size: .74rem; letter-spacing: .12em; }
+}
 @media (max-width: 1180px) {
   .navegacion { gap: 20px; }
   .navegacion a { font-size: .72rem; letter-spacing: .1em; }
