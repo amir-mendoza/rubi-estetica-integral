@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
-  DIAS_SEMANA, HOY_ISO, LOCALES, MESES, TRATAMIENTOS, aISO, cupoDeSede,
+  DIAS_SEMANA, HOY_ISO, LOCALES, MESES, PACIENTES, TRATAMIENTOS, aISO, cupoDeSede,
   formatoFechaLarga, localPorId, nombreCabina, nombreEspecialista,
   pacientePorId, soles, tratamientoPorId
 } from '../../data/datos';
@@ -63,6 +63,7 @@ export class CalendarioComponent {
   pagoCodigo = signal<Record<number, string>>({});
   editFecha = signal<Record<number, string>>({});
   editHora = signal<Record<number, string>>({});
+  manualPacienteEncontrado = signal<Paciente | null>(null);
 
   manualDni = '';
   manualCelular = '';
@@ -205,26 +206,26 @@ export class CalendarioComponent {
     this.manualTotal = this.manualTratamientos().reduce((total, id) => total + (tratamientoPorId(id)?.precio ?? 0), 0);
   }
 
+  buscarPacienteManual(dni: string): void {
+    this.manualDni = dni.replace(/\D/g, '').slice(0, 8);
+    if (this.manualDni.length < 8) {
+      this.manualPacienteEncontrado.set(null);
+      return;
+    }
+
+    const paciente = this.buscarPacientePorDni(this.manualDni);
+    this.manualPacienteEncontrado.set(paciente ?? null);
+    if (paciente) {
+      this.manualNombre = `${paciente.nombre} ${paciente.apellido}`.trim();
+      this.manualCelular = paciente.celular;
+    }
+  }
+
   registrarCitaManual(): void {
     if (!this.manualFecha || !this.manualHora) {
       return;
     }
-    const [nombre, ...resto] = this.manualNombre.trim().split(/\s+/);
-    const pacienteId = 9000 + this.pacientesManuales().length + 1;
-    const paciente: Paciente = {
-      id: pacienteId,
-      nombre: nombre || 'Paciente',
-      apellido: resto.join(' ') || '',
-      dni: this.manualDni,
-      celular: this.manualCelular,
-      correo: '',
-      fechaRegistro: HOY_ISO,
-      observaciones: 'Registro creado desde recepción.',
-      citasTotales: 1,
-      ultimaVisita: this.manualFecha,
-      totalGastado: Number(this.manualPagado)
-    };
-    this.pacientesManuales.update(lista => [paciente, ...lista]);
+    const paciente = this.obtenerOPrepararPacienteManual();
     const principal = this.manualTratamientos()[0];
     const duracion = Math.max(...this.manualTratamientos().map(id => tratamientoPorId(id)?.duracionMin ?? 60));
     const fin = this.sumarMinutos(this.manualHora, duracion);
@@ -232,7 +233,7 @@ export class CalendarioComponent {
       fecha: this.manualFecha,
       horaInicio: this.manualHora,
       horaFin: fin,
-      pacienteId,
+      pacienteId: paciente.id,
       tratamientoId: principal,
       tratamientosIncluidos: [...this.manualTratamientos()],
       localId: Number(this.manualLocalId),
@@ -246,18 +247,76 @@ export class CalendarioComponent {
       codigoOperacion: this.manualPagado > 0 ? `${this.manualMetodo.toUpperCase().replace(/\s/g, '-')}-${Date.now().toString().slice(-5)}` : undefined,
       pagadaEl: this.manualPagado > 0 ? `${HOY_ISO} ${new Date().toTimeString().slice(0, 5)}` : undefined,
       origen: 'Recepción',
-      notas: this.manualTratamientos().length > 1 ? 'Cita manual con varios tratamientos.' : undefined
+      notas: this.notaCitaManual(paciente)
     });
     this.diaSeleccionado.set(this.manualFecha);
     this.mostrarManual.set(false);
     this.manualDni = '';
     this.manualCelular = '';
     this.manualNombre = '';
+    this.manualPacienteEncontrado.set(null);
     this.manualFecha = '';
     this.manualHora = '';
     this.manualPagado = 0;
     this.manualTratamientos.set([TRATAMIENTOS[0]?.id ?? 1]);
     this.recalcularManual();
+  }
+
+  private buscarPacientePorDni(dni: string): Paciente | undefined {
+    return PACIENTES.find(p => p.dni === dni) ?? this.pacientesManuales().find(p => p.dni === dni);
+  }
+
+  private obtenerOPrepararPacienteManual(): Paciente {
+    const existente = this.buscarPacientePorDni(this.manualDni);
+    if (existente) {
+      this.actualizarResumenPaciente(existente.id);
+      return existente;
+    }
+
+    const [nombre, ...resto] = this.manualNombre.trim().split(/\s+/);
+    const paciente: Paciente = {
+      id: 9000 + this.pacientesManuales().length + 1,
+      nombre: nombre || 'Paciente',
+      apellido: resto.join(' ') || '',
+      dni: this.manualDni,
+      celular: this.manualCelular,
+      correo: '',
+      fechaRegistro: HOY_ISO,
+      observaciones: 'Paciente temporal creado desde recepción. Sugerir crear cuenta web para conservar historial completo; sin cuenta se priorizan las 2 últimas citas.',
+      citasTotales: 1,
+      ultimaVisita: this.manualFecha,
+      totalGastado: Number(this.manualPagado)
+    };
+    this.pacientesManuales.update(lista => [paciente, ...lista]);
+    return paciente;
+  }
+
+  private actualizarResumenPaciente(pacienteId: number): void {
+    const actualizar = (p: Paciente): Paciente => ({
+      ...p,
+      citasTotales: p.citasTotales + 1,
+      ultimaVisita: this.manualFecha,
+      totalGastado: p.totalGastado + Number(this.manualPagado)
+    });
+    const manual = this.pacientesManuales().some(p => p.id === pacienteId);
+    if (manual) {
+      this.pacientesManuales.update(lista => lista.map(p => p.id === pacienteId ? actualizar(p) : p));
+      return;
+    }
+
+    const idx = PACIENTES.findIndex(p => p.id === pacienteId);
+    if (idx >= 0) {
+      PACIENTES[idx] = actualizar(PACIENTES[idx]);
+    }
+  }
+
+  private notaCitaManual(paciente: Paciente): string {
+    const varias = this.manualTratamientos().length > 1 ? 'Cita manual con varios tratamientos. ' : '';
+    const esTemporal = !PACIENTES.some(p => p.id === paciente.id);
+    if (esTemporal) {
+      return `${varias}Paciente sin cuenta web: recepción debe ofrecer registro para conservar historial completo. Sin cuenta, se muestran como referencia las 2 últimas atenciones.`;
+    }
+    return `${varias}Paciente encontrada por DNI; datos autocompletados desde el registro existente.`;
   }
 
   abrirReprogramacion(cita: Cita): void {

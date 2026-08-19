@@ -26,9 +26,23 @@
       <div class="aviso-fecha">
         Selecciona fecha y hora de llegada. La cita se guardará exactamente con esos datos y no se registrará si falta alguno.
       </div>
-      <div class="campo"><label>DNI</label><input required maxlength="8" [(ngModel)]="manualDni" name="manualDni"></div>
+      <div class="aviso-cuenta">
+        Antes de registrar, pregunta si la paciente ya tiene cuenta web. Si no la tiene, ofrece crearla para que conserve su historial completo de tratamientos, sesiones y compras.
+      </div>
+      <div class="campo"><label>DNI</label><input required maxlength="8" [ngModel]="manualDni" (ngModelChange)="buscarPacienteManual($event)" name="manualDni" placeholder="Busca y autocompleta"></div>
       <div class="campo"><label>Celular</label><input required [(ngModel)]="manualCelular" name="manualCelular"></div>
       <div class="campo cita-manual__ancho"><label>Nombre completo</label><input required [(ngModel)]="manualNombre" name="manualNombre"></div>
+      @if (manualPacienteEncontrado()) {
+        <div class="estado-cuenta estado-cuenta--ok">
+          <strong>Paciente encontrada</strong>
+          <span>Se autocompletaron sus datos. Esta cita quedará asociada a su historial del sistema.</span>
+        </div>
+      } @else if (manualDni.length === 8) {
+        <div class="estado-cuenta estado-cuenta--alerta">
+          <strong>Paciente sin cuenta registrada</strong>
+          <span>Se puede atender hoy como registro temporal. Recuérdale que con cuenta web conserva su historial completo; sin cuenta se usarán como referencia solo sus 2 últimas atenciones.</span>
+        </div>
+      }
       <div class="campo">
         <label>Local</label>
         <select [(ngModel)]="manualLocalId" name="manualLocalId">

@@ -19,6 +19,28 @@
   font-weight: 700;
   font-size: .88rem;
 }
+.aviso-cuenta {
+  grid-column: 1 / -1;
+  padding: 12px 14px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  background: #fff;
+  color: var(--gris);
+  font-size: .86rem;
+}
+.estado-cuenta {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--radio);
+  font-size: .84rem;
+}
+.estado-cuenta strong { color: var(--vino); white-space: nowrap; }
+.estado-cuenta span { color: var(--gris); }
+.estado-cuenta--ok { border: 1px solid rgba(44, 139, 93, .24); background: rgba(44, 139, 93, .08); }
+.estado-cuenta--alerta { border: 1px solid rgba(184, 124, 35, .28); background: #fffaf2; }
 .cita-manual__ancho { grid-column: span 2; }
 .cita-manual__tratamientos { grid-column: 1 / -1; border: 1px solid var(--linea); border-radius: var(--radio); padding: 14px; background: var(--rosa-50); }
 .cita-manual__sub { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 10px; }
