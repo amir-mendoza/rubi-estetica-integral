@@ -8,25 +8,16 @@
   align-items: end;
   padding: 20px 22px 24px;
 }
-.aviso-fecha {
-  grid-column: 1 / -1;
-  padding: 12px 14px;
-  border: 1px solid rgba(176, 27, 114, .24);
-  border-left: 4px solid var(--magenta);
-  border-radius: var(--radio);
-  background: var(--rosa-50);
-  color: var(--vino);
-  font-weight: 700;
-  font-size: .88rem;
-}
 .aviso-cuenta {
   grid-column: 1 / -1;
   padding: 12px 14px;
   border: 1px solid var(--linea);
+  border-left: 4px solid var(--magenta);
   border-radius: var(--radio);
   background: #fff;
   color: var(--gris);
   font-size: .86rem;
+  line-height: 1.55;
 }
 .estado-cuenta {
   grid-column: 1 / -1;

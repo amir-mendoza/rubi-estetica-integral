@@ -20,6 +20,7 @@ function promocionVacia(): Promocion {
     vigenciaDesde: HOY_ISO,
     vigenciaHasta: HOY_ISO,
     imagen: 'img/trat-limpieza.jpg',
+    nombreImagen: 'Imagen de promoción',
     etiqueta: 'Promoción del mes',
     destacada: true,
     activa: true
@@ -67,6 +68,31 @@ function promocionVacia(): Promocion {
       </div>
     </div>
 
+    <section class="tabla-panel categorias-panel">
+      <div class="tabla-panel__cabecera">
+        <div>
+          <h3>Categorías de promoción</h3>
+          <span class="dato__label">Úsalas para ordenar promociones y filtros futuros</span>
+        </div>
+      </div>
+      <div class="categorias-admin">
+        <div class="categorias-admin__lista">
+          @for (c of categorias(); track c) {
+            <span class="categoria-chip">
+              {{ c }}
+              @if (!categoriaUsada(c)) {
+                <button type="button" (click)="eliminarCategoria(c)" aria-label="Eliminar categoría">×</button>
+              }
+            </span>
+          }
+        </div>
+        <div class="categorias-admin__nuevo">
+          <input placeholder="Nueva categoría" [(ngModel)]="nuevaCategoria" name="nuevaCategoriaPromo">
+          <button type="button" class="btn btn--linea btn--sm" (click)="agregarCategoria()" [disabled]="!nuevaCategoria.trim()">Agregar categoría</button>
+        </div>
+      </div>
+    </section>
+
     <div class="promo-columnas">
       <!-- ------------------------------------------------------ Formulario -->
       <section class="tabla-panel">
@@ -100,7 +126,7 @@ function promocionVacia(): Promocion {
             <div class="campo">
               <label>Categoría</label>
               <select [ngModel]="borrador().categoria" (ngModelChange)="editar('categoria', $event)" name="categoria">
-                @for (c of categorias; track c) { <option [value]="c">{{ c }}</option> }
+                @for (c of categorias(); track c) { <option [value]="c">{{ c }}</option> }
               </select>
             </div>
             <div class="campo">
@@ -189,6 +215,11 @@ function promocionVacia(): Promocion {
           </div>
 
           <div class="promo-form__fila">
+            <div class="campo">
+              <label>Nombre interno de la imagen</label>
+              <input placeholder="Ej. Promo lifting facial agosto"
+                     [ngModel]="borrador().nombreImagen" (ngModelChange)="editar('nombreImagen', $event)" name="nombreImagen">
+            </div>
             <div class="campo">
               <label>Ruta o URL personalizada</label>
               <input placeholder="img/nueva-promo.jpg o https://..."
@@ -310,6 +341,18 @@ function promocionVacia(): Promocion {
   `,
   styles: [`
     .kpis-4 { grid-template-columns: repeat(4, 1fr); margin-bottom: 22px; }
+    .categorias-panel { margin-bottom: 22px; }
+    .categorias-admin { display: grid; grid-template-columns: 1fr minmax(280px, .5fr); gap: 16px; padding: 18px 22px 22px; align-items: start; }
+    .categorias-admin__lista { display: flex; flex-wrap: wrap; gap: 8px; }
+    .categoria-chip {
+      display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--linea);
+      border-radius: 999px; padding: 7px 10px 7px 13px; background: #fff; color: var(--gris); font-size: .78rem;
+    }
+    .categoria-chip button {
+      border: 0; background: var(--rosa-50); color: var(--error); width: 20px; height: 20px;
+      border-radius: 50%; cursor: pointer; line-height: 1;
+    }
+    .categorias-admin__nuevo { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
     .promo-columnas { display: grid; grid-template-columns: 1.25fr 1fr; gap: 22px; margin-bottom: 22px; align-items: start; }
     .promo-form { padding: 20px 22px 24px; }
     .promo-form__fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
@@ -395,7 +438,7 @@ function promocionVacia(): Promocion {
     .tachado { display: block; text-decoration: line-through; color: var(--gris-claro); font-size: .74rem; }
     .boton-icono--peligro { color: var(--error); }
     .vacio { text-align: center; color: var(--gris-claro); padding: 26px 0; }
-    @media (max-width: 1200px) { .kpis-4 { grid-template-columns: repeat(2, 1fr); } .promo-columnas { grid-template-columns: 1fr; } }
+    @media (max-width: 1200px) { .kpis-4 { grid-template-columns: repeat(2, 1fr); } .promo-columnas, .categorias-admin { grid-template-columns: 1fr; } }
     @media (max-width: 720px) { .vista-previa { grid-template-columns: 1fr; } }
     @media (max-width: 760px) {
       .sesiones-editor__cabecera { align-items: flex-start; flex-direction: column; }
@@ -407,7 +450,8 @@ function promocionVacia(): Promocion {
 export class PromocionesAdminComponent {
   soles = soles;
   tratamientos = TRATAMIENTOS;
-  categorias: Categoria[] = ['Facial', 'Corporal', 'Aparatología', 'Medicina estética', 'General'];
+  categorias = signal<Categoria[]>(['Facial', 'Corporal', 'Aparatología', 'Medicina estética', 'General']);
+  nuevaCategoria = '';
 
   imagenes = [
     { nombre: 'Limpieza facial', ruta: 'img/trat-limpieza.jpg' },
@@ -440,6 +484,26 @@ export class PromocionesAdminComponent {
   multisesion = computed(() => this.lista().filter(p => (p.sesiones || 1) > 1).length);
 
   constructor(public promociones: PromocionesService) {}
+
+  agregarCategoria(): void {
+    const nombre = this.nuevaCategoria.trim();
+    if (!nombre || this.categorias().some(c => c.toLowerCase() === nombre.toLowerCase())) { return; }
+    this.categorias.update(lista => [...lista, nombre as Categoria]);
+    this.editar('categoria', nombre as Categoria);
+    this.nuevaCategoria = '';
+  }
+
+  eliminarCategoria(categoria: Categoria): void {
+    if (this.categoriaUsada(categoria)) { return; }
+    this.categorias.update(lista => lista.filter(c => c !== categoria));
+    if (this.borrador().categoria === categoria) {
+      this.editar('categoria', this.categorias()[0] ?? 'General');
+    }
+  }
+
+  categoriaUsada(categoria: Categoria): boolean {
+    return this.lista().some(p => p.categoria === categoria);
+  }
 
   editar<K extends keyof Promocion>(campo: K, valor: Promocion[K]): void {
     this.borrador.update(p => ({ ...p, [campo]: valor }));
@@ -519,6 +583,7 @@ export class PromocionesAdminComponent {
       const imagen = String(lector.result || '');
       this.imagenPersonalizada.set(imagen);
       this.editar('imagen', imagen);
+      this.editar('nombreImagen', archivo.name);
       this.aviso.set('Imagen cargada para vista previa. En producción se guardará en el servidor.');
     };
     lector.readAsDataURL(archivo);

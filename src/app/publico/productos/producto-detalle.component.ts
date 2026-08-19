@@ -47,6 +47,29 @@ import { CarritoService } from '../../compartido/carrito.service';
                 <li>Por ahora no realizamos envíos a domicilio</li>
               </ul>
             </div>
+
+            @if (p.beneficios?.length || p.modoUso?.length || p.recomendaciones?.length) {
+              <div class="detalle-prod__info">
+                @if (p.beneficios?.length) {
+                  <div>
+                    <h4>Beneficios</h4>
+                    <ul>@for (b of p.beneficios; track b) { <li>{{ b }}</li> }</ul>
+                  </div>
+                }
+                @if (p.modoUso?.length) {
+                  <div>
+                    <h4>Modo de uso</h4>
+                    <ul>@for (u of p.modoUso; track u) { <li>{{ u }}</li> }</ul>
+                  </div>
+                }
+                @if (p.recomendaciones?.length) {
+                  <div>
+                    <h4>Recomendaciones</h4>
+                    <ul>@for (r of p.recomendaciones; track r) { <li>{{ r }}</li> }</ul>
+                  </div>
+                }
+              </div>
+            }
           </div>
         </div>
       </section>
@@ -76,9 +99,10 @@ import { CarritoService } from '../../compartido/carrito.service';
     .detalle-prod__imagen img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
     .detalle-prod__acciones { display: flex; gap: 14px; margin: 28px 0; flex-wrap: wrap; }
     .detalle-prod__entrega { border-top: 1px solid var(--linea); padding-top: 22px; }
-    .detalle-prod__entrega ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-    .detalle-prod__entrega li { font-size: .9rem; color: var(--gris); padding-left: 18px; position: relative; }
-    .detalle-prod__entrega li::before { content: ''; position: absolute; left: 0; top: 10px; width: 6px; height: 6px; border-radius: 50%; background: var(--magenta-300); }
+    .detalle-prod__entrega ul, .detalle-prod__info ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    .detalle-prod__entrega li, .detalle-prod__info li { font-size: .9rem; color: var(--gris); padding-left: 18px; position: relative; }
+    .detalle-prod__entrega li::before, .detalle-prod__info li::before { content: ''; position: absolute; left: 0; top: 10px; width: 6px; height: 6px; border-radius: 50%; background: var(--magenta-300); }
+    .detalle-prod__info { display: grid; gap: 18px; margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--linea); }
     @media (max-width: 960px) { .detalle-prod { grid-template-columns: 1fr; gap: 32px; } }
   `]
 })

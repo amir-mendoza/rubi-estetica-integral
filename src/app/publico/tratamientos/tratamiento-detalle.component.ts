@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ESPECIALISTAS, TRATAMIENTOS, soles, tratamientoPorId } from '../../data/datos';
+import { TRATAMIENTOS, soles, tratamientoPorId } from '../../data/datos';
 
 @Component({
   selector: 'app-tratamiento-detalle',
@@ -70,22 +70,6 @@ import { ESPECIALISTAS, TRATAMIENTOS, soles, tratamientoPorId } from '../../data
           </div>
 
           <aside class="detalle__aside">
-            <div class="panel">
-              <h4>Especialistas que lo realizan</h4>
-              <div class="aside-esp">
-                @for (e of especialistas(); track e.id) {
-                  <div class="aside-esp__item">
-                    <img class="img-cobertura" [src]="e.foto" [alt]="e.nombre">
-                    <div>
-                      <strong>{{ e.nombre }} {{ e.apellido }}</strong>
-                      <span>{{ e.especialidad }}</span>
-                    </div>
-                  </div>
-                }
-                @if (!especialistas().length) { <p>Consulta disponibilidad en recepción.</p> }
-              </div>
-            </div>
-
             <div class="panel" style="margin-top:24px">
               <h4>Antes de tu cita</h4>
               <p class="aviso">
@@ -150,11 +134,6 @@ import { ESPECIALISTAS, TRATAMIENTOS, soles, tratamientoPorId } from '../../data
       width: 8px; height: 8px; border-radius: 50%; background: var(--magenta-300);
     }
     .lista-marcada--sobria li::before { background: var(--linea); }
-    .aside-esp { display: grid; gap: 18px; }
-    .aside-esp__item { display: flex; gap: 14px; align-items: center; }
-    .aside-esp__item img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; }
-    .aside-esp__item strong { display: block; font-size: .95rem; font-weight: 500; }
-    .aside-esp__item span { font-size: .78rem; color: var(--gris-claro); }
     @media (max-width: 960px) {
       .detalle__grid, .detalle__contenido { grid-template-columns: 1fr; gap: 36px; }
       .detalle__datos { grid-template-columns: 1fr; }
@@ -169,6 +148,5 @@ export class TratamientoDetalleComponent {
   tratamiento = computed(() =>
     tratamientoPorId(Number(this.parametros().get('id'))) ?? TRATAMIENTOS[0]
   );
-  especialistas = computed(() => ESPECIALISTAS.filter(e => e.tratamientos.includes(this.tratamiento().id)));
   relacionados = computed(() => TRATAMIENTOS.filter(t => t.id !== this.tratamiento().id).slice(0, 3));
 }

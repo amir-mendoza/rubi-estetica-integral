@@ -72,7 +72,8 @@ export type CategoriaTratamiento =
   | 'Facial'
   | 'Corporal'
   | 'Aparatología'
-  | 'Medicina estética';
+  | 'Medicina estética'
+  | (string & {});
 
 export interface Habitacion {
   id: number;
@@ -84,6 +85,7 @@ export interface Habitacion {
 
 export interface Especialista {
   id: number;
+  dni?: string;
   nombre: string;
   apellido: string;
   especialidad: string;
@@ -111,6 +113,7 @@ export interface Tratamiento {
   precio: number;
   precioAntes?: number;
   imagen: string;
+  nombreImagen?: string;
   destacado: boolean;
   activo: boolean;
 }
@@ -125,6 +128,10 @@ export interface Producto {
   precioAntes?: number;
   stock: number;
   imagen: string;
+  nombreImagen?: string;
+  beneficios?: string[];
+  recomendaciones?: string[];
+  modoUso?: string[];
   activo: boolean;
 }
 
@@ -219,6 +226,7 @@ export interface Promocion {
   vigenciaDesde: string;
   vigenciaHasta: string;
   imagen: string;
+  nombreImagen?: string;
   etiqueta: string;
   destacada: boolean;
   activa: boolean;

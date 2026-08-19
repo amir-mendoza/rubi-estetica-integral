@@ -54,10 +54,31 @@ function cabinaVacia(localId: number): Habitacion {
           <div class="campo"><label>Referencia</label><input [ngModel]="localForm().referencia" (ngModelChange)="editarLocal('referencia', $event)" name="referencia"></div>
           <div class="campo"><label>Distrito</label><input [ngModel]="localForm().distrito" (ngModelChange)="editarLocal('distrito', $event)" name="distrito"></div>
           <div class="campo"><label>Teléfono / WhatsApp</label><input [ngModel]="localForm().telefono" (ngModelChange)="editarLocal('telefono', $event)" name="telefono"></div>
-          <div class="campo"><label>Apertura</label><input type="time" [ngModel]="localForm().horario[0].apertura" (ngModelChange)="editarHorario('apertura', $event)" name="apertura"></div>
-          <div class="campo"><label>Cierre</label><input type="time" [ngModel]="localForm().horario[0].cierre" (ngModelChange)="editarHorario('cierre', $event)" name="cierre"></div>
+          <label class="check check--247"><input type="checkbox" [checked]="es247()" (change)="alternar247()"> Local 24/7</label>
+          @if (es247()) {
+            <div class="local-form__247-label">Abierto todo el día, todos los días</div>
+          } @else {
+            <div class="campo"><label>Apertura</label><input type="time" [ngModel]="localForm().horario[0].apertura" (ngModelChange)="editarHorario('apertura', $event)" name="apertura"></div>
+            <div class="campo"><label>Cierre</label><input type="time" [ngModel]="localForm().horario[0].cierre" (ngModelChange)="editarHorario('cierre', $event)" name="cierre"></div>
+          }
           <div class="campo"><label>Latitud</label><input type="number" step="0.000001" [ngModel]="localForm().latitud" (ngModelChange)="editarLocal('latitud', Number($event))" name="latitud"></div>
           <div class="campo"><label>Longitud</label><input type="number" step="0.000001" [ngModel]="localForm().longitud" (ngModelChange)="editarLocal('longitud', Number($event))" name="longitud"></div>
+          <div class="campo local-form__ancho"><label>Link de Google Maps</label><input [ngModel]="localForm().mapa" (ngModelChange)="editarLocal('mapa', $event)" name="mapa" placeholder="Pega el link o usa latitud/longitud"></div>
+          <div class="local-form__imagen">
+            <span class="dato__label">Imagen del local</span>
+            <img [src]="localForm().imagen" [alt]="localForm().nombre || 'Local'">
+            <input [ngModel]="localForm().imagen" (ngModelChange)="editarLocal('imagen', $event)" name="imagenLocal" placeholder="img/local-1.jpg">
+            <label class="btn btn--linea btn--sm">
+              Subir foto
+              <input type="file" accept="image/*" (change)="cargarImagenLocal($event)" hidden>
+            </label>
+          </div>
+          @if (!localForm().id) {
+            <div class="campo">
+              <label>Cabinas iniciales</label>
+              <input type="number" min="1" [(ngModel)]="cabinasIniciales" name="cabinasIniciales">
+            </div>
+          }
           <label class="check"><input type="checkbox" [ngModel]="localForm().activo" (ngModelChange)="editarLocal('activo', $event)" name="activo"> Local operativo</label>
           <button class="btn btn--vino btn--sm" type="submit" [disabled]="!localForm().nombre || !localForm().direccion">Guardar local</button>
         </form>
@@ -158,7 +179,16 @@ function cabinaVacia(localId: number): Habitacion {
     .panel-form { margin-bottom: 22px; }
     .local-form, .cabina-form { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 14px; padding: 20px 22px 24px; align-items: end; }
     .cabina-form__ancho { grid-column: span 2; }
+    .local-form__ancho, .local-form__imagen { grid-column: 1 / -1; }
+    .local-form__247-label {
+      min-height: 42px; display: flex; align-items: center; padding: 0 14px;
+      border: 1px solid rgba(176, 27, 114, .22); border-radius: var(--radio); background: var(--rosa-50);
+      color: var(--vino); font-weight: 700; font-size: .86rem;
+    }
+    .local-form__imagen { display: grid; grid-template-columns: 180px 1fr auto; gap: 12px; align-items: end; }
+    .local-form__imagen img { width: 180px; height: 120px; object-fit: cover; border-radius: var(--radio); border: 1px solid var(--linea); background: var(--rosa-50); }
     .check { display: flex; gap: 8px; align-items: center; color: var(--gris); font-size: .86rem; }
+    .check--247 { min-height: 42px; }
     .local { margin-bottom: 20px; }
     .local__cabecera { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
     .local__cabecera h3 { margin: 0 0 4px; }
@@ -175,6 +205,7 @@ function cabinaVacia(localId: number): Habitacion {
     @media (max-width: 1200px) {
       .local__metricas { grid-template-columns: repeat(2, 1fr); }
       .local__columnas, .local-form, .cabina-form { grid-template-columns: 1fr; }
+      .local-form__imagen { grid-template-columns: 1fr; }
       .cabina-form__ancho { grid-column: auto; }
     }
   `]
@@ -188,10 +219,12 @@ export class LocalesAdminComponent {
   mostrarCabina = signal(false);
   localForm = signal<Local>(localVacio());
   cabinaForm = signal<Habitacion>(cabinaVacia(1));
+  cabinasIniciales = 5;
   private mes = HOY_ISO.slice(0, 7);
 
   nuevoLocal(): void {
     this.localForm.set(localVacio());
+    this.cabinasIniciales = 5;
     this.mostrarLocal.set(true);
   }
 
@@ -202,9 +235,14 @@ export class LocalesAdminComponent {
 
   guardarLocal(): void {
     const local = this.localForm();
+    const nuevo = !local.id;
+    const nuevoId = local.id || this.locales().reduce((max, item) => Math.max(max, item.id), 0) + 1;
     this.locales.update(lista => local.id
       ? lista.map(item => item.id === local.id ? { ...local } : item)
-      : [{ ...local, id: lista.reduce((max, item) => Math.max(max, item.id), 0) + 1 }, ...lista]);
+      : [{ ...local, id: nuevoId }, ...lista]);
+    if (nuevo) {
+      this.crearCabinasIniciales(nuevoId);
+    }
     this.mostrarLocal.set(false);
   }
 
@@ -217,6 +255,42 @@ export class LocalesAdminComponent {
       ...local,
       horario: [{ ...local.horario[0], [campo]: valor }]
     }));
+  }
+
+  es247(): boolean {
+    const horario = this.localForm().horario[0];
+    return horario.apertura === '00:00' && (horario.cierre === '24:00' || horario.cierre === '00:00');
+  }
+
+  alternar247(): void {
+    if (this.es247()) {
+      this.localForm.update(local => ({ ...local, horario: [{ ...local.horario[0], apertura: '08:00', cierre: '22:00' }] }));
+      return;
+    }
+    this.localForm.update(local => ({ ...local, horario: [{ ...local.horario[0], apertura: '00:00', cierre: '24:00' }] }));
+  }
+
+  cargarImagenLocal(evento: Event): void {
+    const archivo = (evento.target as HTMLInputElement).files?.[0];
+    if (!archivo) { return; }
+    const lector = new FileReader();
+    lector.onload = () => this.editarLocal('imagen', String(lector.result || ''));
+    lector.readAsDataURL(archivo);
+  }
+
+  private crearCabinasIniciales(localId: number): void {
+    const cantidad = Math.max(1, Number(this.cabinasIniciales) || 1);
+    this.habitaciones.update(lista => {
+      let siguienteId = lista.reduce((max, h) => Math.max(max, h.id), 0);
+      const nuevas = Array.from({ length: cantidad }, (_, i) => ({
+        id: ++siguienteId,
+        nombre: `Cabina ${i + 1}`,
+        localId,
+        equipamiento: '',
+        activa: true
+      }));
+      return [...lista, ...nuevas];
+    });
   }
 
   nuevaCabina(): void { this.crearCabina(this.locales()[0]?.id ?? 1); }

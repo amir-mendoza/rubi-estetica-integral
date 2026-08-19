@@ -1,7 +1,7 @@
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CATEGORIAS_TRATAMIENTO, CITAS, TRATAMIENTOS, soles } from '../../data/datos';
-import { Tratamiento } from '../../data/modelos';
+import { CategoriaTratamiento, Tratamiento } from '../../data/modelos';
 
 function tratamientoVacio(): Tratamiento {
   return {
@@ -17,6 +17,7 @@ function tratamientoVacio(): Tratamiento {
     limpiezaMin: 15,
     precio: 0,
     imagen: 'img/trat-limpieza.jpg',
+    nombreImagen: 'Imagen del tratamiento',
     destacado: false,
     activo: true
   };
@@ -37,6 +38,31 @@ function tratamientoVacio(): Tratamiento {
         <button class="btn btn--vino btn--sm" (click)="nuevo()">Nuevo tratamiento</button>
       </div>
     </div>
+
+    <section class="tabla-panel categorias-panel">
+      <div class="tabla-panel__cabecera">
+        <div>
+          <h3>Categorías de tratamiento</h3>
+          <span class="dato__label">Crea una categoría nueva si el tratamiento no encaja en las actuales</span>
+        </div>
+      </div>
+      <div class="categorias-admin">
+        <div class="categorias-admin__lista">
+          @for (c of categorias(); track c) {
+            <span class="categoria-chip">
+              {{ c }}
+              @if (c !== 'Todos' && !categoriaUsada(c)) {
+                <button type="button" (click)="eliminarCategoria(c)" aria-label="Eliminar categoría">×</button>
+              }
+            </span>
+          }
+        </div>
+        <div class="categorias-admin__nuevo">
+          <input placeholder="Nueva categoría" [(ngModel)]="nuevaCategoria" name="nuevaCategoriaTratamiento">
+          <button type="button" class="btn btn--linea btn--sm" (click)="agregarCategoria()" [disabled]="!nuevaCategoria.trim()">Agregar categoría</button>
+        </div>
+      </div>
+    </section>
 
     @if (mostrarAjuste()) {
       <div class="tabla-panel panel-form">
@@ -65,7 +91,7 @@ function tratamientoVacio(): Tratamiento {
           <div class="campo">
             <label>Categoría</label>
             <select [ngModel]="borrador().categoria" (ngModelChange)="editar('categoria', $event)" name="categoria">
-              <option>Facial</option><option>Corporal</option><option>Aparatología</option><option>Medicina estética</option>
+              @for (c of categoriasSinTodos(); track c) { <option [value]="c">{{ c }}</option> }
             </select>
           </div>
           <div class="campo"><label>Precio (S/)</label><input type="number" min="0" [ngModel]="borrador().precio" (ngModelChange)="editar('precio', Number($event))" name="precio"></div>
@@ -76,8 +102,37 @@ function tratamientoVacio(): Tratamiento {
             <input [ngModel]="borrador().imagen" (ngModelChange)="editar('imagen', $event)" name="imagen" placeholder="img/trat-limpieza.jpg">
             <input type="file" accept="image/*" (change)="cargarImagen($event)">
           </div>
+          <div class="campo"><label>Nombre interno de imagen</label><input [ngModel]="borrador().nombreImagen" (ngModelChange)="editar('nombreImagen', $event)" name="nombreImagen" placeholder="Ej. Foto HIFU agosto"></div>
           <div class="campo trat-form__ancho"><label>Resumen</label><input [ngModel]="borrador().resumen" (ngModelChange)="editar('resumen', $event)" name="resumen"></div>
           <div class="campo trat-form__ancho"><label>Descripción</label><textarea rows="3" [ngModel]="borrador().descripcion" (ngModelChange)="editar('descripcion', $event)" name="descripcion"></textarea></div>
+          <div class="trat-form__preview">
+            <span class="dato__label">Previsualización de imagen</span>
+            <img [src]="borrador().imagen" [alt]="borrador().nombre || 'Tratamiento'">
+          </div>
+          <div class="lista-editor">
+            <div class="lista-editor__cabecera">
+              <div><span class="dato__label">Beneficios</span><strong>Qué gana la paciente</strong></div>
+              <button type="button" class="btn btn--linea btn--sm" (click)="agregarItem('beneficios')">Agregar beneficio</button>
+            </div>
+            @for (b of borrador().beneficios; track $index; let i = $index) {
+              <div class="lista-editor__fila">
+                <input [ngModel]="b" (ngModelChange)="editarItem('beneficios', i, $event)" name="beneficio{{ i }}" placeholder="Ej. Redefine el contorno facial">
+                <button type="button" class="boton-icono boton-icono--peligro" (click)="quitarItem('beneficios', i)">Quitar</button>
+              </div>
+            }
+          </div>
+          <div class="lista-editor">
+            <div class="lista-editor__cabecera">
+              <div><span class="dato__label">Recomendaciones posteriores</span><strong>Cuidados luego del tratamiento</strong></div>
+              <button type="button" class="btn btn--linea btn--sm" (click)="agregarItem('recomendaciones')">Agregar recomendación</button>
+            </div>
+            @for (r of borrador().recomendaciones; track $index; let i = $index) {
+              <div class="lista-editor__fila">
+                <input [ngModel]="r" (ngModelChange)="editarItem('recomendaciones', i, $event)" name="recomendacion{{ i }}" placeholder="Ej. Usar protector solar SPF 50">
+                <button type="button" class="boton-icono boton-icono--peligro" (click)="quitarItem('recomendaciones', i)">Quitar</button>
+              </div>
+            }
+          </div>
           <label class="check"><input type="checkbox" [ngModel]="borrador().activo" (ngModelChange)="editar('activo', $event)" name="activo"> Activo en la web</label>
           <button class="btn btn--vino btn--sm" type="submit" [disabled]="!borrador().nombre || !borrador().precio">Guardar tratamiento</button>
         </form>
@@ -92,7 +147,7 @@ function tratamientoVacio(): Tratamiento {
       <div class="campo">
         <label>Categoría</label>
         <select [ngModel]="categoria()" (ngModelChange)="categoria.set($event)">
-          @for (c of categorias; track c) { <option>{{ c }}</option> }
+          @for (c of categorias(); track c) { <option>{{ c }}</option> }
         </select>
       </div>
     </div>
@@ -148,7 +203,12 @@ function tratamientoVacio(): Tratamiento {
     </div>
   `,
   styles: [`
-    .panel-form { margin-bottom: 22px; }
+    .panel-form, .categorias-panel { margin-bottom: 22px; }
+    .categorias-admin { display: grid; grid-template-columns: 1fr minmax(280px, .5fr); gap: 16px; padding: 18px 22px 22px; align-items: start; }
+    .categorias-admin__lista { display: flex; flex-wrap: wrap; gap: 8px; }
+    .categoria-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--linea); border-radius: 999px; padding: 7px 10px 7px 13px; background: #fff; color: var(--gris); font-size: .78rem; }
+    .categoria-chip button { border: 0; background: var(--rosa-50); color: var(--error); width: 20px; height: 20px; border-radius: 50%; cursor: pointer; line-height: 1; }
+    .categorias-admin__nuevo { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
     .form-rapido {
       display: flex;
       gap: 14px;
@@ -163,17 +223,26 @@ function tratamientoVacio(): Tratamiento {
       align-items: end;
     }
     .trat-form__ancho { grid-column: 1 / -1; }
+    .trat-form__preview, .lista-editor { grid-column: 1 / -1; }
+    .trat-form__preview { display: grid; gap: 10px; align-items: start; }
+    .trat-form__preview img { width: min(360px, 100%); max-height: 220px; object-fit: contain; border: 1px solid var(--linea); border-radius: var(--radio); background: var(--rosa-50); padding: 8px; }
+    .lista-editor { border: 1px solid var(--linea); border-radius: var(--radio); padding: 14px; background: var(--rosa-50); display: grid; gap: 10px; }
+    .lista-editor__cabecera { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .lista-editor__cabecera strong { display: block; color: var(--vino); font-size: .92rem; }
+    .lista-editor__fila { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
     .check { display: flex; gap: 8px; align-items: center; color: var(--gris); font-size: .86rem; }
+    .boton-icono--peligro { color: var(--error); }
     .fila-trat { display: flex; gap: 12px; align-items: center; max-width: 380px; }
     .fila-trat img { width: 46px; height: 46px; border-radius: var(--radio); object-fit: cover; }
     .fila-trat .mini-dato span { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-    @media (max-width: 1000px) { .trat-form { grid-template-columns: 1fr; } .form-rapido { display: grid; } }
+    @media (max-width: 1000px) { .trat-form, .categorias-admin { grid-template-columns: 1fr; } .form-rapido, .lista-editor__fila, .categorias-admin__nuevo { display: grid; grid-template-columns: 1fr; } }
   `]
 })
 export class TratamientosAdminComponent {
   Number = Number;
   soles = soles;
-  categorias = CATEGORIAS_TRATAMIENTO;
+  categorias = signal<string[]>([...CATEGORIAS_TRATAMIENTO]);
+  categoriasSinTodos = computed(() => this.categorias().filter(c => c !== 'Todos'));
   tratamientos = signal(TRATAMIENTOS.map(t => ({ ...t })));
   busqueda = signal('');
   categoria = signal('Todos');
@@ -181,6 +250,7 @@ export class TratamientosAdminComponent {
   mostrarAjuste = signal(false);
   borrador = signal<Tratamiento>(tratamientoVacio());
   porcentajeAjuste = 0;
+  nuevaCategoria = '';
 
   lista = computed(() => {
     const texto = this.busqueda().trim().toLowerCase();
@@ -189,6 +259,24 @@ export class TratamientosAdminComponent {
       (!texto || t.nombre.toLowerCase().includes(texto))
     );
   });
+
+  categoriaUsada(categoria: string): boolean {
+    return this.tratamientos().some(t => t.categoria === categoria);
+  }
+
+  agregarCategoria(): void {
+    const nombre = this.nuevaCategoria.trim();
+    if (!nombre || this.categorias().some(c => c.toLowerCase() === nombre.toLowerCase())) { return; }
+    this.categorias.update(lista => [...lista, nombre]);
+    this.editar('categoria', nombre as CategoriaTratamiento);
+    this.nuevaCategoria = '';
+  }
+
+  eliminarCategoria(categoria: string): void {
+    if (categoria === 'Todos' || this.categoriaUsada(categoria)) { return; }
+    this.categorias.update(lista => lista.filter(c => c !== categoria));
+    if (this.categoria() === categoria) { this.categoria.set('Todos'); }
+  }
 
   sesiones(id: number): number {
     const mes = new Date().toISOString().slice(0, 7);
@@ -214,11 +302,28 @@ export class TratamientosAdminComponent {
     this.borrador.update(t => ({ ...t, [campo]: valor }));
   }
 
+  agregarItem(campo: 'beneficios' | 'recomendaciones'): void {
+    this.borrador.update(t => ({ ...t, [campo]: [...t[campo], ''] }));
+  }
+
+  editarItem(campo: 'beneficios' | 'recomendaciones', index: number, valor: string): void {
+    this.borrador.update(t => ({ ...t, [campo]: t[campo].map((item, i) => i === index ? valor : item) }));
+  }
+
+  quitarItem(campo: 'beneficios' | 'recomendaciones', index: number): void {
+    this.borrador.update(t => ({ ...t, [campo]: t[campo].length === 1 ? [''] : t[campo].filter((_, i) => i !== index) }));
+  }
+
   guardar(): void {
     const t = this.borrador();
-    this.tratamientos.update(lista => t.id
-      ? lista.map(item => item.id === t.id ? { ...t } : item)
-      : [{ ...t, id: lista.reduce((max, item) => Math.max(max, item.id), 0) + 1 }, ...lista]);
+    const limpio = {
+      ...t,
+      beneficios: t.beneficios.map(v => v.trim()).filter(Boolean),
+      recomendaciones: t.recomendaciones.map(v => v.trim()).filter(Boolean)
+    };
+    this.tratamientos.update(lista => limpio.id
+      ? lista.map(item => item.id === limpio.id ? { ...limpio } : item)
+      : [{ ...limpio, id: lista.reduce((max, item) => Math.max(max, item.id), 0) + 1 }, ...lista]);
     this.cerrarFormulario();
   }
 
@@ -239,7 +344,10 @@ export class TratamientosAdminComponent {
     const archivo = (evento.target as HTMLInputElement).files?.[0];
     if (!archivo) { return; }
     const lector = new FileReader();
-    lector.onload = () => this.editar('imagen', String(lector.result || ''));
+    lector.onload = () => {
+      this.editar('imagen', String(lector.result || ''));
+      this.editar('nombreImagen', archivo.name);
+    };
     lector.readAsDataURL(archivo);
   }
 }
