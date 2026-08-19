@@ -47,6 +47,13 @@
           @for (l of locales; track l.id) { <option [value]="l.id">{{ l.nombre }}</option> }
         </select>
       </div>
+      <div class="campo">
+        <label>Origen de la cita</label>
+        <select [(ngModel)]="manualOrigen" name="manualOrigen">
+          <option>Recepción</option>
+          <option>WhatsApp</option>
+        </select>
+      </div>
       <div class="campo"><label>Fecha de llegada (obligatoria)</label><input required type="date" [(ngModel)]="manualFecha" name="manualFecha"></div>
       <div class="campo"><label>Hora de llegada (obligatoria)</label><input required type="time" [(ngModel)]="manualHora" name="manualHora"></div>
 

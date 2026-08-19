@@ -157,6 +157,9 @@ function cabinaVacia(localId: number): Habitacion {
             </span>
             <button class="boton-icono" (click)="editarLocalExistente(l)">Editar datos</button>
             <button class="boton-icono" (click)="crearCabina(l.id)">Agregar cabina</button>
+            <button class="boton-icono boton-icono--peligro" (click)="quitarLocal(l)">
+              {{ tieneCitas(l.id) ? 'Desactivar local' : 'Eliminar local' }}
+            </button>
           </div>
         </header>
 
@@ -277,6 +280,8 @@ function cabinaVacia(localId: number): Habitacion {
     .local__cabecera p { margin: 0; font-size: .88rem; }
     .local__coords { margin-top: 4px !important; font-size: .78rem !important; color: var(--gris-claro); }
     .local__acciones { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .boton-icono--peligro { color: var(--error); border-color: rgba(166,40,40,.28); }
+    .boton-icono--peligro:hover { background: var(--error-bg); border-color: var(--error); color: var(--error); }
     .local__metricas { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin: 22px 0; padding: 18px 0; border-top: 1px dashed var(--linea); border-bottom: 1px dashed var(--linea); }
     .local__metricas div { display: flex; flex-direction: column; }
     .local__metricas strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.7rem; color: var(--vino); }
@@ -327,6 +332,23 @@ export class LocalesAdminComponent {
       this.crearCabinasIniciales(nuevoId);
     }
     this.mostrarLocal.set(false);
+  }
+
+  quitarLocal(local: Local): void {
+    if (this.tieneCitas(local.id)) {
+      if (!confirm(`"${local.nombre}" tiene citas registradas. Para conservar reportes se desactivará, no se borrará. ¿Continuar?`)) { return; }
+      this.locales.update(lista => lista.map(item => item.id === local.id ? { ...item, activo: false } : item));
+      if (this.localForm().id === local.id) { this.editarLocal('activo', false); }
+      return;
+    }
+
+    if (!confirm(`¿Eliminar "${local.nombre}" y sus cabinas?`)) { return; }
+    this.locales.update(lista => lista.filter(item => item.id !== local.id));
+    this.habitaciones.update(lista => lista.filter(h => h.localId !== local.id));
+    if (this.localForm().id === local.id) {
+      this.mostrarLocal.set(false);
+      this.localForm.set(localVacio());
+    }
   }
 
   editarLocal<K extends keyof Local>(campo: K, valor: Local[K]): void {
@@ -409,6 +431,7 @@ export class LocalesAdminComponent {
   }
 
   cabinas(localId: number) { return this.habitaciones().filter(h => h.localId === localId); }
+  tieneCitas(localId: number): boolean { return CITAS.some(c => c.localId === localId); }
   googleMapsLocal(local: Local): string { return `https://www.google.com/maps?q=${local.latitud},${local.longitud}`; }
   especialistas(localId: number) { return ESPECIALISTAS.filter(e => e.locales.includes(localId)).length; }
   citasHoy(localId: number) { return CITAS.filter(c => c.localId === localId && c.fecha === HOY_ISO).length; }

@@ -1,14 +1,17 @@
 import { Injectable, signal } from '@angular/core';
 
-const LOGO_DEFAULT = 'img/logo-rubi-transparente.png';
+const LOGO_DEFAULT = 'img/logo-rubi-web-transparente.png';
+const LOGO_ADMIN_DEFAULT = 'img/logo-rubi-panel-transparente.png';
 const FAVICON_DEFAULT = 'favicon.svg';
 
 @Injectable({ providedIn: 'root' })
 export class MarcaService {
   private logoKey = 'rubi.logoSitio';
+  private logoAdminKey = 'rubi.logoAdmin';
   private faviconKey = 'rubi.faviconSitio';
 
   logoSitio = signal(this.leer(this.logoKey, LOGO_DEFAULT));
+  logoAdmin = signal(this.leer(this.logoAdminKey, LOGO_ADMIN_DEFAULT));
   faviconSitio = signal(this.leer(this.faviconKey, FAVICON_DEFAULT));
 
   constructor() {
@@ -21,6 +24,12 @@ export class MarcaService {
     this.guardar(this.logoKey, ruta);
   }
 
+  cambiarLogoAdmin(valor: string): void {
+    const ruta = valor.trim() || LOGO_ADMIN_DEFAULT;
+    this.logoAdmin.set(ruta);
+    this.guardar(this.logoAdminKey, ruta);
+  }
+
   cambiarFavicon(valor: string): void {
     const ruta = valor.trim() || FAVICON_DEFAULT;
     this.faviconSitio.set(ruta);
@@ -30,6 +39,7 @@ export class MarcaService {
 
   restablecer(): void {
     this.cambiarLogo(LOGO_DEFAULT);
+    this.cambiarLogoAdmin(LOGO_ADMIN_DEFAULT);
     this.cambiarFavicon(FAVICON_DEFAULT);
   }
 

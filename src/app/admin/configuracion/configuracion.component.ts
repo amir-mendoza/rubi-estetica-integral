@@ -61,7 +61,27 @@ import { MarcaService } from '../../compartido/marca.service';
           </div>
           <div class="acciones-marca">
             <button class="btn btn--vino btn--sm" (click)="guardarLogo()">Guardar logo web</button>
-            <button class="btn btn--linea btn--sm" (click)="logoRuta.set('img/logo-rubi-transparente.png'); guardarLogo()">Usar logo oficial</button>
+            <button class="btn btn--linea btn--sm" (click)="logoRuta.set('img/logo-rubi-web-transparente.png'); guardarLogo()">Usar logo oficial</button>
+          </div>
+        </div>
+
+        <div class="panel panel--vino">
+          <h4>Logo del panel administrador</h4>
+          <div class="marca-preview marca-preview--admin">
+            <img [src]="marca.logoAdmin()" alt="Logo actual del panel">
+          </div>
+          <div class="campo">
+            <label>Ruta o URL del logo del panel</label>
+            <input type="text" [ngModel]="logoAdminRuta()" (ngModelChange)="logoAdminRuta.set($event)" placeholder="img/logo-rubi-panel-transparente.png">
+            <span class="campo__ayuda">Este logo se usa sobre el menú vino del panel. Recomendado: PNG claro/transparente.</span>
+          </div>
+          <div class="campo">
+            <label>Cargar logo del panel</label>
+            <input type="file" accept="image/*" (change)="cargarLogoAdmin($event)">
+          </div>
+          <div class="acciones-marca">
+            <button class="btn btn--vino btn--sm" (click)="guardarLogoAdmin()">Guardar logo panel</button>
+            <button class="btn btn--linea btn--sm" (click)="logoAdminRuta.set('img/logo-rubi-panel-transparente.png'); guardarLogoAdmin()">Usar logo claro</button>
           </div>
         </div>
 
@@ -255,6 +275,11 @@ import { MarcaService } from '../../compartido/marca.service';
       background-position: 0 0, 0 12px, 12px -12px, -12px 0;
     }
     .marca-preview--web img { max-width: min(360px, 86%); max-height: 90px; object-fit: contain; }
+    .panel--vino .marca-preview {
+      background: var(--vino-900);
+      border-color: rgba(255,255,255,.16);
+    }
+    .marca-preview--admin img { max-width: min(360px, 86%); max-height: 96px; object-fit: contain; }
     .marca-preview--favicon {
       grid-template-columns: 72px 1fr;
       gap: 16px;
@@ -280,6 +305,7 @@ import { MarcaService } from '../../compartido/marca.service';
 export class ConfiguracionComponent {
   constructor(public marca: MarcaService) {
     this.logoRuta.set(this.marca.logoSitio());
+    this.logoAdminRuta.set(this.marca.logoAdmin());
     this.faviconRuta.set(this.marca.faviconSitio());
   }
 
@@ -289,6 +315,7 @@ export class ConfiguracionComponent {
   pestanas = ['Negocio', 'Marca', 'Agenda', 'Pagos', 'Usuarios', 'Sincronización'];
   pestana = signal('Negocio');
   logoRuta = signal('');
+  logoAdminRuta = signal('');
   faviconRuta = signal('');
 
   usuarios = [
@@ -303,6 +330,10 @@ export class ConfiguracionComponent {
     this.marca.cambiarLogo(this.logoRuta());
   }
 
+  guardarLogoAdmin(): void {
+    this.marca.cambiarLogoAdmin(this.logoAdminRuta());
+  }
+
   guardarFavicon(): void {
     this.marca.cambiarFavicon(this.faviconRuta());
   }
@@ -311,6 +342,13 @@ export class ConfiguracionComponent {
     this.cargarImagen(evento, ruta => {
       this.logoRuta.set(ruta);
       this.guardarLogo();
+    });
+  }
+
+  cargarLogoAdmin(evento: Event): void {
+    this.cargarImagen(evento, ruta => {
+      this.logoAdminRuta.set(ruta);
+      this.guardarLogoAdmin();
     });
   }
 
@@ -324,6 +362,7 @@ export class ConfiguracionComponent {
   restablecerMarca(): void {
     this.marca.restablecer();
     this.logoRuta.set(this.marca.logoSitio());
+    this.logoAdminRuta.set(this.marca.logoAdmin());
     this.faviconRuta.set(this.marca.faviconSitio());
   }
 

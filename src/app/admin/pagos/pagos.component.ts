@@ -1,6 +1,9 @@
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HOY_ISO, LOCALES, PAGOS, localPorId, soles } from '../../data/datos';
+import { MetodoPago, MovimientoPago } from '../../data/modelos';
+
+type PeriodoPago = 'hoy' | 'semana' | 'mes' | 'todo';
 
 @Component({
   selector: 'app-pagos',
@@ -14,39 +17,8 @@ import { HOY_ISO, LOCALES, PAGOS, localPorId, soles } from '../../data/datos';
       </div>
       <div class="cabecera-admin__acciones">
         <button class="btn btn--linea btn--sm">Exportar a Excel</button>
-        <button class="btn btn--vino btn--sm" (click)="mostrarCobro.set(!mostrarCobro())">
-          {{ mostrarCobro() ? 'Cerrar cobro' : 'Registrar cobro en local' }}
-        </button>
       </div>
     </div>
-
-    @if (mostrarCobro()) {
-      <div class="tabla-panel cobro-panel">
-        <div class="tabla-panel__cabecera">
-          <h3>Cobro recibido en recepción</h3>
-          <span class="dato__label">Efectivo, Yape, POS o transferencia</span>
-        </div>
-        <form class="cobro-form" (ngSubmit)="registrarCobro()">
-          <div class="campo"><label>Concepto</label><input required [(ngModel)]="cobroConcepto" name="cobroConcepto" placeholder="Plan facial luminosidad · María López"></div>
-          <div class="campo"><label>Referencia</label><input required [(ngModel)]="cobroReferencia" name="cobroReferencia" placeholder="CT-1042 o PL-3004"></div>
-          <div class="campo">
-            <label>Método</label>
-            <select [(ngModel)]="cobroMetodo" name="cobroMetodo">
-              <option>Efectivo</option><option>Yape</option><option>Tarjeta POS</option><option>Transferencia</option>
-            </select>
-          </div>
-          <div class="campo">
-            <label>Sede</label>
-            <select [(ngModel)]="cobroLocalId" name="cobroLocalId">
-              @for (l of locales; track l.id) { <option [value]="l.id">{{ l.nombre }}</option> }
-            </select>
-          </div>
-          <div class="campo"><label>Monto cobrado (S/)</label><input type="number" min="1" required [(ngModel)]="cobroMonto" name="cobroMonto"></div>
-          <div class="campo"><label>Código / operación</label><input [(ngModel)]="cobroCodigo" name="cobroCodigo" placeholder="Caja genera uno si queda vacío"></div>
-          <button class="btn btn--vino btn--sm" type="submit" [disabled]="!cobroConcepto || !cobroReferencia || !cobroMonto">Guardar cobro</button>
-        </form>
-      </div>
-    }
 
     <div class="kpis kpis-5">
       <div class="kpi kpi--acento">
@@ -55,7 +27,7 @@ import { HOY_ISO, LOCALES, PAGOS, localPorId, soles } from '../../data/datos';
         <span class="kpi__nota">Confirmado por Izipay o caja</span>
       </div>
       <div class="kpi"><span class="kpi__label">Online (Izipay)</span><span class="kpi__valor">{{ soles(online()) }}</span><span class="kpi__nota">Confirmado por webhook</span></div>
-      <div class="kpi"><span class="kpi__label">En local</span><span class="kpi__valor">{{ soles(local()) }}</span><span class="kpi__nota">Cobros en recepción</span></div>
+      <div class="kpi"><span class="kpi__label">Recepción / WhatsApp</span><span class="kpi__valor">{{ soles(local()) }}</span><span class="kpi__nota">Cobros gestionados por el equipo</span></div>
       <div class="kpi"><span class="kpi__label">Por cobrar hoy</span><span class="kpi__valor" style="color:var(--alerta)">{{ soles(pendienteHoy()) }}</span><span class="kpi__nota">No cuenta como ingreso</span></div>
       <div class="kpi"><span class="kpi__label">Reembolsos hoy</span><span class="kpi__valor" style="color:var(--error)">{{ soles(reembolsosHoy()) }}</span><span class="kpi__nota">Dinero devuelto</span></div>
     </div>
@@ -67,16 +39,24 @@ import { HOY_ISO, LOCALES, PAGOS, localPorId, soles } from '../../data/datos';
                [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)">
       </div>
       <div class="campo">
+        <label>Periodo</label>
+        <select [ngModel]="periodo()" (ngModelChange)="periodo.set($event)">
+          <option value="hoy">Hoy</option>
+          <option value="semana">Últimos 7 días</option>
+          <option value="mes">Mes actual</option>
+          <option value="todo">Todo</option>
+        </select>
+      </div>
+      <div class="campo">
         <label>Canal</label>
         <select [ngModel]="canal()" (ngModelChange)="canal.set($event)">
-          <option>Todos</option><option>Online</option><option>En local</option>
+          <option>Todos</option><option>Online</option><option>Recepción</option><option>WhatsApp</option>
         </select>
       </div>
       <div class="campo">
         <label>Método</label>
         <select [ngModel]="metodo()" (ngModelChange)="metodo.set($event)">
-          <option>Todos</option><option>Izipay</option><option>Efectivo</option>
-
+          <option>Todos</option><option>Izipay</option><option>Efectivo</option><option>Yape</option><option>Plin</option><option>Tarjeta POS</option><option>Transferencia</option>
         </select>
       </div>
       <div class="campo">
@@ -105,7 +85,7 @@ import { HOY_ISO, LOCALES, PAGOS, localPorId, soles } from '../../data/datos';
             <tr>
               <th>Fecha y hora</th><th>Concepto</th><th>Referencia</th><th>Método</th>
               <th>Canal</th><th>Registrado / confirmado por</th><th>Código de operación</th>
-              <th>Estado</th><th class="num">Monto</th>
+              <th>Estado</th><th class="num">Monto</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -120,7 +100,45 @@ import { HOY_ISO, LOCALES, PAGOS, localPorId, soles } from '../../data/datos';
                 <td>{{ p.codigoOperacion }}</td>
                 <td><span [class]="clase(p.estado)">{{ p.estado }}</span></td>
                 <td class="num" [style.color]="p.monto < 0 ? 'var(--error)' : ''"><strong>{{ soles(p.monto) }}</strong></td>
+                <td class="num">
+                  <div class="acciones-fila">
+                    @if (p.estado === 'Pendiente') {
+                      <button class="boton-icono" (click)="abrirCobro(p)">Cobrar</button>
+                    } @else if (p.estado === 'Pagado') {
+                      <button class="boton-icono" (click)="abrirCobro(p)">Editar</button>
+                      <button class="boton-icono boton-icono--peligro" (click)="registrarReembolso(p)">Reembolso</button>
+                    }
+                  </div>
+                </td>
               </tr>
+              @if (cobroAbierto() === p.id) {
+                <tr class="fila-cobro">
+                  <td colspan="10">
+                    <form class="cobro-inline" (ngSubmit)="guardarCobroMovimiento(p)">
+                      <div>
+                        <strong>{{ p.estado === 'Pendiente' ? 'Registrar cobro' : 'Editar pago' }}</strong>
+                        <span>{{ p.concepto }} · {{ p.referencia }}</span>
+                      </div>
+                      <div class="campo">
+                        <label>Monto</label>
+                        <input type="number" min="1" [max]="p.estado === 'Pendiente' ? p.monto : null" [ngModel]="montoCobro(p)" (ngModelChange)="setCobroMonto(p.id, Number($event))" name="monto{{ p.id }}">
+                      </div>
+                      <div class="campo">
+                        <label>Método</label>
+                        <select [ngModel]="cobroMetodo()[p.id] || p.metodo" (ngModelChange)="setCobroMetodo(p.id, $event)" name="metodo{{ p.id }}">
+                          @for (m of metodosPago; track m) { <option>{{ m }}</option> }
+                        </select>
+                      </div>
+                      <div class="campo">
+                        <label>Código operación</label>
+                        <input [ngModel]="codigoCobro(p)" (ngModelChange)="setCobroCodigo(p.id, $event)" name="codigo{{ p.id }}" placeholder="Se genera si queda vacío">
+                      </div>
+                      <button class="btn btn--vino btn--sm" type="submit">Guardar</button>
+                      <button class="boton-icono" type="button" (click)="cobroAbierto.set(null)">Cancelar</button>
+                    </form>
+                  </td>
+                </tr>
+              }
             }
           </tbody>
         </table>
@@ -129,41 +147,50 @@ import { HOY_ISO, LOCALES, PAGOS, localPorId, soles } from '../../data/datos';
   `,
   styles: [`
     .kpis-5 { grid-template-columns: repeat(5, 1fr); margin-bottom: 22px; }
-    .cobro-panel { margin-bottom: 22px; }
-    .cobro-form {
+    .cobro-inline {
       display: grid;
-      grid-template-columns: minmax(220px, 1.3fr) minmax(150px, .8fr) repeat(4, minmax(130px, .7fr));
+      grid-template-columns: minmax(220px, 1.2fr) repeat(3, minmax(130px, .7fr)) auto auto;
       gap: 14px;
       align-items: end;
-      padding: 20px 22px 24px;
+      padding: 14px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      background: var(--rosa-50);
     }
+    .cobro-inline > div:first-child { display: grid; gap: 2px; align-self: center; }
+    .cobro-inline > div:first-child strong { color: var(--vino); }
+    .cobro-inline > div:first-child span { color: var(--gris); font-size: .82rem; }
+    .cobro-inline .campo { margin: 0; }
+    .fila-cobro td { background: #fff; }
+    .boton-icono--peligro { color: var(--error); border-color: rgba(166,40,40,.28); }
+    .boton-icono--peligro:hover { background: var(--error-bg); border-color: var(--error); color: var(--error); }
     @media (max-width: 1400px) { .kpis-5 { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 1200px) { .cobro-form { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 1200px) { .cobro-inline { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 1000px) { .kpis-5 { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 640px) { .cobro-form { grid-template-columns: 1fr; } }
   `]
 })
 export class PagosComponent {
+  Math = Math;
+  Number = Number;
   soles = soles;
   locales = LOCALES;
   movimientos = signal(PAGOS.map(p => ({ ...p })));
   busqueda = signal('');
+  periodo = signal<PeriodoPago>('hoy');
   canal = signal('Todos');
   metodo = signal('Todos');
   estado = signal('Todos');
   sede = signal('Todos');
-  mostrarCobro = signal(false);
-
-  cobroConcepto = '';
-  cobroReferencia = '';
-  cobroMetodo = 'Efectivo';
-  cobroLocalId = 1;
-  cobroMonto = 0;
-  cobroCodigo = '';
+  cobroAbierto = signal<number | null>(null);
+  cobroMonto = signal<Record<number, number>>({});
+  cobroMetodo = signal<Record<number, MetodoPago>>({});
+  cobroCodigo = signal<Record<number, string>>({});
+  metodosPago: MetodoPago[] = ['Efectivo', 'Yape', 'Plin', 'Tarjeta POS', 'Transferencia', 'Izipay'];
 
   cobradoHoy = computed(() => this.movimientos().filter(p => p.fecha === HOY_ISO && p.estado === 'Pagado').reduce((t, p) => t + p.monto, 0));
   online = computed(() => this.movimientos().filter(p => p.fecha === HOY_ISO && p.canal === 'Online' && p.estado === 'Pagado').reduce((t, p) => t + p.monto, 0));
-  local = computed(() => this.movimientos().filter(p => p.fecha === HOY_ISO && p.canal === 'En local' && p.estado === 'Pagado').reduce((t, p) => t + p.monto, 0));
+  local = computed(() => this.movimientos().filter(p => p.fecha === HOY_ISO && (p.canal === 'Recepción' || p.canal === 'WhatsApp') && p.estado === 'Pagado').reduce((t, p) => t + p.monto, 0));
   pendienteHoy = computed(() => this.movimientos().filter(p => p.fecha === HOY_ISO && p.estado === 'Pendiente').reduce((t, p) => t + p.monto, 0));
   reembolsosHoy = computed(() => Math.abs(this.movimientos().filter(p => p.fecha === HOY_ISO && p.estado === 'Reembolsado').reduce((t, p) => t + p.monto, 0)));
 
@@ -174,6 +201,7 @@ export class PagosComponent {
       (this.metodo() === 'Todos' || p.metodo === this.metodo()) &&
       (this.estado() === 'Todos' || p.estado === this.estado()) &&
       (this.sede() === 'Todos' || this.nombreLocal(p.localId) === this.sede()) &&
+      this.enPeriodo(p.fecha) &&
       (!texto || `${p.concepto} ${p.referencia} ${p.codigoOperacion}`.toLowerCase().includes(texto))
     );
   });
@@ -190,29 +218,104 @@ export class PagosComponent {
     return 'chip chip--error chip--punto';
   }
 
-  registrarCobro(): void {
+  abrirCobro(p: MovimientoPago): void {
+    this.cobroAbierto.set(this.cobroAbierto() === p.id ? null : p.id);
+    this.setCobroMonto(p.id, Math.abs(p.monto));
+    this.setCobroMetodo(p.id, p.metodo);
+    this.setCobroCodigo(p.id, p.codigoOperacion === '—' ? '' : p.codigoOperacion);
+  }
+
+  setCobroMonto(id: number, monto: number): void {
+    this.cobroMonto.update(v => ({ ...v, [id]: monto }));
+  }
+
+  setCobroMetodo(id: number, metodo: MetodoPago): void {
+    this.cobroMetodo.update(v => ({ ...v, [id]: metodo }));
+  }
+
+  setCobroCodigo(id: number, codigo: string): void {
+    this.cobroCodigo.update(v => ({ ...v, [id]: codigo }));
+  }
+
+  montoCobro(p: MovimientoPago): number {
+    return this.cobroMonto()[p.id] || Math.abs(p.monto);
+  }
+
+  codigoCobro(p: MovimientoPago): string {
+    return this.cobroCodigo()[p.id] ?? (p.codigoOperacion === '—' ? '' : p.codigoOperacion);
+  }
+
+  guardarCobroMovimiento(p: MovimientoPago): void {
     const ahora = new Date();
     const hora = ahora.toTimeString().slice(0, 5);
+    const monto = Math.max(0, Number(this.cobroMonto()[p.id] ?? Math.abs(p.monto)));
+    const metodo = this.cobroMetodo()[p.id] ?? p.metodo;
+    const codigo = this.cobroCodigo()[p.id] || `CAJA-${String(Date.now()).slice(-5)}`;
+
+    if (p.estado === 'Pendiente' && monto > 0 && monto < p.monto) {
+      const id = this.movimientos().reduce((max, item) => Math.max(max, item.id), 0) + 1;
+      this.movimientos.update(lista => [
+        {
+          ...p,
+          id,
+          fecha: HOY_ISO,
+          hora,
+          metodo,
+          canal: metodo === 'Izipay' ? 'Online' : p.canal,
+          estado: 'Pagado',
+          monto,
+          registradoPor: 'Recepción',
+          codigoOperacion: codigo
+        },
+        ...lista.map(item => item.id === p.id ? { ...item, monto: Math.max(item.monto - monto, 0) } : item)
+      ]);
+    } else {
+      this.movimientos.update(lista => lista.map(item => item.id === p.id
+        ? {
+            ...item,
+            fecha: item.estado === 'Pendiente' ? HOY_ISO : item.fecha,
+            hora: item.estado === 'Pendiente' ? hora : item.hora,
+            metodo,
+            canal: metodo === 'Izipay' ? 'Online' : item.canal,
+            estado: 'Pagado',
+            monto: monto || item.monto,
+            registradoPor: item.estado === 'Pendiente' ? 'Recepción' : item.registradoPor,
+            codigoOperacion: codigo
+          }
+        : item));
+    }
+    this.cobroAbierto.set(null);
+  }
+
+  registrarReembolso(p: MovimientoPago): void {
+    if (!confirm(`¿Registrar reembolso de ${soles(Math.abs(p.monto))} para ${p.referencia}?`)) { return; }
+    const hora = new Date().toTimeString().slice(0, 5);
     const id = this.movimientos().reduce((max, p) => Math.max(max, p.id), 0) + 1;
     this.movimientos.update(lista => [{
       id,
       fecha: HOY_ISO,
       hora,
-      concepto: this.cobroConcepto,
-      referencia: this.cobroReferencia,
-      origen: this.cobroReferencia.startsWith('PD-') ? 'Producto' : 'Cita',
-      metodo: this.cobroMetodo as any,
-      canal: 'En local',
-      estado: 'Pagado',
-      monto: Number(this.cobroMonto),
-      localId: Number(this.cobroLocalId),
-      registradoPor: 'Recepción',
-      codigoOperacion: this.cobroCodigo || `CAJA-${String(id).padStart(5, '0')}`
+      concepto: `Reembolso · ${p.concepto}`,
+      referencia: p.referencia,
+      origen: p.origen,
+      metodo: p.metodo,
+      canal: p.canal,
+      estado: 'Reembolsado',
+      monto: -Math.abs(p.monto),
+      localId: p.localId,
+      registradoPor: 'Administración',
+      codigoOperacion: `RB-${String(id).padStart(5, '0')}`
     }, ...lista]);
-    this.cobroConcepto = '';
-    this.cobroReferencia = '';
-    this.cobroMonto = 0;
-    this.cobroCodigo = '';
-    this.mostrarCobro.set(false);
+  }
+
+  private enPeriodo(fecha: string): boolean {
+    if (this.periodo() === 'todo') { return true; }
+    if (this.periodo() === 'hoy') { return fecha === HOY_ISO; }
+    if (this.periodo() === 'mes') { return fecha.slice(0, 7) === HOY_ISO.slice(0, 7); }
+    const base = new Date(`${HOY_ISO}T00:00:00`);
+    const actual = new Date(`${fecha}T00:00:00`);
+    const inicio = new Date(base);
+    inicio.setDate(base.getDate() - 6);
+    return actual >= inicio && actual <= base;
   }
 }

@@ -6,7 +6,7 @@ import { MarcaService } from './marca.service';
   standalone: true,
   template: `
     <span class="logo" [class.logo--claro]="claro" [class.logo--sm]="compacto">
-      <img [src]="marca.logoSitio()" alt="Rubí Estética Integral">
+      <img [src]="panel ? marca.logoAdmin() : marca.logoSitio()" alt="Rubí Estética Integral">
     </span>
   `,
   styles: [`
@@ -31,10 +31,12 @@ import { MarcaService } from './marca.service';
       border-radius: var(--radio);
     }
     .logo--sm { width: 150px; height: 46px; }
+    .logo--sm img { object-position: center; }
   `]
 })
 export class LogoComponent {
   marca = inject(MarcaService);
   @Input() claro = false;
   @Input() compacto = false;
+  @Input() panel = false;
 }

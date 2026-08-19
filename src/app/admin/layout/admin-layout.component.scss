@@ -11,8 +11,9 @@
   position: sticky; top: 0; height: 100vh; overflow-y: auto;
 }
 .lateral__logo { padding: 22px 22px 18px; border-bottom: 1px solid rgba(255,255,255,.1); }
-.lateral__logo :is(a) { display: inline-flex; color: #fff; }
+.lateral__logo :is(a) { display: flex; align-items: center; justify-content: center; color: #fff; min-height: 50px; }
 .lateral__logo ::ng-deep .logo { color: #fff; }
+.lateral__logo ::ng-deep .logo--sm { width: 164px; height: 54px; }
 .lateral__logo ::ng-deep .logo__bajada { color: rgba(255,255,255,.6); }
 
 .lateral__nav { padding: 18px 12px; flex: 1; }
@@ -44,6 +45,9 @@
 .admin--colapsado .lateral__pie,
 .admin--colapsado .lateral__logo ::ng-deep .logo__texto { display: none; }
 .admin--colapsado .lateral__enlace { justify-content: center; }
+.admin--colapsado .lateral__logo { padding: 20px 10px 16px; }
+.admin--colapsado .lateral__logo ::ng-deep .logo--sm { width: 54px; height: 54px; overflow: hidden; }
+.admin--colapsado .lateral__logo ::ng-deep .logo--sm img { width: 150px; max-width: none; transform: translateX(-5px); object-position: left center; }
 
 /* -------------------------------------------------------------- Topbar */
 .contenido { display: flex; flex-direction: column; min-width: 0; }
@@ -55,12 +59,6 @@
 }
 .topbar__toggle { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 4px; padding: 6px; }
 .topbar__toggle span { width: 18px; height: 1.5px; background: var(--vino); }
-.topbar__buscador {
-  display: flex; align-items: center; gap: 10px; flex: 1; max-width: 460px;
-  border: 1px solid var(--linea); border-radius: var(--radio); padding: 0 14px; height: 40px;
-  color: var(--gris-claro);
-}
-.topbar__buscador input { border: none; outline: none; flex: 1; font-family: inherit; font-size: .88rem; background: none; }
 .topbar__acciones { margin-left: auto; display: flex; align-items: center; gap: 26px; }
 .topbar__reloj {
   display: flex;
@@ -101,5 +99,5 @@
   .admin { grid-template-columns: 78px 1fr; }
   .lateral__enlace span, .lateral__grupo-titulo, .lateral__pie { display: none; }
   .lateral__enlace { justify-content: center; }
-  .topbar__buscador, .topbar__rol, .topbar__reloj { display: none; }
+  .topbar__rol, .topbar__reloj { display: none; }
 }

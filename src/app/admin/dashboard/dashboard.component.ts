@@ -35,7 +35,7 @@ export class DashboardComponent {
   canceladoHoy = this.suma(this.citasHoy.filter(c => c.estado === 'Cancelada' || c.estado === 'No asistió'), c => c.montoPagado);
 
   pagosOnlineHoy = this.suma(this.pagosPagadosHoy.filter(p => p.canal === 'Online'), p => p.monto);
-  pagosLocalHoy = this.suma(this.pagosPagadosHoy.filter(p => p.canal === 'En local'), p => p.monto);
+  pagosLocalHoy = this.suma(this.pagosPagadosHoy.filter(p => p.canal === 'Recepción' || p.canal === 'WhatsApp'), p => p.monto);
   reembolsosHoy = Math.abs(this.suma(PAGOS.filter(p => p.fecha === HOY_ISO && p.estado === 'Reembolsado'), p => p.monto));
 
   ingresoSemana = this.suma(PAGOS.filter(p => this.enUltimos(p.fecha, 7) && p.estado === 'Pagado'), p => p.monto);

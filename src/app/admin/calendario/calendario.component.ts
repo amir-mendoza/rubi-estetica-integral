@@ -75,6 +75,7 @@ export class CalendarioComponent {
   manualTotal = TRATAMIENTOS[0]?.precio ?? 0;
   manualPagado = 0;
   manualMetodo: MetodoPago = 'Efectivo';
+  manualOrigen: 'Recepción' | 'WhatsApp' = 'Recepción';
 
   estados = ['Todos', ...ESTADOS_CITA];
   estadosPago = ['Todos', 'Pagado', 'Pago en local', 'Pendiente', 'Reembolsado'];
@@ -242,11 +243,11 @@ export class CalendarioComponent {
       metodoPago: this.manualPagado > 0 ? this.manualMetodo : undefined,
       montoTotal: Number(this.manualTotal),
       montoPagado: Number(this.manualPagado),
-      registradaPor: this.responsable(),
+      registradaPor: this.manualOrigen === 'WhatsApp' ? `WhatsApp · ${this.responsable()}` : this.responsable(),
       confirmadaPor: this.manualPagado > 0 ? this.responsable() : undefined,
       codigoOperacion: this.manualPagado > 0 ? `${this.manualMetodo.toUpperCase().replace(/\s/g, '-')}-${Date.now().toString().slice(-5)}` : undefined,
       pagadaEl: this.manualPagado > 0 ? `${HOY_ISO} ${new Date().toTimeString().slice(0, 5)}` : undefined,
-      origen: 'Recepción',
+      origen: this.manualOrigen,
       notas: this.notaCitaManual(paciente)
     });
     this.diaSeleccionado.set(this.manualFecha);
@@ -258,6 +259,7 @@ export class CalendarioComponent {
     this.manualFecha = '';
     this.manualHora = '';
     this.manualPagado = 0;
+    this.manualOrigen = 'Recepción';
     this.manualTratamientos.set([TRATAMIENTOS[0]?.id ?? 1]);
     this.recalcularManual();
   }

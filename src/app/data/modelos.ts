@@ -287,7 +287,7 @@ export interface MovimientoPago {
   referencia: string;
   origen: 'Cita' | 'Producto';
   metodo: MetodoPago;
-  canal: 'Online' | 'En local';
+  canal: 'Online' | 'Recepción' | 'WhatsApp';
   estado: EstadoPago;
   monto: number;
   localId: number;
