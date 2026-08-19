@@ -243,6 +243,7 @@ export interface SesionPlan {
   /** Nombre del procedimiento de esa sesion: limpieza, skin care, peeling, etc. */
   procedimiento: string;
   fecha?: string;
+  hora?: string;
   estado: EstadoSesion;
   observaciones?: string;
 }

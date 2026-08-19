@@ -76,6 +76,19 @@ export class PlanesService {
     }));
   }
 
+  programarSiguienteManual(planId: number, fecha: string, hora: string): void {
+    this.lista.update(lista => lista.map(p => {
+      if (p.id !== planId) { return p; }
+      const siguiente = p.sesiones.find(s => s.estado === 'Pendiente' || s.estado === 'Reprogramada');
+      if (!siguiente) { return p; }
+
+      const sesiones = p.sesiones.map(s => (s.numero === siguiente.numero
+        ? { ...s, fecha, hora, estado: 'Programada' as EstadoSesion }
+        : s));
+      return { ...p, sesiones, estado: 'En curso' as const };
+    }));
+  }
+
   registrarPago(planId: number, monto: number): void {
     this.lista.update(lista => lista.map(p => (p.id === planId
       ? { ...p, pagado: Math.min(p.pagado + monto, p.precioTotal) }

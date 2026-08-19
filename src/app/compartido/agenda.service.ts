@@ -49,6 +49,17 @@ export class AgendaService {
     return nueva;
   }
 
+  actualizarFechaHora(id: number, fecha: string, horaInicio: string, horaFin: string, usuario: string): void {
+    this.lista.update(lista => lista.map(c => c.id === id ? {
+      ...c,
+      fecha,
+      horaInicio,
+      horaFin,
+      estado: c.estado === 'Cancelada' ? c.estado : 'Reprogramada',
+      notas: `Fecha y hora actualizadas por ${usuario}. Llegada: ${fecha} ${horaInicio}.`
+    } : c));
+  }
+
   /** Cobro presencial: recepcion confirma el monto recibido con el metodo elegido. */
   registrarPago(id: number, usuario: string, metodo: MetodoPago, monto?: number, codigo?: string): void {
     const hora = new Date().toTimeString().slice(0, 5);

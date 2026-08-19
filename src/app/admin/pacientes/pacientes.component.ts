@@ -16,9 +16,43 @@ import { Paciente } from '../../data/modelos';
       </div>
       <div class="cabecera-admin__acciones">
         <button class="btn btn--linea btn--sm">Exportar listado</button>
-        <button class="btn btn--vino btn--sm">Registrar paciente</button>
+        <button class="btn btn--vino btn--sm" (click)="mostrarRegistro.set(!mostrarRegistro())">
+          {{ mostrarRegistro() ? 'Cerrar registro' : 'Registrar paciente' }}
+        </button>
       </div>
     </div>
+
+    @if (mostrarRegistro()) {
+      <div class="tabla-panel registro-paciente">
+        <div class="tabla-panel__cabecera">
+          <div>
+            <h3>Nueva paciente</h3>
+            <span class="dato__label">Registro base para citas, planes y compras futuras</span>
+          </div>
+        </div>
+        <form class="registro-paciente__form" (ngSubmit)="registrarPaciente()">
+          <div class="campo registro-paciente__nombre">
+            <label>Nombre completo</label>
+            <input required [(ngModel)]="nuevoNombreCompleto" name="nuevoNombreCompleto" placeholder="Ej. María López Rivera">
+          </div>
+          <div class="campo">
+            <label>DNI</label>
+            <input required maxlength="8" [(ngModel)]="nuevoDni" name="nuevoDni" placeholder="8 dígitos">
+          </div>
+          <div class="campo">
+            <label>Celular</label>
+            <input required [(ngModel)]="nuevoCelular" name="nuevoCelular" placeholder="987 654 321">
+          </div>
+          <div class="campo">
+            <label>Correo electrónico (opcional)</label>
+            <input type="email" [(ngModel)]="nuevoCorreo" name="nuevoCorreo" placeholder="correo@ejemplo.com">
+          </div>
+          <button class="btn btn--vino btn--sm" type="submit" [disabled]="!nuevoNombreCompleto || !nuevoDni || !nuevoCelular">
+            Guardar paciente
+          </button>
+        </form>
+      </div>
+    }
 
     <div class="kpis kpis-4">
       <div class="kpi"><span class="kpi__label">Pacientes registradas</span><span class="kpi__valor">{{ pacientes.length }}</span><span class="kpi__nota">Base histórica</span></div>
@@ -115,21 +149,42 @@ import { Paciente } from '../../data/modelos';
     .detalle-paciente p { font-size: .88rem; margin: 6px 0 0; }
     .historial { display: grid; grid-template-columns: 1.1fr 1.4fr .8fr .6fr; gap: 12px; padding: 7px 0; border-bottom: 1px dashed var(--linea); font-size: .84rem; color: var(--gris); }
     .historial strong { text-align: right; color: var(--tinta); font-weight: 500; }
-    @media (max-width: 1200px) { .kpis-4 { grid-template-columns: repeat(2, 1fr); } .detalle-paciente { grid-template-columns: 1fr; } }
+    .registro-paciente { margin-bottom: 22px; }
+    .registro-paciente__form {
+      display: grid;
+      grid-template-columns: 1.4fr repeat(3, minmax(160px, 1fr)) auto;
+      gap: 14px;
+      align-items: end;
+      padding: 20px 22px 24px;
+    }
+    @media (max-width: 1200px) {
+      .kpis-4 { grid-template-columns: repeat(2, 1fr); }
+      .detalle-paciente { grid-template-columns: 1fr; }
+      .registro-paciente__form { grid-template-columns: repeat(2, 1fr); }
+      .registro-paciente__nombre { grid-column: 1 / -1; }
+    }
+    @media (max-width: 720px) { .registro-paciente__form { grid-template-columns: 1fr; } }
   `]
 })
 export class PacientesComponent {
   soles = soles;
   pacientes = PACIENTES;
+  mostrarRegistro = signal(false);
   busqueda = signal('');
   orden = signal('reciente');
   abierta = signal<number | null>(null);
+  version = signal(0);
+  nuevoNombreCompleto = '';
+  nuevoDni = '';
+  nuevoCelular = '';
+  nuevoCorreo = '';
 
   consumoTotal = PACIENTES.reduce((t, p) => t + p.totalGastado, 0);
   conCitaFutura = new Set(CITAS.filter(c => c.fecha >= new Date().toISOString().slice(0, 10)).map(c => c.pacienteId)).size;
   ticketPromedio = Math.round(this.consumoTotal / PACIENTES.reduce((t, p) => t + p.citasTotales, 0));
 
   lista = computed<Paciente[]>(() => {
+    this.version();
     const texto = this.busqueda().trim().toLowerCase();
     const filtradas = PACIENTES.filter(p =>
       !texto || `${p.nombre} ${p.apellido} ${p.dni} ${p.celular}`.toLowerCase().includes(texto)
@@ -149,5 +204,32 @@ export class PacientesComponent {
 
   tratamiento(id: number): string {
     return tratamientoPorId(id)?.nombre ?? '—';
+  }
+
+  registrarPaciente(): void {
+    if (!this.nuevoNombreCompleto.trim() || !this.nuevoDni.trim() || !this.nuevoCelular.trim()) {
+      return;
+    }
+    const [nombre, ...apellidos] = this.nuevoNombreCompleto.trim().split(/\s+/);
+    const hoy = new Date().toISOString().slice(0, 10);
+    PACIENTES.unshift({
+      id: PACIENTES.reduce((max, p) => Math.max(max, p.id), 0) + 1,
+      nombre,
+      apellido: apellidos.join(' '),
+      dni: this.nuevoDni.trim(),
+      celular: this.nuevoCelular.trim(),
+      correo: this.nuevoCorreo.trim(),
+      fechaRegistro: hoy,
+      observaciones: '',
+      citasTotales: 0,
+      ultimaVisita: hoy,
+      totalGastado: 0
+    });
+    this.nuevoNombreCompleto = '';
+    this.nuevoDni = '';
+    this.nuevoCelular = '';
+    this.nuevoCorreo = '';
+    this.mostrarRegistro.set(false);
+    this.version.update(v => v + 1);
   }
 }

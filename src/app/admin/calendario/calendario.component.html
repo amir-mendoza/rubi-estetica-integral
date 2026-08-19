@@ -23,6 +23,9 @@
       </div>
     </div>
     <form class="cita-manual__form" (ngSubmit)="registrarCitaManual()">
+      <div class="aviso-fecha">
+        Selecciona fecha y hora de llegada. La cita se guardará exactamente con esos datos y no se registrará si falta alguno.
+      </div>
       <div class="campo"><label>DNI</label><input required maxlength="8" [(ngModel)]="manualDni" name="manualDni"></div>
       <div class="campo"><label>Celular</label><input required [(ngModel)]="manualCelular" name="manualCelular"></div>
       <div class="campo cita-manual__ancho"><label>Nombre completo</label><input required [(ngModel)]="manualNombre" name="manualNombre"></div>
@@ -32,8 +35,8 @@
           @for (l of locales; track l.id) { <option [value]="l.id">{{ l.nombre }}</option> }
         </select>
       </div>
-      <div class="campo"><label>Fecha</label><input type="date" [(ngModel)]="manualFecha" name="manualFecha"></div>
-      <div class="campo"><label>Hora de llegada</label><input type="time" [(ngModel)]="manualHora" name="manualHora"></div>
+      <div class="campo"><label>Fecha de llegada (obligatoria)</label><input required type="date" [(ngModel)]="manualFecha" name="manualFecha"></div>
+      <div class="campo"><label>Hora de llegada (obligatoria)</label><input required type="time" [(ngModel)]="manualHora" name="manualHora"></div>
 
       <div class="cita-manual__tratamientos">
         <div class="cita-manual__sub">
@@ -58,7 +61,7 @@
           @for (m of metodosPago; track m) { <option>{{ m }}</option> }
         </select>
       </div>
-      <button class="btn btn--vino btn--sm" type="submit" [disabled]="!manualDni || !manualCelular || !manualNombre || !manualTratamientos().length">
+      <button class="btn btn--vino btn--sm" type="submit" [disabled]="!manualDni || !manualCelular || !manualNombre || !manualFecha || !manualHora || !manualTratamientos().length">
         Guardar cita
       </button>
     </form>
@@ -201,7 +204,12 @@
             </div>
 
             <div class="cita__acciones">
-              <span class="dato__label">Cambiar estado</span>
+              <div class="cita__acciones-top">
+                <span class="dato__label">Cambiar estado</span>
+                <button class="boton-icono" (click)="abrirReprogramacion(f.cita)">
+                  {{ reprogramando() === f.cita.id ? 'Cerrar horario' : 'Cambiar fecha/hora' }}
+                </button>
+              </div>
               <div class="cita__botones">
                 @for (e of estadosCita; track e) {
                   <button class="accion"
@@ -210,6 +218,25 @@
                 }
               </div>
             </div>
+
+            @if (reprogramando() === f.cita.id) {
+              <div class="reprogramar">
+                <strong>Nueva fecha y hora de llegada</strong>
+                <div class="reprogramar__campos">
+                  <div class="campo">
+                    <label>Fecha</label>
+                    <input type="date" [ngModel]="editFecha()[f.cita.id]" (ngModelChange)="setEditFecha(f.cita.id, $event)" name="editFecha{{ f.cita.id }}">
+                  </div>
+                  <div class="campo">
+                    <label>Hora</label>
+                    <input type="time" [ngModel]="editHora()[f.cita.id]" (ngModelChange)="setEditHora(f.cita.id, $event)" name="editHora{{ f.cita.id }}">
+                  </div>
+                  <button class="btn btn--vino btn--sm" (click)="guardarFechaHora(f.cita)" [disabled]="!editFecha()[f.cita.id] || !editHora()[f.cita.id]">
+                    Guardar horario
+                  </button>
+                </div>
+              </div>
+            }
 
             @if (f.cita.notas) { <p class="cita__nota">{{ f.cita.notas }}</p> }
           </div>

@@ -50,6 +50,7 @@ export class CalendarioComponent {
   anio = signal(this.hoy.getFullYear());
   diaSeleccionado = signal(HOY_ISO);
   citaAbierta = signal<number | null>(null);
+  reprogramando = signal<number | null>(null);
 
   filtroLocal = signal('Todos');
   filtroEstado = signal('Todos');
@@ -60,13 +61,15 @@ export class CalendarioComponent {
   pagoMetodo = signal<MetodoPago>('Efectivo');
   pagoMonto = signal<Record<number, number>>({});
   pagoCodigo = signal<Record<number, string>>({});
+  editFecha = signal<Record<number, string>>({});
+  editHora = signal<Record<number, string>>({});
 
   manualDni = '';
   manualCelular = '';
   manualNombre = '';
   manualLocalId = LOCALES[0]?.id ?? 1;
-  manualFecha = HOY_ISO;
-  manualHora = '09:00';
+  manualFecha = '';
+  manualHora = '';
   manualTratamientos = signal<number[]>([TRATAMIENTOS[0]?.id ?? 1]);
   manualTotal = TRATAMIENTOS[0]?.precio ?? 0;
   manualPagado = 0;
@@ -203,6 +206,9 @@ export class CalendarioComponent {
   }
 
   registrarCitaManual(): void {
+    if (!this.manualFecha || !this.manualHora) {
+      return;
+    }
     const [nombre, ...resto] = this.manualNombre.trim().split(/\s+/);
     const pacienteId = 9000 + this.pacientesManuales().length + 1;
     const paciente: Paciente = {
@@ -247,9 +253,42 @@ export class CalendarioComponent {
     this.manualDni = '';
     this.manualCelular = '';
     this.manualNombre = '';
+    this.manualFecha = '';
+    this.manualHora = '';
     this.manualPagado = 0;
     this.manualTratamientos.set([TRATAMIENTOS[0]?.id ?? 1]);
     this.recalcularManual();
+  }
+
+  abrirReprogramacion(cita: Cita): void {
+    const abierta = this.reprogramando() === cita.id ? null : cita.id;
+    this.reprogramando.set(abierta);
+    if (abierta) {
+      this.editFecha.update(v => ({ ...v, [cita.id]: cita.fecha }));
+      this.editHora.update(v => ({ ...v, [cita.id]: cita.horaInicio }));
+    }
+  }
+
+  setEditFecha(id: number, fecha: string): void {
+    this.editFecha.update(v => ({ ...v, [id]: fecha }));
+  }
+
+  setEditHora(id: number, hora: string): void {
+    this.editHora.update(v => ({ ...v, [id]: hora }));
+  }
+
+  guardarFechaHora(cita: Cita): void {
+    const fecha = this.editFecha()[cita.id];
+    const hora = this.editHora()[cita.id];
+    if (!fecha || !hora) {
+      return;
+    }
+    const duracion = this.minutosEntre(cita.horaInicio, cita.horaFin)
+      || this.tratamiento(cita.tratamientoId)?.duracionMin
+      || 60;
+    this.agenda.actualizarFechaHora(cita.id, fecha, hora, this.sumarMinutos(hora, duracion), this.responsable());
+    this.diaSeleccionado.set(fecha);
+    this.reprogramando.set(null);
   }
 
   private responsable(): string {
@@ -287,5 +326,11 @@ export class CalendarioComponent {
     const [h, m] = hora.split(':').map(Number);
     const total = h * 60 + m + minutos;
     return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  }
+
+  private minutosEntre(inicio: string, fin: string): number {
+    const [hi, mi] = inicio.split(':').map(Number);
+    const [hf, mf] = fin.split(':').map(Number);
+    return (hf * 60 + mf) - (hi * 60 + mi);
   }
 }

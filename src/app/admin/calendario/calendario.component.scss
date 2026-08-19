@@ -8,6 +8,17 @@
   align-items: end;
   padding: 20px 22px 24px;
 }
+.aviso-fecha {
+  grid-column: 1 / -1;
+  padding: 12px 14px;
+  border: 1px solid rgba(176, 27, 114, .24);
+  border-left: 4px solid var(--magenta);
+  border-radius: var(--radio);
+  background: var(--rosa-50);
+  color: var(--vino);
+  font-weight: 700;
+  font-size: .88rem;
+}
 .cita-manual__ancho { grid-column: span 2; }
 .cita-manual__tratamientos { grid-column: 1 / -1; border: 1px solid var(--linea); border-radius: var(--radio); padding: 14px; background: var(--rosa-50); }
 .cita-manual__sub { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 10px; }
@@ -101,6 +112,7 @@
 
 /* Acciones de recepcion */
 .cita__acciones { margin-top: 14px; display: grid; gap: 6px; }
+.cita__acciones-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .cita__botones { display: flex; flex-wrap: wrap; gap: 6px; }
 .accion {
   border: 1px solid var(--linea); border-radius: 999px; background: #fff;
@@ -122,6 +134,15 @@
   margin: 14px 0 0; padding: 10px 14px; background: var(--rosa-50);
   border-radius: var(--radio); font-size: .84rem; color: var(--gris);
 }
+.reprogramar {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px dashed var(--magenta-300);
+  border-radius: var(--radio);
+  background: #fff;
+}
+.reprogramar strong { display: block; color: var(--vino); margin-bottom: 10px; font-size: .9rem; }
+.reprogramar__campos { display: grid; grid-template-columns: repeat(2, minmax(140px, 1fr)) auto; gap: 10px; align-items: end; }
 
 .cita__montos {
   display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
@@ -148,6 +169,7 @@
   .trat-row { grid-template-columns: 1fr; }
   .cita { grid-template-columns: 1fr; }
   .cita__datos { grid-template-columns: repeat(2, 1fr); }
+  .reprogramar__campos { grid-template-columns: 1fr; }
   .cita__montos { align-items: flex-start; padding-left: 0; border-left: none; border-top: 1px dashed var(--linea); padding-top: 14px; }
   .cita__traza { grid-template-columns: 1fr; }
 }

@@ -1,8 +1,22 @@
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LOCALES, formatoFechaLarga, nombrePaciente, pacientePorId, soles, PACIENTES, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
+import { CITAS, LOCALES, formatoFechaLarga, nombrePaciente, pacientePorId, soles, PACIENTES, TRATAMIENTOS, PROMOCIONES, aISO, cupoDeSede } from '../../data/datos';
 import { ESTADOS_SESION, EstadoSesion, PlanSesiones, SesionPlan, Paciente, MetodoPago } from '../../data/modelos';
 import { PlanesService } from '../../compartido/planes.service';
+
+interface HoraDisponible {
+  hora: string;
+  ocupadas: number;
+  cupo: number;
+  disponible: boolean;
+}
+
+interface DiaDisponible {
+  iso: string;
+  etiqueta: string;
+  dia: number;
+  horas: HoraDisponible[];
+}
 
 @Component({
   selector: 'app-sesiones',
@@ -234,7 +248,7 @@ import { PlanesService } from '../../compartido/planes.service';
                   <span [class]="claseEstadoSesion(s.estado)">{{ s.estado }}</span>
                 </div>
                 <p class="sesion__fecha">
-                  {{ s.fecha ? fechaLarga(s.fecha) : 'Sin fecha asignada · se programa al terminar la sesión anterior' }}
+                  {{ s.fecha ? fechaLarga(s.fecha) + (s.hora ? ' · ' + s.hora : '') : 'Sin fecha asignada · recepción define fecha y hora con la paciente' }}
                 </p>
                 @if (s.observaciones) { <p class="sesion__obs">{{ s.observaciones }}</p> }
                 <div class="sesion__acciones">
@@ -252,10 +266,10 @@ import { PlanesService } from '../../compartido/planes.service';
           @if (plan.notas) { <p class="plan__notas">{{ plan.notas }}</p> }
           <div class="plan__acciones">
             <div class="accion-explicada">
-              <button class="btn btn--linea btn--sm" (click)="planes.programarSiguiente(plan.id)">
-                Agendar próxima sesión
+              <button class="btn btn--linea btn--sm" (click)="abrirProgramador(plan)">
+                Asignar próxima sesión
               </button>
-              <small>Usa el intervalo del plan y programa la siguiente sesión pendiente.</small>
+              <small>Recepción elige fecha y hora revisando la disponibilidad de la semana.</small>
             </div>
             @if (plan.precioTotal - plan.pagado > 0) {
               <div class="cobro-plan">
@@ -268,6 +282,55 @@ import { PlanesService } from '../../compartido/planes.service';
             }
           </div>
         </footer>
+
+        @if (programandoPlanId() === plan.id) {
+          <div class="programador-sesion">
+            <div class="programador-sesion__cabecera">
+              <div>
+                <span class="dato__label">Próxima sesión manual</span>
+                <h4>{{ proximaProgramable(plan)?.procedimiento || 'Sin sesiones pendientes' }}</h4>
+              </div>
+              <button class="boton-icono" (click)="programandoPlanId.set(null)">Cerrar</button>
+            </div>
+
+            <div class="programador-sesion__controles">
+              <div class="campo">
+                <label>Fecha base</label>
+                <input type="date" [ngModel]="programarFecha()[plan.id]" (ngModelChange)="setProgramarFecha(plan.id, $event)" name="programarFecha{{ plan.id }}">
+              </div>
+              <div class="campo">
+                <label>Hora elegida</label>
+                <input type="time" [ngModel]="programarHora()[plan.id]" (ngModelChange)="setProgramarHora(plan.id, $event)" name="programarHora{{ plan.id }}">
+              </div>
+              <button class="btn btn--vino btn--sm" (click)="guardarProximaSesion(plan)" [disabled]="!programarFecha()[plan.id] || !programarHora()[plan.id]">
+                Guardar próxima sesión
+              </button>
+            </div>
+
+            <div class="semana-disponible">
+              @for (dia of semanaDisponible(plan); track dia.iso) {
+                <article class="dia-disponible" [class.dia-disponible--activo]="programarFecha()[plan.id] === dia.iso">
+                  <button class="dia-disponible__fecha" (click)="setProgramarFecha(plan.id, dia.iso)">
+                    <span>{{ dia.etiqueta }}</span>
+                    <strong>{{ dia.dia }}</strong>
+                  </button>
+                  <div class="dia-disponible__horas">
+                    @for (h of dia.horas; track h.hora) {
+                      <button class="hora-mini"
+                              [class.hora-mini--activa]="programarFecha()[plan.id] === dia.iso && programarHora()[plan.id] === h.hora"
+                              [class.hora-mini--llena]="!h.disponible"
+                              [disabled]="!h.disponible"
+                              (click)="seleccionarFechaHora(plan.id, dia.iso, h.hora)">
+                        {{ h.hora }}
+                        <small>{{ h.cupo - h.ocupadas }}/{{ h.cupo }}</small>
+                      </button>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          </div>
+        }
       </section>
     } @empty {
       <div class="tabla-panel"><p class="vacio">No hay planes que coincidan con la búsqueda.</p></div>
@@ -304,7 +367,7 @@ import { PlanesService } from '../../compartido/planes.service';
     .sesion__acciones { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .accion {
       border: 1px solid var(--linea); border-radius: 999px; background: #fff;
-      padding: 5px 12px; font-family: inherit; font-size: .72rem; color: var(--gris); cursor: pointer;
+      min-width: 94px; padding: 6px 14px; font-family: inherit; font-size: .74rem; color: var(--gris); cursor: pointer;
     }
     .accion:hover { border-color: var(--magenta-300); color: var(--magenta); }
     .accion--activa { background: var(--vino); border-color: var(--vino); color: #fff; }
@@ -319,6 +382,79 @@ import { PlanesService } from '../../compartido/planes.service';
     }
     .cobro-plan small { grid-column: 1 / -1; }
     .vacio { text-align: center; color: var(--gris-claro); padding: 30px 0; margin: 0; }
+    .programador-sesion {
+      margin: 0 24px 24px;
+      padding: 18px;
+      border: 1px solid rgba(176, 27, 114, .22);
+      border-radius: var(--radio-lg);
+      background: #fff;
+    }
+    .programador-sesion__cabecera {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .programador-sesion__cabecera h4 { margin: 4px 0 0; }
+    .programador-sesion__controles {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(160px, 220px)) auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+    .semana-disponible { display: grid; grid-template-columns: repeat(7, minmax(110px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+    .dia-disponible {
+      min-width: 110px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio);
+      background: var(--rosa-50);
+      overflow: hidden;
+    }
+    .dia-disponible--activo { border-color: var(--magenta); box-shadow: 0 0 0 3px rgba(224, 123, 173, .14); }
+    .dia-disponible__fecha {
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid var(--linea);
+      background: #fff;
+      padding: 10px;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--vino);
+    }
+    .dia-disponible__fecha span {
+      display: block;
+      font-size: .66rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--gris-claro);
+    }
+    .dia-disponible__fecha strong {
+      display: block;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.45rem;
+      line-height: 1;
+    }
+    .dia-disponible__horas { display: grid; gap: 6px; padding: 8px; }
+    .hora-mini {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      border: 1px solid var(--linea);
+      border-radius: 999px;
+      background: #fff;
+      padding: 6px 8px;
+      font-family: inherit;
+      font-size: .74rem;
+      color: var(--tinta);
+      cursor: pointer;
+    }
+    .hora-mini small { color: var(--gris-claro); }
+    .hora-mini--activa { background: var(--vino); border-color: var(--vino); color: #fff; }
+    .hora-mini--activa small { color: rgba(255, 255, 255, .78); }
+    .hora-mini--llena { opacity: .48; cursor: not-allowed; text-decoration: line-through; }
     
     /* Estilos del formulario de registro */
     .promo-form { padding: 20px 22px 24px; }
@@ -331,6 +467,8 @@ import { PlanesService } from '../../compartido/planes.service';
       .plan__cabecera { grid-template-columns: 1fr; }
       .plan__cobro { text-align: left; }
       .cobro-plan { grid-template-columns: 1fr; }
+      .programador-sesion__controles { grid-template-columns: 1fr; }
+      .semana-disponible { grid-template-columns: repeat(7, 128px); }
     }
   `]
 })
@@ -344,6 +482,11 @@ export class SesionesComponent {
   metodosPago: MetodoPago[] = ['Efectivo', 'Yape', 'Plin', 'Tarjeta POS', 'Transferencia'];
   montoPlan = signal<Record<number, number>>({});
   metodoPlan = signal<Record<number, MetodoPago>>({});
+  programandoPlanId = signal<number | null>(null);
+  programarFecha = signal<Record<number, string>>({});
+  programarHora = signal<Record<number, string>>({});
+  horasAgenda = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
+  diasCortos = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
   // Catálogos base para el formulario
   promocionesLista = PROMOCIONES;
@@ -416,6 +559,75 @@ export class SesionesComponent {
 
   cobrarSaldo(plan: PlanSesiones): void {
     this.planes.registrarPago(plan.id, plan.precioTotal - plan.pagado);
+  }
+
+  abrirProgramador(plan: PlanSesiones): void {
+    const nuevaVista = this.programandoPlanId() === plan.id ? null : plan.id;
+    this.programandoPlanId.set(nuevaVista);
+    if (!nuevaVista) { return; }
+
+    const actual = this.proximaProgramable(plan);
+    const fecha = actual?.fecha || aISO(new Date());
+    this.programarFecha.update(v => ({ ...v, [plan.id]: fecha }));
+    this.programarHora.update(v => ({ ...v, [plan.id]: actual?.hora || '09:00' }));
+  }
+
+  proximaProgramable(plan: PlanSesiones): SesionPlan | undefined {
+    return plan.sesiones.find(s => s.estado === 'Pendiente' || s.estado === 'Reprogramada');
+  }
+
+  setProgramarFecha(planId: number, fecha: string): void {
+    this.programarFecha.update(v => ({ ...v, [planId]: fecha }));
+  }
+
+  setProgramarHora(planId: number, hora: string): void {
+    this.programarHora.update(v => ({ ...v, [planId]: hora }));
+  }
+
+  seleccionarFechaHora(planId: number, fecha: string, hora: string): void {
+    this.setProgramarFecha(planId, fecha);
+    this.setProgramarHora(planId, hora);
+  }
+
+  guardarProximaSesion(plan: PlanSesiones): void {
+    const fecha = this.programarFecha()[plan.id];
+    const hora = this.programarHora()[plan.id];
+    if (!fecha || !hora) { return; }
+    this.planes.programarSiguienteManual(plan.id, fecha, hora);
+    this.programandoPlanId.set(null);
+  }
+
+  semanaDisponible(plan: PlanSesiones): DiaDisponible[] {
+    const fecha = this.programarFecha()[plan.id] || aISO(new Date());
+    const base = new Date(`${fecha}T12:00:00`);
+    const lunes = new Date(base);
+    lunes.setDate(base.getDate() - ((base.getDay() + 6) % 7));
+    return Array.from({ length: 7 }, (_, i) => {
+      const dia = new Date(lunes);
+      dia.setDate(lunes.getDate() + i);
+      const iso = aISO(dia);
+      return {
+        iso,
+        etiqueta: this.diasCortos[i],
+        dia: dia.getDate(),
+        horas: this.horasDisponibles(plan, iso)
+      };
+    });
+  }
+
+  horasDisponibles(plan: PlanSesiones, fecha: string): HoraDisponible[] {
+    const localId = plan.localId || LOCALES[0]?.id || 1;
+    const cupo = cupoDeSede(localId);
+    return this.horasAgenda.map(hora => {
+      const ocupadas = CITAS.filter(c =>
+        c.fecha === fecha &&
+        c.localId === localId &&
+        c.estado !== 'Cancelada' &&
+        c.estado !== 'No asistió' &&
+        c.horaInicio.slice(0, 2) === hora.slice(0, 2)
+      ).length;
+      return { hora, ocupadas, cupo, disponible: ocupadas < cupo };
+    });
   }
 
   claseEstadoPlan(estado: string): string {
