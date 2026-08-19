@@ -101,3 +101,100 @@
   .lateral__enlace { justify-content: center; }
   .topbar__rol, .topbar__reloj { display: none; }
 }
+
+@media (max-width: 760px) {
+  .admin,
+  .admin--colapsado {
+    display: block;
+    min-height: 100vh;
+    padding-bottom: 76px;
+  }
+
+  .lateral {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 60;
+    height: 76px;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-direction: row;
+    border-top: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 -12px 30px rgba(42, 32, 40, .16);
+  }
+
+  .lateral__logo,
+  .lateral__grupo-titulo,
+  .lateral__pie,
+  .admin--colapsado .lateral__logo {
+    display: none;
+  }
+
+  .lateral__nav {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+    min-width: max-content;
+    padding: 10px 12px;
+  }
+
+  .lateral__grupo {
+    display: flex;
+    gap: 6px;
+    margin: 0;
+  }
+
+  .lateral__enlace,
+  .admin--colapsado .lateral__enlace {
+    width: 48px;
+    min-width: 48px;
+    height: 52px;
+    justify-content: center;
+    padding: 0;
+    border-radius: 8px;
+  }
+
+  .lateral__enlace span {
+    display: none;
+  }
+
+  .lateral__enlace svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .topbar {
+    min-height: 64px;
+    height: auto;
+    padding: 10px 14px;
+    gap: 12px;
+  }
+
+  .topbar__acciones {
+    gap: 10px;
+  }
+
+  .topbar__usuario strong,
+  .topbar__usuario span {
+    display: none;
+  }
+
+  .topbar__avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .lienzo {
+    padding: 18px 14px 94px;
+  }
+}
+
+@media (max-width: 440px) {
+  .topbar__acciones {
+    margin-left: 0;
+  }
+
+  .topbar {
+    justify-content: space-between;
+  }
+}

@@ -42,7 +42,7 @@
 
 * { box-sizing: border-box; }
 
-html, body { height: 100%; }
+html, body { height: 100%; overflow-x: hidden; }
 
 body {
   margin: 0;
@@ -187,6 +187,10 @@ hr { border: none; border-top: 1px solid var(--linea); margin: 2.5rem 0; }
   color: #fff;
   transform: translateY(-3px);
   box-shadow: 0 14px 28px rgba(110, 19, 56, .22);
+}
+
+input, select, textarea, button {
+  max-width: 100%;
 }
 
 .btn--vino { background: var(--vino); color: #fff; }
@@ -342,8 +346,8 @@ table.tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* -------------------------------------------------------------- Responsive */
 @media (max-width: 1080px) {
-  .grid-4 { grid-template-columns: repeat(2, 1fr); }
-  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 760px) {
   .seccion { padding: 64px 0; }
@@ -514,6 +518,188 @@ table.tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
 .mini-dato { display: flex; flex-direction: column; }
 .mini-dato strong { font-weight: 500; font-size: .9rem; }
 .mini-dato span { font-size: .76rem; color: var(--gris-claro); }
+
+@media (max-width: 1200px) {
+  .contenedor { padding-inline: 24px; }
+
+  .kpis,
+  .kpis-3,
+  .kpis-4,
+  .kpis-5,
+  .grid-tres,
+  .grid-dos,
+  .resumen-rapido,
+  .ficha,
+  .catalogo-admin,
+  .promo-columnas,
+  .categorias-admin,
+  .producto-form,
+  .local-form,
+  .cabina-form,
+  .esp-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 860px) {
+  body { font-size: 16px; }
+
+  .cabecera-admin {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .cabecera-admin > div,
+  .cabecera-admin__acciones,
+  .panel__titulo,
+  .tabla-panel__cabecera {
+    width: 100%;
+  }
+
+  .cabecera-admin__acciones,
+  .panel__titulo,
+  .tabla-panel__cabecera,
+  .acciones-fila {
+    flex-wrap: wrap;
+  }
+
+  .barra-filtros {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .barra-filtros .campo,
+  .barra-filtros__crecer {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .tabla-envoltura {
+    margin-inline: -14px;
+    padding-inline: 14px;
+  }
+
+  table.tabla {
+    min-width: 720px;
+  }
+
+  .btn {
+    min-height: 44px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .tarjeta-trat__pie,
+  .tarjeta-local__acciones,
+  .detalle__acciones,
+  .confirmacion__acciones {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  h1 { font-size: clamp(2.15rem, 13vw, 3rem); }
+  h2 { font-size: clamp(1.8rem, 10vw, 2.35rem); }
+  h3 { font-size: 1.32rem; }
+
+  .contenedor { padding-inline: 16px; }
+  .seccion { padding: 52px 0; }
+  .seccion--compacta { padding: 42px 0; }
+  .encabezado-seccion { margin-bottom: 34px; }
+
+  .grid,
+  .grid-2,
+  .grid-3,
+  .grid-4,
+  .kpis,
+  .kpis-3,
+  .kpis-4,
+  .kpis-5,
+  .grid-tres,
+  .grid-dos,
+  .resumen-rapido,
+  .ficha,
+  .catalogo-admin,
+  .promo-columnas,
+  .categorias-admin,
+  .producto-form,
+  .stock-form,
+  .local-form,
+  .cabina-form,
+  .esp-form,
+  .local-form__imagen,
+  .local-cabina-row,
+  .pedido-form__grid,
+  .gestion,
+  .item-row,
+  .resumen-final,
+  .detalle-paciente,
+  .historial,
+  .cita__datos,
+  .cita__traza,
+  .horario-config__fila {
+    grid-template-columns: 1fr !important;
+  }
+
+  .panel,
+  .tarjeta__cuerpo,
+  .tarjeta-trat__cuerpo,
+  .tarjeta-prod__cuerpo,
+  .tarjeta-esp__cuerpo,
+  .tarjeta-local__cuerpo {
+    padding: 18px;
+  }
+
+  .tabla-panel__cabecera {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .barra-filtros {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .cabecera-admin {
+    margin-bottom: 18px;
+  }
+
+  .cabecera-admin h1,
+  .cabecera-pagina h1 {
+    font-size: 1.95rem;
+  }
+
+  .cabecera-pagina {
+    padding: 42px 0;
+  }
+
+  .precio,
+  .acciones-fila,
+  .confirmacion__acciones,
+  .tarjeta-trat__pie,
+  .tarjeta-local__acciones {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .acciones-fila {
+    justify-content: flex-start;
+  }
+
+  .chip {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 420px) {
+  .contenedor { padding-inline: 14px; }
+  .panel { padding: 16px; }
+  .btn { width: 100%; padding-inline: 1rem; }
+  table.tabla { min-width: 640px; }
+}
 
 @media (prefers-reduced-motion: no-preference) {
   app-publico-layout .animar-scroll {

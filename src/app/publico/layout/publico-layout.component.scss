@@ -249,9 +249,52 @@
   .pie__legal { flex-direction: column; }
   .cabecera__acciones .btn { display: none; }
   .cuenta__nombre { display: none; }
+  .barra-superior__interior {
+    min-height: 36px;
+    justify-content: center;
+    text-align: center;
+  }
+  .barra-superior__acciones {
+    display: none;
+  }
+  .cabecera__interior {
+    min-height: 72px;
+    gap: 12px;
+  }
+  .navegacion {
+    padding-inline: 18px;
+  }
+  .icono-enlace {
+    width: 36px;
+    height: 36px;
+  }
+  .whatsapp {
+    right: 16px;
+    bottom: 16px;
+    width: 48px;
+    height: 48px;
+  }
   .carrito-aviso {
     top: auto;
     right: 16px;
     bottom: 92px;
+  }
+}
+
+@media (max-width: 420px) {
+  .cabecera__logo ::ng-deep .logo--sm {
+    width: 126px;
+  }
+
+  .cabecera__acciones {
+    gap: 8px;
+  }
+
+  .hamburguesa {
+    padding: 6px;
+  }
+
+  .pie {
+    padding-top: 54px;
   }
 }

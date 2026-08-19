@@ -169,4 +169,50 @@
 @media (max-width: 560px) {
   .promo-reserva { grid-template-columns: 1fr; }
   .promo-reserva img { width: min(220px, 100%); }
+  .pasos-barra {
+    gap: 6px;
+  }
+  .pasos-barra li {
+    flex: 1 1 140px;
+    justify-content: center;
+    padding-inline: 10px;
+  }
+  .opcion {
+    align-items: flex-start;
+  }
+  .opcion img {
+    width: 94px;
+    height: 90px;
+  }
+  .opcion > div {
+    padding: 14px;
+  }
+  .opcion__precio {
+    padding: 0 14px 14px;
+  }
+  .acciones-paso,
+  .confirmacion__acciones {
+    flex-direction: column;
+  }
+  .resumen__fila {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+  .resumen-final {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 420px) {
+  .opcion {
+    flex-direction: column;
+  }
+  .opcion img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+  .horarios {
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  }
 }
