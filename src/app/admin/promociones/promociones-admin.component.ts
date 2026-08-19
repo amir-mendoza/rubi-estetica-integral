@@ -80,9 +80,7 @@ function promocionVacia(): Promocion {
           @for (c of categorias(); track c) {
             <span class="categoria-chip">
               {{ c }}
-              @if (!categoriaUsada(c)) {
-                <button type="button" (click)="eliminarCategoria(c)" aria-label="Eliminar categoría">×</button>
-              }
+              <button type="button" (click)="eliminarCategoria(c)" aria-label="Eliminar categoría">×</button>
             </span>
           }
         </div>
@@ -494,10 +492,12 @@ export class PromocionesAdminComponent {
   }
 
   eliminarCategoria(categoria: Categoria): void {
-    if (this.categoriaUsada(categoria)) { return; }
-    this.categorias.update(lista => lista.filter(c => c !== categoria));
+    const restantes = this.categorias().filter(c => c !== categoria);
+    const reemplazo = (restantes[0] ?? 'General') as Categoria;
+    this.categorias.set(restantes.length ? restantes : [reemplazo]);
+    this.promociones.reasignarCategoria(categoria, reemplazo);
     if (this.borrador().categoria === categoria) {
-      this.editar('categoria', this.categorias()[0] ?? 'General');
+      this.editar('categoria', reemplazo);
     }
   }
 

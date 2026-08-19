@@ -64,6 +64,11 @@ function cabinaVacia(localId: number): Habitacion {
           <div class="campo"><label>Latitud</label><input type="number" step="0.000001" [ngModel]="localForm().latitud" (ngModelChange)="editarLocal('latitud', Number($event))" name="latitud"></div>
           <div class="campo"><label>Longitud</label><input type="number" step="0.000001" [ngModel]="localForm().longitud" (ngModelChange)="editarLocal('longitud', Number($event))" name="longitud"></div>
           <div class="campo local-form__ancho"><label>Link de Google Maps</label><input [ngModel]="localForm().mapa" (ngModelChange)="editarLocal('mapa', $event)" name="mapa" placeholder="Pega el link o usa latitud/longitud"></div>
+          <div class="local-form__mapa">
+            <span class="dato__label">Mapa visual</span>
+            <app-mapa-sede [local]="localForm()" [editable]="true" (coordenadas)="actualizarCoordenadas($event)" />
+            <small>Haz clic sobre el mapa para ajustar latitud y longitud antes de guardar el local.</small>
+          </div>
           <div class="local-form__imagen">
             <span class="dato__label">Imagen del local</span>
             <img [src]="localForm().imagen" [alt]="localForm().nombre || 'Local'">
@@ -77,6 +82,23 @@ function cabinaVacia(localId: number): Habitacion {
             <div class="campo">
               <label>Cabinas iniciales</label>
               <input type="number" min="1" [(ngModel)]="cabinasIniciales" name="cabinasIniciales">
+            </div>
+          } @else {
+            <div class="local-form__cabinas">
+              <div class="local-form__cabinas-head">
+                <div>
+                  <span class="dato__label">Cabinas del local</span>
+                  <strong>{{ cabinas(localForm().id).length }} cabinas registradas</strong>
+                </div>
+                <button type="button" class="btn btn--linea btn--sm" (click)="crearCabina(localForm().id)">Agregar cabina</button>
+              </div>
+              @for (c of cabinas(localForm().id); track c.id) {
+                <div class="local-cabina-row">
+                  <div><strong>{{ c.nombre }}</strong><span>{{ c.equipamiento || 'Sin equipamiento registrado' }}</span></div>
+                  <label class="check"><input type="checkbox" [checked]="c.activa" (change)="alternarCabinaDesdeLocal(c)"> Habilitada</label>
+                  <button type="button" class="boton-icono" (click)="editarCabinaExistente(c)">Editar</button>
+                </div>
+              }
             </div>
           }
           <label class="check"><input type="checkbox" [ngModel]="localForm().activo" (ngModelChange)="editarLocal('activo', $event)" name="activo"> Local operativo</label>
@@ -179,7 +201,7 @@ function cabinaVacia(localId: number): Habitacion {
     .panel-form { margin-bottom: 22px; }
     .local-form, .cabina-form { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 14px; padding: 20px 22px 24px; align-items: end; }
     .cabina-form__ancho { grid-column: span 2; }
-    .local-form__ancho, .local-form__imagen { grid-column: 1 / -1; }
+    .local-form__ancho, .local-form__imagen, .local-form__mapa, .local-form__cabinas { grid-column: 1 / -1; }
     .local-form__247-label {
       min-height: 42px; display: flex; align-items: center; padding: 0 14px;
       border: 1px solid rgba(176, 27, 114, .22); border-radius: var(--radio); background: var(--rosa-50);
@@ -187,6 +209,30 @@ function cabinaVacia(localId: number): Habitacion {
     }
     .local-form__imagen { display: grid; grid-template-columns: 180px 1fr auto; gap: 12px; align-items: end; }
     .local-form__imagen img { width: 180px; height: 120px; object-fit: cover; border-radius: var(--radio); border: 1px solid var(--linea); background: var(--rosa-50); }
+    .local-form__mapa { display: grid; gap: 8px; align-items: start; }
+    .local-form__mapa small { color: var(--gris); font-size: .8rem; }
+    .local-form__cabinas {
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      background: var(--rosa-50);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .local-form__cabinas-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .local-form__cabinas-head strong { color: var(--vino); font-size: .92rem; }
+    .local-cabina-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio);
+      padding: 10px;
+      background: #fff;
+    }
+    .local-cabina-row div { display: flex; flex-direction: column; gap: 2px; }
+    .local-cabina-row span { color: var(--gris); font-size: .82rem; }
     .check { display: flex; gap: 8px; align-items: center; color: var(--gris); font-size: .86rem; }
     .check--247 { min-height: 42px; }
     .local { margin-bottom: 20px; }
@@ -205,7 +251,7 @@ function cabinaVacia(localId: number): Habitacion {
     @media (max-width: 1200px) {
       .local__metricas { grid-template-columns: repeat(2, 1fr); }
       .local__columnas, .local-form, .cabina-form { grid-template-columns: 1fr; }
-      .local-form__imagen { grid-template-columns: 1fr; }
+      .local-form__imagen, .local-cabina-row { grid-template-columns: 1fr; }
       .cabina-form__ancho { grid-column: auto; }
     }
   `]
@@ -248,6 +294,10 @@ export class LocalesAdminComponent {
 
   editarLocal<K extends keyof Local>(campo: K, valor: Local[K]): void {
     this.localForm.update(local => ({ ...local, [campo]: valor }));
+  }
+
+  actualizarCoordenadas(coordenadas: { latitud: number; longitud: number }): void {
+    this.localForm.update(local => ({ ...local, ...coordenadas }));
   }
 
   editarHorario(campo: 'apertura' | 'cierre', valor: string): void {
@@ -315,6 +365,10 @@ export class LocalesAdminComponent {
 
   editarCabina<K extends keyof Habitacion>(campo: K, valor: Habitacion[K]): void {
     this.cabinaForm.update(cabina => ({ ...cabina, [campo]: valor }));
+  }
+
+  alternarCabinaDesdeLocal(cabina: Habitacion): void {
+    this.habitaciones.update(lista => lista.map(item => item.id === cabina.id ? { ...item, activa: !item.activa } : item));
   }
 
   cabinas(localId: number) { return this.habitaciones().filter(h => h.localId === localId); }

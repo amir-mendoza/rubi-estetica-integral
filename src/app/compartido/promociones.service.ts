@@ -38,6 +38,10 @@ export class PromocionesService {
     this.lista.update(lista => lista.map(p => (p.id === id ? { ...p, destacada: !p.destacada } : p)));
   }
 
+  reasignarCategoria(categoria: Promocion['categoria'], reemplazo: Promocion['categoria']): void {
+    this.lista.update(lista => lista.map(p => p.categoria === categoria ? { ...p, categoria: reemplazo } : p));
+  }
+
   private siguienteId(): number {
     return this.lista().reduce((max, p) => Math.max(max, p.id), 0) + 1;
   }

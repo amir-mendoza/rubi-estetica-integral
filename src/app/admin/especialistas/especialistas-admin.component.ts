@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CITAS, ESPECIALISTAS, HOY_ISO, soles } from '../../data/datos';
+import { CITAS, ESPECIALISTAS, HOY_ISO, localPorId, nombrePaciente, soles, tratamientoPorId } from '../../data/datos';
 import { Especialista } from '../../data/modelos';
 
 function especialistaVacia(): Especialista {
@@ -82,6 +82,24 @@ function especialistaVacia(): Especialista {
             <div><strong>{{ soles(ingresos(e.id)) }}</strong><span>Ingresos cobrados del mes</span></div>
           </div>
 
+          <div class="movimientos-esp">
+            <div class="movimientos-esp__cabecera">
+              <div>
+                <span class="dato__label">Movimientos recientes</span>
+                <strong>Pacientes, local e ingreso asociado</strong>
+              </div>
+            </div>
+            @for (m of movimientos(e.id); track m.id) {
+              <div class="movimiento-row">
+                <div><strong>{{ nombrePaciente(m.pacienteId) }}</strong><span>{{ tratamiento(m.tratamientoId) }}</span></div>
+                <div><span>{{ m.fecha }} · {{ m.horaInicio }}</span><small>{{ local(m.localId) }}</small></div>
+                <div class="movimiento-row__monto">{{ soles(m.montoPagado) }}</div>
+              </div>
+            } @empty {
+              <p class="movimientos-esp__vacio">Aún no hay atenciones registradas para supervisar.</p>
+            }
+          </div>
+
           <div class="acciones-fila" style="justify-content:flex-start">
             <button class="boton-icono" (click)="editarEspecialista(e)">Editar perfil</button>
           </div>
@@ -107,6 +125,23 @@ function especialistaVacia(): Especialista {
     .tarjeta-esp-admin__metricas div { display: flex; flex-direction: column; }
     .tarjeta-esp-admin__metricas strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.6rem; color: var(--vino); }
     .tarjeta-esp-admin__metricas span { font-size: .7rem; color: var(--gris-claro); letter-spacing: .08em; }
+    .movimientos-esp { border-top: 1px dashed var(--linea); border-bottom: 1px dashed var(--linea); padding: 14px 0; margin-bottom: 16px; }
+    .movimientos-esp__cabecera { margin-bottom: 10px; }
+    .movimientos-esp__cabecera strong { display: block; color: var(--vino); font-size: .9rem; }
+    .movimiento-row {
+      display: grid;
+      grid-template-columns: minmax(170px, 1fr) minmax(150px, .8fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 9px 0;
+      border-top: 1px solid var(--linea);
+      font-size: .82rem;
+    }
+    .movimiento-row:first-of-type { border-top: 0; }
+    .movimiento-row div { display: flex; flex-direction: column; }
+    .movimiento-row span, .movimiento-row small { color: var(--gris); }
+    .movimiento-row__monto { align-items: flex-end; color: var(--vino); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .movimientos-esp__vacio { margin: 0; font-size: .84rem; }
     @media (max-width: 1200px) {
       .grid-esp { grid-template-columns: 1fr; }
       .tarjeta-esp-admin__datos { grid-template-columns: 1fr; }
@@ -118,6 +153,7 @@ function especialistaVacia(): Especialista {
 })
 export class EspecialistasAdminComponent {
   soles = soles;
+  nombrePaciente = nombrePaciente;
   especialistas = signal(ESPECIALISTAS.map(e => ({ ...e, locales: [...e.locales], tratamientos: [...e.tratamientos] })));
   mostrarFormulario = signal(false);
   borrador = signal<Especialista>(especialistaVacia());
@@ -169,5 +205,20 @@ export class EspecialistasAdminComponent {
   ingresos(id: number): number {
     return CITAS.filter(c => c.especialistaId === id && c.fecha.slice(0, 7) === this.mes)
       .reduce((t, c) => t + c.montoPagado, 0);
+  }
+
+  movimientos(id: number) {
+    return CITAS
+      .filter(c => c.especialistaId === id)
+      .sort((a, b) => `${b.fecha} ${b.horaInicio}`.localeCompare(`${a.fecha} ${a.horaInicio}`))
+      .slice(0, 5);
+  }
+
+  tratamiento(id: number): string {
+    return tratamientoPorId(id)?.nombre ?? 'Tratamiento sin dato';
+  }
+
+  local(id: number): string {
+    return localPorId(id)?.nombre ?? 'Local sin dato';
   }
 }

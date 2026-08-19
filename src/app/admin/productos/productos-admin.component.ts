@@ -21,6 +21,26 @@ function productoVacio(): Producto {
   };
 }
 
+function enriquecerProducto(p: Producto): Producto {
+  return {
+    ...p,
+    beneficios: p.beneficios?.length ? [...p.beneficios] : [
+      'Ayuda a mantener una rutina de cuidado constante en casa',
+      'Complementa los tratamientos faciales realizados en cabina',
+      'Mejora la apariencia e hidratación de la piel'
+    ],
+    modoUso: p.modoUso?.length ? [...p.modoUso] : [
+      'Aplicar sobre piel limpia según la indicación del producto',
+      'Usar la cantidad recomendada y evitar el contacto directo con los ojos'
+    ],
+    recomendaciones: p.recomendaciones?.length ? [...p.recomendaciones] : [
+      'Suspender el uso si aparece irritación',
+      'Conservar en un lugar fresco y alejado del sol directo'
+    ],
+    nombreImagen: p.nombreImagen || p.nombre
+  };
+}
+
 @Component({
   selector: 'app-productos-admin',
   standalone: true,
@@ -49,7 +69,10 @@ function productoVacio(): Producto {
           <span class="dato__label">Categorías</span>
           <div class="chips-admin">
             @for (c of categorias(); track c) {
-              <span class="categoria-chip">{{ c }}</span>
+              <span class="categoria-chip">
+                {{ c }}
+                <button type="button" (click)="eliminarCategoria(c)" aria-label="Eliminar categoría">×</button>
+              </span>
             }
           </div>
           <div class="catalogo-admin__nuevo">
@@ -61,7 +84,10 @@ function productoVacio(): Producto {
           <span class="dato__label">Marcas frecuentes</span>
           <div class="chips-admin">
             @for (m of marcas(); track m) {
-              <span class="categoria-chip">{{ m }}</span>
+              <span class="categoria-chip">
+                {{ m }}
+                <button type="button" (click)="eliminarMarca(m)" aria-label="Eliminar marca">×</button>
+              </span>
             }
           </div>
           <div class="catalogo-admin__nuevo">
@@ -91,14 +117,18 @@ function productoVacio(): Producto {
             <span>Vista previa local; luego Spring Boot la guardará en el servidor.</span>
           </div>
           <div class="campo"><label>Nombre</label><input required [ngModel]="borrador().nombre" (ngModelChange)="editar('nombre', $event)" name="nombre"></div>
-          <div class="campo"><label>Marca</label><input list="marcasProducto" [ngModel]="borrador().marca" (ngModelChange)="editar('marca', $event)" name="marca"></div>
-          <datalist id="marcasProducto">
-            @for (m of marcas(); track m) { <option [value]="m"></option> }
-          </datalist>
-          <div class="campo"><label>Categoría</label><input list="categoriasProducto" [ngModel]="borrador().categoria" (ngModelChange)="editar('categoria', $event)" name="categoria"></div>
-          <datalist id="categoriasProducto">
-            @for (c of categorias(); track c) { <option [value]="c"></option> }
-          </datalist>
+          <div class="campo">
+            <label>Marca</label>
+            <select [ngModel]="borrador().marca" (ngModelChange)="editar('marca', $event)" name="marca">
+              @for (m of marcas(); track m) { <option [value]="m">{{ m }}</option> }
+            </select>
+          </div>
+          <div class="campo">
+            <label>Categoría</label>
+            <select [ngModel]="borrador().categoria" (ngModelChange)="editar('categoria', $event)" name="categoria">
+              @for (c of categorias(); track c) { <option [value]="c">{{ c }}</option> }
+            </select>
+          </div>
           <div class="campo"><label>Precio venta (S/)</label><input type="number" min="0" required [ngModel]="borrador().precio" (ngModelChange)="editar('precio', Number($event))" name="precio"></div>
           <div class="campo"><label>Precio antes (opcional)</label><input type="number" min="0" [ngModel]="borrador().precioAntes" (ngModelChange)="editar('precioAntes', Number($event) || undefined)" name="precioAntes"></div>
           <div class="campo"><label>Stock actual</label><input type="number" min="0" [ngModel]="borrador().stock" (ngModelChange)="editar('stock', Number($event))" name="stock"></div>
@@ -238,7 +268,8 @@ function productoVacio(): Producto {
     .panel-form, .categorias-panel { margin-bottom: 22px; }
     .catalogo-admin { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; padding: 18px 22px 22px; }
     .chips-admin { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
-    .categoria-chip { border: 1px solid var(--linea); border-radius: 999px; padding: 7px 13px; background: #fff; color: var(--gris); font-size: .78rem; }
+    .categoria-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--linea); border-radius: 999px; padding: 7px 10px 7px 13px; background: #fff; color: var(--gris); font-size: .78rem; }
+    .categoria-chip button { border: 0; background: var(--rosa-50); color: var(--error); width: 20px; height: 20px; border-radius: 50%; cursor: pointer; line-height: 1; }
     .catalogo-admin__nuevo { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
     .producto-form { display: grid; grid-template-columns: 180px repeat(3, minmax(150px, 1fr)); gap: 14px; padding: 20px 22px 24px; align-items: end; }
     .producto-form__imagen { grid-row: span 3; display: grid; gap: 10px; align-content: start; color: var(--gris-claro); font-size: .76rem; }
@@ -261,9 +292,9 @@ export class ProductosAdminComponent {
   Math = Math;
   Number = Number;
   soles = soles;
-  categorias = signal(CATEGORIAS_PRODUCTO.filter(c => c !== 'Todos'));
+  categorias = signal(Array.from(new Set(['Cuidado facial', ...CATEGORIAS_PRODUCTO.filter(c => c !== 'Todos')])));
   marcas = signal(Array.from(new Set(PRODUCTOS.map(p => p.marca))));
-  productos = signal(PRODUCTOS.map(p => ({ ...p })));
+  productos = signal(PRODUCTOS.map(p => enriquecerProducto(p)));
   busqueda = signal('');
   categoria = signal('Todos');
   mostrarFormulario = signal(false);
@@ -295,6 +326,15 @@ export class ProductosAdminComponent {
     this.nuevaCategoria = '';
   }
 
+  eliminarCategoria(categoria: string): void {
+    const restantes = this.categorias().filter(c => c !== categoria);
+    const reemplazo = restantes[0] ?? 'Cuidado facial';
+    this.categorias.set(restantes.length ? restantes : [reemplazo]);
+    this.productos.update(lista => lista.map(p => p.categoria === categoria ? { ...p, categoria: reemplazo } : p));
+    if (this.borrador().categoria === categoria) { this.editar('categoria', reemplazo); }
+    if (this.categoria() === categoria) { this.categoria.set('Todos'); }
+  }
+
   agregarMarca(): void {
     const nombre = this.nuevaMarca.trim();
     if (!nombre || this.marcas().some(m => m.toLowerCase() === nombre.toLowerCase())) { return; }
@@ -303,17 +343,26 @@ export class ProductosAdminComponent {
     this.nuevaMarca = '';
   }
 
+  eliminarMarca(marca: string): void {
+    const restantes = this.marcas().filter(m => m !== marca);
+    const reemplazo = restantes[0] ?? 'Rubí Skin';
+    this.marcas.set(restantes.length ? restantes : [reemplazo]);
+    this.productos.update(lista => lista.map(p => p.marca === marca ? { ...p, marca: reemplazo } : p));
+    if (this.borrador().marca === marca) { this.editar('marca', reemplazo); }
+  }
+
   nuevo(): void {
     this.borrador.set(productoVacio());
     this.mostrarFormulario.set(true);
   }
 
   editarProducto(p: Producto): void {
+    const completo = enriquecerProducto(p);
     this.borrador.set({
-      ...p,
-      beneficios: [...(p.beneficios ?? [''])],
-      recomendaciones: [...(p.recomendaciones ?? [''])],
-      modoUso: [...(p.modoUso ?? [''])]
+      ...completo,
+      beneficios: [...(completo.beneficios ?? [''])],
+      recomendaciones: [...(completo.recomendaciones ?? [''])],
+      modoUso: [...(completo.modoUso ?? [''])]
     });
     this.mostrarFormulario.set(true);
   }

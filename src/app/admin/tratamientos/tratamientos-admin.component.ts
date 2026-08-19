@@ -11,8 +11,8 @@ function tratamientoVacio(): Tratamiento {
     etiquetas: [],
     resumen: '',
     descripcion: '',
-    beneficios: [],
-    recomendaciones: [],
+    beneficios: [''],
+    recomendaciones: [''],
     duracionMin: 60,
     limpiezaMin: 15,
     precio: 0,
@@ -51,7 +51,7 @@ function tratamientoVacio(): Tratamiento {
           @for (c of categorias(); track c) {
             <span class="categoria-chip">
               {{ c }}
-              @if (c !== 'Todos' && !categoriaUsada(c)) {
+              @if (c !== 'Todos') {
                 <button type="button" (click)="eliminarCategoria(c)" aria-label="Eliminar categoría">×</button>
               }
             </span>
@@ -106,8 +106,27 @@ function tratamientoVacio(): Tratamiento {
           <div class="campo trat-form__ancho"><label>Resumen</label><input [ngModel]="borrador().resumen" (ngModelChange)="editar('resumen', $event)" name="resumen"></div>
           <div class="campo trat-form__ancho"><label>Descripción</label><textarea rows="3" [ngModel]="borrador().descripcion" (ngModelChange)="editar('descripcion', $event)" name="descripcion"></textarea></div>
           <div class="trat-form__preview">
-            <span class="dato__label">Previsualización de imagen</span>
-            <img [src]="borrador().imagen" [alt]="borrador().nombre || 'Tratamiento'">
+            <span class="dato__label">Vista previa pública</span>
+            <article class="preview-trat-card">
+              <div class="preview-trat-card__media">
+                <img [src]="borrador().imagen" [alt]="borrador().nombre || 'Tratamiento'">
+                <span>{{ borrador().categoria || 'Categoría' }}</span>
+              </div>
+              <div class="preview-trat-card__body">
+                <h4>{{ borrador().nombre || 'Nombre del tratamiento' }}</h4>
+                <p>{{ borrador().resumen || 'Resumen breve que verá la paciente en la lista.' }}</p>
+                <div class="precio">
+                  <span class="precio__actual">{{ soles(borrador().precio || 0) }}</span>
+                </div>
+              </div>
+            </article>
+            <div class="preview-trat-detail">
+              <strong>Detalle al abrir</strong>
+              <p>{{ borrador().descripcion || 'Aquí se verá en qué consiste el tratamiento.' }}</p>
+              <ul>
+                @for (b of beneficiosPreview(); track $index) { <li>{{ b }}</li> }
+              </ul>
+            </div>
           </div>
           <div class="lista-editor">
             <div class="lista-editor__cabecera">
@@ -217,15 +236,44 @@ function tratamientoVacio(): Tratamiento {
     }
     .trat-form {
       display: grid;
-      grid-template-columns: repeat(3, minmax(150px, 1fr));
+      grid-template-columns: repeat(2, minmax(170px, 1fr)) minmax(320px, .85fr);
       gap: 14px;
       padding: 20px 22px 24px;
       align-items: end;
     }
-    .trat-form__ancho { grid-column: 1 / -1; }
-    .trat-form__preview, .lista-editor { grid-column: 1 / -1; }
-    .trat-form__preview { display: grid; gap: 10px; align-items: start; }
-    .trat-form__preview img { width: min(360px, 100%); max-height: 220px; object-fit: contain; border: 1px solid var(--linea); border-radius: var(--radio); background: var(--rosa-50); padding: 8px; }
+    .trat-form__ancho, .lista-editor { grid-column: 1 / 3; }
+    .trat-form__preview {
+      grid-column: 3;
+      grid-row: 1 / span 8;
+      display: grid;
+      gap: 12px;
+      align-items: start;
+      align-self: start;
+      position: sticky;
+      top: 86px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      padding: 14px;
+      background: #fff;
+    }
+    .preview-trat-card { border: 1px solid var(--linea); border-radius: var(--radio-lg); overflow: hidden; background: #fff; }
+    .preview-trat-card__media { position: relative; aspect-ratio: 4 / 3; background: var(--rosa-50); }
+    .preview-trat-card__media img { width: 100%; height: 100%; object-fit: cover; }
+    .preview-trat-card__media span {
+      position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,.94); color: var(--vino);
+      font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; padding: 5px 10px; border-radius: 2px;
+    }
+    .preview-trat-card__body { padding: 16px; }
+    .preview-trat-card__body h4 { margin-bottom: 6px; }
+    .preview-trat-card__body p, .preview-trat-detail p { font-size: .84rem; margin-bottom: 8px; }
+    .preview-trat-detail {
+      border: 1px dashed var(--linea);
+      border-radius: var(--radio);
+      padding: 12px;
+      background: var(--rosa-50);
+    }
+    .preview-trat-detail strong { color: var(--vino); font-size: .9rem; }
+    .preview-trat-detail ul { margin: 8px 0 0; padding-left: 18px; color: var(--gris); font-size: .8rem; }
     .lista-editor { border: 1px solid var(--linea); border-radius: var(--radio); padding: 14px; background: var(--rosa-50); display: grid; gap: 10px; }
     .lista-editor__cabecera { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
     .lista-editor__cabecera strong { display: block; color: var(--vino); font-size: .92rem; }
@@ -235,7 +283,11 @@ function tratamientoVacio(): Tratamiento {
     .fila-trat { display: flex; gap: 12px; align-items: center; max-width: 380px; }
     .fila-trat img { width: 46px; height: 46px; border-radius: var(--radio); object-fit: cover; }
     .fila-trat .mini-dato span { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-    @media (max-width: 1000px) { .trat-form, .categorias-admin { grid-template-columns: 1fr; } .form-rapido, .lista-editor__fila, .categorias-admin__nuevo { display: grid; grid-template-columns: 1fr; } }
+    @media (max-width: 1000px) {
+      .trat-form, .categorias-admin { grid-template-columns: 1fr; }
+      .trat-form__ancho, .lista-editor, .trat-form__preview { grid-column: 1; grid-row: auto; position: static; }
+      .form-rapido, .lista-editor__fila, .categorias-admin__nuevo { display: grid; grid-template-columns: 1fr; }
+    }
   `]
 })
 export class TratamientosAdminComponent {
@@ -273,9 +325,18 @@ export class TratamientosAdminComponent {
   }
 
   eliminarCategoria(categoria: string): void {
-    if (categoria === 'Todos' || this.categoriaUsada(categoria)) { return; }
-    this.categorias.update(lista => lista.filter(c => c !== categoria));
+    if (categoria === 'Todos') { return; }
+    const restantes = this.categorias().filter(c => c !== categoria);
+    const reemplazo = (restantes.find(c => c !== 'Todos') ?? 'Facial') as CategoriaTratamiento;
+    this.categorias.set(restantes.some(c => c !== 'Todos') ? restantes : ['Todos', reemplazo]);
+    this.tratamientos.update(lista => lista.map(t => t.categoria === categoria ? { ...t, categoria: reemplazo } : t));
+    if (this.borrador().categoria === categoria) { this.editar('categoria', reemplazo); }
     if (this.categoria() === categoria) { this.categoria.set('Todos'); }
+  }
+
+  beneficiosPreview(): string[] {
+    const lista = this.borrador().beneficios.map(b => b.trim()).filter(Boolean);
+    return lista.length ? lista.slice(0, 3) : ['Beneficio principal del tratamiento'];
   }
 
   sesiones(id: number): number {
@@ -289,7 +350,12 @@ export class TratamientosAdminComponent {
   }
 
   editarTratamiento(t: Tratamiento): void {
-    this.borrador.set({ ...t, etiquetas: [...t.etiquetas], beneficios: [...t.beneficios], recomendaciones: [...t.recomendaciones] });
+    this.borrador.set({
+      ...t,
+      etiquetas: [...t.etiquetas],
+      beneficios: t.beneficios.length ? [...t.beneficios] : [''],
+      recomendaciones: t.recomendaciones.length ? [...t.recomendaciones] : ['']
+    });
     this.mostrarFormulario.set(true);
   }
 

@@ -251,17 +251,27 @@ hr { border: none; border-top: 1px solid var(--linea); margin: 2.5rem 0; }
 }
 .campo input, .campo select, .campo textarea {
   font-family: inherit; font-size: .95rem; color: var(--tinta);
+  min-height: 42px;
   padding: .8rem .9rem;
-  border: 1px solid var(--linea);
+  border: 1.5px solid #d8c2cf;
   border-radius: var(--radio);
-  background: #fff;
+  background: #fffafd;
   outline: none;
-  transition: border-color .15s ease, box-shadow .15s ease;
+  box-shadow: inset 0 1px 0 rgba(110, 19, 56, .04);
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.campo textarea { min-height: 96px; resize: vertical; }
+.campo input:hover, .campo select:hover, .campo textarea:hover {
+  border-color: #c59aad;
+  background: #fff;
 }
 .campo input:focus, .campo select:focus, .campo textarea:focus {
   border-color: var(--magenta-300);
-  box-shadow: 0 0 0 3px rgba(224, 123, 173, .18);
+  box-shadow: 0 0 0 3px rgba(224, 123, 173, .18), inset 0 1px 0 rgba(110, 19, 56, .04);
+  background: #fff;
 }
+.campo input::placeholder, .campo textarea::placeholder { color: #9f8a98; }
+.campo input[type="file"] { padding: .62rem .75rem; background: #fff; }
 .campo__ayuda { font-size: .78rem; color: var(--gris-claro); }
 
 /* ----------------------------------------------------------------- Tablas */
