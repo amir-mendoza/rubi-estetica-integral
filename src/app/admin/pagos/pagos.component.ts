@@ -107,6 +107,8 @@ type PeriodoPago = 'hoy' | 'semana' | 'mes' | 'todo';
                     } @else if (p.estado === 'Pagado') {
                       <button class="boton-icono" (click)="abrirCobro(p)">Editar</button>
                       <button class="boton-icono boton-icono--peligro" (click)="registrarReembolso(p)">Reembolso</button>
+                    } @else if (p.estado === 'Reembolsado') {
+                      <button class="boton-icono" (click)="cancelarReembolso(p)">Cancelar reembolso</button>
                     }
                   </div>
                 </td>
@@ -119,8 +121,12 @@ type PeriodoPago = 'hoy' | 'semana' | 'mes' | 'todo';
                         <strong>{{ p.estado === 'Pendiente' ? 'Registrar cobro' : 'Editar pago' }}</strong>
                         <span>{{ p.concepto }} · {{ p.referencia }}</span>
                       </div>
+                      <div class="cobro-resumen">
+                        <span>{{ p.estado === 'Pendiente' ? 'Monto pendiente' : 'Monto registrado' }}</span>
+                        <strong>{{ soles(Math.abs(p.monto)) }}</strong>
+                      </div>
                       <div class="campo">
-                        <label>Monto</label>
+                        <label>{{ p.estado === 'Pendiente' ? 'Monto que paga ahora' : 'Monto corregido' }}</label>
                         <input type="number" min="1" [max]="p.estado === 'Pendiente' ? p.monto : null" [ngModel]="montoCobro(p)" (ngModelChange)="setCobroMonto(p.id, Number($event))" name="monto{{ p.id }}">
                       </div>
                       <div class="campo">
@@ -129,9 +135,9 @@ type PeriodoPago = 'hoy' | 'semana' | 'mes' | 'todo';
                           @for (m of metodosPago; track m) { <option>{{ m }}</option> }
                         </select>
                       </div>
-                      <div class="campo">
-                        <label>Código operación</label>
-                        <input [ngModel]="codigoCobro(p)" (ngModelChange)="setCobroCodigo(p.id, $event)" name="codigo{{ p.id }}" placeholder="Se genera si queda vacío">
+                      <div class="codigo-auto">
+                        <span>Código automático</span>
+                        <strong>{{ codigoGenerado(p) }}</strong>
                       </div>
                       <button class="btn btn--vino btn--sm" type="submit">Guardar</button>
                       <button class="boton-icono" type="button" (click)="cobroAbierto.set(null)">Cancelar</button>
@@ -149,7 +155,7 @@ type PeriodoPago = 'hoy' | 'semana' | 'mes' | 'todo';
     .kpis-5 { grid-template-columns: repeat(5, 1fr); margin-bottom: 22px; }
     .cobro-inline {
       display: grid;
-      grid-template-columns: minmax(220px, 1.2fr) repeat(3, minmax(130px, .7fr)) auto auto;
+      grid-template-columns: minmax(220px, 1.2fr) minmax(120px, .55fr) repeat(2, minmax(140px, .7fr)) minmax(150px, .65fr) auto auto;
       gap: 14px;
       align-items: end;
       padding: 14px;
@@ -161,6 +167,30 @@ type PeriodoPago = 'hoy' | 'semana' | 'mes' | 'todo';
     .cobro-inline > div:first-child strong { color: var(--vino); }
     .cobro-inline > div:first-child span { color: var(--gris); font-size: .82rem; }
     .cobro-inline .campo { margin: 0; }
+    .cobro-resumen,
+    .codigo-auto {
+      display: grid;
+      gap: 4px;
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio);
+      background: #fff;
+    }
+    .cobro-resumen span,
+    .codigo-auto span {
+      color: var(--gris-claro);
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .cobro-resumen strong,
+    .codigo-auto strong {
+      color: var(--vino);
+      font-size: .95rem;
+      line-height: 1.1;
+    }
     .fila-cobro td { background: #fff; }
     .boton-icono--peligro { color: var(--error); border-color: rgba(166,40,40,.28); }
     .boton-icono--peligro:hover { background: var(--error-bg); border-color: var(--error); color: var(--error); }
@@ -222,7 +252,7 @@ export class PagosComponent {
     this.cobroAbierto.set(this.cobroAbierto() === p.id ? null : p.id);
     this.setCobroMonto(p.id, Math.abs(p.monto));
     this.setCobroMetodo(p.id, p.metodo);
-    this.setCobroCodigo(p.id, p.codigoOperacion === '—' ? '' : p.codigoOperacion);
+    this.setCobroCodigo(p.id, this.codigoGenerado(p));
   }
 
   setCobroMonto(id: number, monto: number): void {
@@ -241,8 +271,10 @@ export class PagosComponent {
     return this.cobroMonto()[p.id] || Math.abs(p.monto);
   }
 
-  codigoCobro(p: MovimientoPago): string {
-    return this.cobroCodigo()[p.id] ?? (p.codigoOperacion === '—' ? '' : p.codigoOperacion);
+  codigoGenerado(p: MovimientoPago): string {
+    const existente = p.codigoOperacion && p.codigoOperacion !== '—' ? p.codigoOperacion : '';
+    const prefijo = p.estado === 'Pendiente' ? 'CAJA' : p.estado === 'Reembolsado' ? 'RB' : 'AJ';
+    return this.cobroCodigo()[p.id] || existente || `${prefijo}-${String(p.id).padStart(5, '0')}`;
   }
 
   guardarCobroMovimiento(p: MovimientoPago): void {
@@ -306,6 +338,11 @@ export class PagosComponent {
       registradoPor: 'Administración',
       codigoOperacion: `RB-${String(id).padStart(5, '0')}`
     }, ...lista]);
+  }
+
+  cancelarReembolso(p: MovimientoPago): void {
+    if (!confirm(`¿Cancelar el reembolso registrado para ${p.referencia}?`)) { return; }
+    this.movimientos.update(lista => lista.filter(item => item.id !== p.id));
   }
 
   private enPeriodo(fecha: string): boolean {

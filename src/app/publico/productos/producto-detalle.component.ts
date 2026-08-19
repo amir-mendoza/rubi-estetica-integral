@@ -14,6 +14,7 @@ import { CarritoService } from '../../compartido/carrito.service';
         <div class="contenedor detalle-prod">
           <figure class="detalle-prod__imagen"><img class="img-cobertura" [src]="p.imagen" [alt]="p.nombre"></figure>
           <div>
+            <a routerLink="/productos" class="volver-link">← Volver a productos</a>
             <div class="miga">
               <a routerLink="/">Inicio</a> / <a routerLink="/productos">Productos</a> / {{ p.nombre }}
             </div>
@@ -104,6 +105,16 @@ import { CarritoService } from '../../compartido/carrito.service';
   `,
   styles: [`
     .detalle-prod { display: grid; grid-template-columns: 1fr 1.1fr; gap: 64px; align-items: center; }
+    .volver-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      color: var(--vino);
+      font-size: .86rem;
+      font-weight: 600;
+    }
+    .volver-link:hover { color: var(--magenta); }
     .detalle-prod__imagen { margin: 0; border-radius: var(--radio-lg); overflow: hidden; background: var(--rosa-50); }
     .detalle-prod__imagen img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
     .detalle-prod__acciones { display: flex; gap: 14px; margin: 28px 0; flex-wrap: wrap; }

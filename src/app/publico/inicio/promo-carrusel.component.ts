@@ -27,7 +27,13 @@ import { PromocionesService } from '../../compartido/promociones.service';
             </div>
           </div>
 
-          <div class="promociones__marco">
+          <div class="promociones__marco"
+               (mouseenter)="pausar()"
+               (mouseleave)="reanudar()"
+               (pointerdown)="iniciarArrastre($event)"
+               (pointermove)="moverArrastre($event)"
+               (pointerup)="terminarArrastre($event)"
+               (pointercancel)="cancelarArrastre()">
             @for (p of promos(); track p.id; let i = $index) {
               <article class="promo" [class.promo--activa]="i === indice()" [attr.aria-hidden]="i !== indice()">
                 <div class="promo__arte">
@@ -132,7 +138,11 @@ import { PromocionesService } from '../../compartido/promociones.service';
       background: #fff;
       box-shadow: var(--sombra);
       overflow: hidden;
+      cursor: grab;
+      user-select: none;
+      touch-action: pan-y;
     }
+    .promociones__marco:active { cursor: grabbing; }
     .promo {
       display: none;
       grid-template-columns: minmax(300px, 470px) minmax(0, 1fr);
@@ -420,6 +430,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
 })
 export class PromoCarruselComponent implements OnInit, OnDestroy {
   private temporizador?: ReturnType<typeof setInterval>;
+  private arrastre: { id: number; y: number } | null = null;
 
   soles = soles;
   indice = signal(0);
@@ -428,11 +439,11 @@ export class PromoCarruselComponent implements OnInit, OnDestroy {
   constructor(private promociones: PromocionesService) {}
 
   ngOnInit(): void {
-    this.temporizador = setInterval(() => this.siguiente(), 7000);
+    this.reanudar();
   }
 
   ngOnDestroy(): void {
-    if (this.temporizador) { clearInterval(this.temporizador); }
+    this.pausar();
   }
 
   ir(i: number): void { this.indice.set(i); }
@@ -445,6 +456,44 @@ export class PromoCarruselComponent implements OnInit, OnDestroy {
   anterior(): void {
     const total = this.promos().length;
     if (total) { this.indice.set((this.indice() - 1 + total) % total); }
+  }
+
+  pausar(): void {
+    if (this.temporizador) {
+      clearInterval(this.temporizador);
+      this.temporizador = undefined;
+    }
+  }
+
+  reanudar(): void {
+    this.pausar();
+    this.temporizador = setInterval(() => this.siguiente(), 7000);
+  }
+
+  iniciarArrastre(evento: PointerEvent): void {
+    this.arrastre = { id: evento.pointerId, y: evento.clientY };
+    (evento.currentTarget as HTMLElement).setPointerCapture(evento.pointerId);
+    this.pausar();
+  }
+
+  moverArrastre(evento: PointerEvent): void {
+    if (!this.arrastre || this.arrastre.id !== evento.pointerId) { return; }
+    const desplazamiento = evento.clientY - this.arrastre.y;
+    if (Math.abs(desplazamiento) < 42) { return; }
+    desplazamiento < 0 ? this.siguiente() : this.anterior();
+    this.arrastre = { ...this.arrastre, y: evento.clientY };
+  }
+
+  terminarArrastre(evento: PointerEvent): void {
+    if (!this.arrastre || this.arrastre.id !== evento.pointerId) { return; }
+    (evento.currentTarget as HTMLElement).releasePointerCapture(evento.pointerId);
+    this.arrastre = null;
+    this.reanudar();
+  }
+
+  cancelarArrastre(): void {
+    this.arrastre = null;
+    this.reanudar();
   }
 
   whatsappPromo(promo: { titulo: string; precio?: number }): string {

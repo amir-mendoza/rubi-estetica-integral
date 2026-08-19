@@ -15,6 +15,7 @@ import { TRATAMIENTOS, soles, tratamientoPorId } from '../../data/datos';
             <img class="img-cobertura" [src]="t.imagen" [alt]="t.nombre">
           </figure>
           <div>
+            <a routerLink="/tratamientos" class="volver-link">← Volver a tratamientos</a>
             <div class="miga">
               <a routerLink="/">Inicio</a> / <a routerLink="/tratamientos">Tratamientos</a> / {{ t.nombre }}
             </div>
@@ -112,6 +113,16 @@ import { TRATAMIENTOS, soles, tratamientoPorId } from '../../data/datos';
   styles: [`
     .detalle { padding: 56px 0 0; }
     .detalle__grid { display: grid; grid-template-columns: 1fr 1.05fr; gap: 64px; align-items: center; }
+    .volver-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      color: var(--vino);
+      font-size: .86rem;
+      font-weight: 600;
+    }
+    .volver-link:hover { color: var(--magenta); }
     .detalle__imagen { margin: 0; border-radius: var(--radio-lg); overflow: hidden; }
     .detalle__imagen img { width: 100%; aspect-ratio: 4/3; object-fit: cover; }
     .detalle__precio { display: flex; align-items: baseline; gap: 12px; margin: 26px 0; }
