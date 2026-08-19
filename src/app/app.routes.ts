@@ -37,6 +37,7 @@ export const routes: Routes = [
       { path: 'productos', loadComponent: () => import('./admin/productos/productos-admin.component').then(m => m.ProductosAdminComponent) },
       { path: 'tratamientos', loadComponent: () => import('./admin/tratamientos/tratamientos-admin.component').then(m => m.TratamientosAdminComponent) },
       { path: 'especialistas', loadComponent: () => import('./admin/especialistas/especialistas-admin.component').then(m => m.EspecialistasAdminComponent) },
+      { path: 'especialistas/:id/historial', loadComponent: () => import('./admin/especialistas/especialista-historial.component').then(m => m.EspecialistaHistorialComponent) },
       { path: 'locales', loadComponent: () => import('./admin/locales/locales-admin.component').then(m => m.LocalesAdminComponent) },
       { path: 'pagos', loadComponent: () => import('./admin/pagos/pagos.component').then(m => m.PagosComponent) },
       { path: 'pedidos', loadComponent: () => import('./admin/pedidos/pedidos.component').then(m => m.PedidosComponent) },

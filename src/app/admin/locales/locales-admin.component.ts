@@ -63,12 +63,27 @@ function cabinaVacia(localId: number): Habitacion {
           }
           <div class="campo"><label>Latitud</label><input type="number" step="0.000001" [ngModel]="localForm().latitud" (ngModelChange)="editarLocal('latitud', Number($event))" name="latitud"></div>
           <div class="campo"><label>Longitud</label><input type="number" step="0.000001" [ngModel]="localForm().longitud" (ngModelChange)="editarLocal('longitud', Number($event))" name="longitud"></div>
-          <div class="campo local-form__ancho"><label>Link de Google Maps</label><input [ngModel]="localForm().mapa" (ngModelChange)="editarLocal('mapa', $event)" name="mapa" placeholder="Pega el link o usa latitud/longitud"></div>
           <div class="local-form__mapa">
             <span class="dato__label">Mapa visual</span>
             <app-mapa-sede [local]="localForm()" [editable]="true" (coordenadas)="actualizarCoordenadas($event)" />
-            <small>Haz clic sobre el mapa para ajustar latitud y longitud antes de guardar el local.</small>
+            <small>Arrastra el mapa para ubicarte y haz clic en el punto exacto. El botón público de Google Maps se genera con estas coordenadas.</small>
           </div>
+          <aside class="local-form__preview">
+            <span class="dato__label">Vista previa pública</span>
+            <article class="preview-local-card">
+              <img [src]="localForm().imagen" [alt]="localForm().nombre || 'Local'">
+              <div>
+                <h4>{{ localForm().nombre || 'Nombre del local' }}</h4>
+                <p>{{ localForm().direccion || 'Dirección del local' }}</p>
+                <p>{{ localForm().referencia || 'Referencia para llegar' }} · {{ localForm().distrito }}</p>
+                <div class="preview-local-card__meta">
+                  <span>{{ localForm().telefono }}</span>
+                  <span>{{ localForm().horario[0].apertura }} - {{ localForm().horario[0].cierre }}</span>
+                </div>
+                <a [href]="googleMapsLocal(localForm())" target="_blank" rel="noopener">Abrir en Google Maps</a>
+              </div>
+            </article>
+          </aside>
           <div class="local-form__imagen">
             <span class="dato__label">Imagen del local</span>
             <img [src]="localForm().imagen" [alt]="localForm().nombre || 'Local'">
@@ -199,9 +214,10 @@ function cabinaVacia(localId: number): Habitacion {
   `,
   styles: [`
     .panel-form { margin-bottom: 22px; }
-    .local-form, .cabina-form { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 14px; padding: 20px 22px 24px; align-items: end; }
+    .local-form { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)) minmax(340px, .86fr); gap: 14px; padding: 20px 22px 24px; align-items: end; }
+    .cabina-form { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 14px; padding: 20px 22px 24px; align-items: end; }
     .cabina-form__ancho { grid-column: span 2; }
-    .local-form__ancho, .local-form__imagen, .local-form__mapa, .local-form__cabinas { grid-column: 1 / -1; }
+    .local-form__ancho, .local-form__imagen, .local-form__mapa, .local-form__cabinas { grid-column: 1 / 4; }
     .local-form__247-label {
       min-height: 42px; display: flex; align-items: center; padding: 0 14px;
       border: 1px solid rgba(176, 27, 114, .22); border-radius: var(--radio); background: var(--rosa-50);
@@ -211,6 +227,26 @@ function cabinaVacia(localId: number): Habitacion {
     .local-form__imagen img { width: 180px; height: 120px; object-fit: cover; border-radius: var(--radio); border: 1px solid var(--linea); background: var(--rosa-50); }
     .local-form__mapa { display: grid; gap: 8px; align-items: start; }
     .local-form__mapa small { color: var(--gris); font-size: .8rem; }
+    .local-form__preview {
+      grid-column: 4;
+      grid-row: 1 / span 9;
+      align-self: start;
+      position: sticky;
+      top: 86px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      padding: 14px;
+      background: #fff;
+      display: grid;
+      gap: 12px;
+    }
+    .preview-local-card { border: 1px solid var(--linea); border-radius: var(--radio-lg); overflow: hidden; background: #fff; }
+    .preview-local-card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--rosa-50); }
+    .preview-local-card div { padding: 16px; }
+    .preview-local-card h4 { margin-bottom: 6px; }
+    .preview-local-card p { margin-bottom: 6px; font-size: .84rem; }
+    .preview-local-card__meta { display: grid; gap: 4px; padding: 10px 0 !important; color: var(--vino); font-size: .82rem; }
+    .preview-local-card a { display: inline-flex; margin-top: 8px; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; }
     .local-form__cabinas {
       border: 1px solid var(--linea);
       border-radius: var(--radio-lg);
@@ -252,6 +288,7 @@ function cabinaVacia(localId: number): Habitacion {
       .local__metricas { grid-template-columns: repeat(2, 1fr); }
       .local__columnas, .local-form, .cabina-form { grid-template-columns: 1fr; }
       .local-form__imagen, .local-cabina-row { grid-template-columns: 1fr; }
+      .local-form__imagen, .local-form__mapa, .local-form__cabinas, .local-form__preview { grid-column: 1; grid-row: auto; position: static; }
       .cabina-form__ancho { grid-column: auto; }
     }
   `]
@@ -280,7 +317,7 @@ export class LocalesAdminComponent {
   }
 
   guardarLocal(): void {
-    const local = this.localForm();
+    const local = { ...this.localForm(), mapa: this.googleMapsLocal(this.localForm()) };
     const nuevo = !local.id;
     const nuevoId = local.id || this.locales().reduce((max, item) => Math.max(max, item.id), 0) + 1;
     this.locales.update(lista => local.id
@@ -297,7 +334,7 @@ export class LocalesAdminComponent {
   }
 
   actualizarCoordenadas(coordenadas: { latitud: number; longitud: number }): void {
-    this.localForm.update(local => ({ ...local, ...coordenadas }));
+    this.localForm.update(local => ({ ...local, ...coordenadas, mapa: this.googleMapsLocal({ ...local, ...coordenadas }) }));
   }
 
   editarHorario(campo: 'apertura' | 'cierre', valor: string): void {
@@ -372,6 +409,7 @@ export class LocalesAdminComponent {
   }
 
   cabinas(localId: number) { return this.habitaciones().filter(h => h.localId === localId); }
+  googleMapsLocal(local: Local): string { return `https://www.google.com/maps?q=${local.latitud},${local.longitud}`; }
   especialistas(localId: number) { return ESPECIALISTAS.filter(e => e.locales.includes(localId)).length; }
   citasHoy(localId: number) { return CITAS.filter(c => c.localId === localId && c.fecha === HOY_ISO).length; }
   citasCabina(habId: number) { return CITAS.filter(c => c.habitacionId === habId && c.fecha === HOY_ISO).length; }

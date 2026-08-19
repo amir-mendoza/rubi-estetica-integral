@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { CITAS, ESPECIALISTAS, HOY_ISO, localPorId, nombrePaciente, soles, tratamientoPorId } from '../../data/datos';
 import { Especialista } from '../../data/modelos';
 
@@ -23,7 +24,7 @@ function especialistaVacia(): Especialista {
 @Component({
   selector: 'app-especialistas-admin',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   template: `
     <div class="cabecera-admin">
       <div>
@@ -102,6 +103,7 @@ function especialistaVacia(): Especialista {
 
           <div class="acciones-fila" style="justify-content:flex-start">
             <button class="boton-icono" (click)="editarEspecialista(e)">Editar perfil</button>
+            <a class="boton-icono" [routerLink]="['/admin/especialistas', e.id, 'historial']">Ver historial completo</a>
           </div>
         </article>
       }

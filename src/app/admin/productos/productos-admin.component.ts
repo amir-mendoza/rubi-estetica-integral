@@ -134,6 +134,39 @@ function enriquecerProducto(p: Producto): Producto {
           <div class="campo"><label>Stock actual</label><input type="number" min="0" [ngModel]="borrador().stock" (ngModelChange)="editar('stock', Number($event))" name="stock"></div>
           <div class="campo"><label>Nombre interno de imagen</label><input [ngModel]="borrador().nombreImagen" (ngModelChange)="editar('nombreImagen', $event)" name="nombreImagenProducto" placeholder="Ej. Serum vitamina C frontal"></div>
           <div class="campo producto-form__ancho"><label>Descripción para venta</label><textarea rows="3" [ngModel]="borrador().descripcion" (ngModelChange)="editar('descripcion', $event)" name="descripcion"></textarea></div>
+          <div class="producto-form__preview">
+            <span class="dato__label">Vista previa pública</span>
+            <article class="preview-prod-card">
+              <div class="preview-prod-card__media"><img [src]="borrador().imagen" [alt]="borrador().nombre || 'Producto'"></div>
+              <div class="preview-prod-card__body">
+                <span>{{ borrador().marca || 'Marca' }}</span>
+                <h4>{{ borrador().nombre || 'Nombre del producto' }}</h4>
+                <p>{{ borrador().descripcion || 'Descripción corta que verá la paciente en el detalle del producto.' }}</p>
+                <div class="precio">
+                  @if (borrador().precioAntes) { <span class="precio__antes">{{ soles(borrador().precioAntes || 0) }}</span> }
+                  <span class="precio__actual">{{ soles(borrador().precio || 0) }}</span>
+                </div>
+              </div>
+            </article>
+            <div class="preview-prod-detail">
+              <div class="preview-prod-detail__head">
+                <span>{{ borrador().marca || 'Marca' }} · {{ borrador().categoria || 'Categoría' }}</span>
+                <strong>{{ borrador().stock > 0 ? 'Disponible' : 'Sin stock' }} · {{ borrador().stock || 0 }} unidades</strong>
+              </div>
+              <div>
+                <h5>Beneficios</h5>
+                <ul>@for (b of previewItems('beneficios'); track $index) { <li>{{ b }}</li> }</ul>
+              </div>
+              <div>
+                <h5>Modo de uso</h5>
+                <ul>@for (u of previewItems('modoUso'); track $index) { <li>{{ u }}</li> }</ul>
+              </div>
+              <div>
+                <h5>Recomendaciones</h5>
+                <ul>@for (r of previewItems('recomendaciones'); track $index) { <li>{{ r }}</li> }</ul>
+              </div>
+            </div>
+          </div>
           <div class="lista-editor producto-form__ancho">
             <div class="lista-editor__cabecera">
               <div><span class="dato__label">Beneficios</span><strong>Qué aporta este producto</strong></div>
@@ -271,10 +304,44 @@ function enriquecerProducto(p: Producto): Producto {
     .categoria-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--linea); border-radius: 999px; padding: 7px 10px 7px 13px; background: #fff; color: var(--gris); font-size: .78rem; }
     .categoria-chip button { border: 0; background: var(--rosa-50); color: var(--error); width: 20px; height: 20px; border-radius: 50%; cursor: pointer; line-height: 1; }
     .catalogo-admin__nuevo { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
-    .producto-form { display: grid; grid-template-columns: 180px repeat(3, minmax(150px, 1fr)); gap: 14px; padding: 20px 22px 24px; align-items: end; }
+    .producto-form { display: grid; grid-template-columns: 180px repeat(2, minmax(150px, 1fr)) minmax(340px, .9fr); gap: 14px; padding: 20px 22px 24px; align-items: end; }
     .producto-form__imagen { grid-row: span 3; display: grid; gap: 10px; align-content: start; color: var(--gris-claro); font-size: .76rem; }
     .producto-form__imagen img { width: 160px; height: 160px; border-radius: var(--radio); object-fit: contain; background: var(--rosa-50); border: 1px solid var(--linea); padding: 8px; }
-    .producto-form__ancho { grid-column: 2 / -1; }
+    .producto-form__ancho { grid-column: 2 / 4; }
+    .producto-form__preview {
+      grid-column: 4;
+      grid-row: 1 / span 9;
+      align-self: start;
+      position: sticky;
+      top: 86px;
+      display: grid;
+      gap: 12px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      padding: 14px;
+      background: #fff;
+    }
+    .preview-prod-card { border: 1px solid var(--linea); border-radius: var(--radio-lg); overflow: hidden; background: #fff; }
+    .preview-prod-card__media { aspect-ratio: 1 / 1; background: var(--rosa-50); display: grid; place-items: center; }
+    .preview-prod-card__media img { width: 100%; height: 100%; object-fit: cover; }
+    .preview-prod-card__body { padding: 16px; display: grid; gap: 7px; }
+    .preview-prod-card__body > span, .preview-prod-detail__head span {
+      color: var(--gris-claro); font-size: .64rem; letter-spacing: .18em; text-transform: uppercase;
+    }
+    .preview-prod-card__body h4 { margin: 0; }
+    .preview-prod-card__body p { margin: 0; font-size: .84rem; }
+    .preview-prod-detail {
+      display: grid;
+      gap: 12px;
+      border: 1px dashed var(--linea);
+      border-radius: var(--radio);
+      padding: 12px;
+      background: var(--rosa-50);
+    }
+    .preview-prod-detail__head { display: grid; gap: 3px; }
+    .preview-prod-detail__head strong { color: var(--vino); font-size: .88rem; }
+    .preview-prod-detail h5 { margin: 0 0 5px; font-size: .95rem; }
+    .preview-prod-detail ul { margin: 0; padding-left: 18px; color: var(--gris); font-size: .8rem; }
     .stock-form { display: grid; grid-template-columns: 1fr 220px auto; gap: 14px; align-items: end; padding: 20px 22px 24px; }
     .lista-editor { border: 1px solid var(--linea); border-radius: var(--radio); padding: 14px; background: var(--rosa-50); display: grid; gap: 10px; }
     .lista-editor__cabecera { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
@@ -284,7 +351,11 @@ function enriquecerProducto(p: Producto): Producto {
     .check { display: flex; gap: 8px; align-items: center; color: var(--gris); font-size: .86rem; }
     .fila-prod { display: flex; gap: 12px; align-items: center; }
     .fila-prod img { width: 44px; height: 44px; border-radius: var(--radio); object-fit: cover; background: var(--rosa-50); }
-    @media (max-width: 1200px) { .kpis-4 { grid-template-columns: repeat(2, 1fr); } .producto-form, .catalogo-admin { grid-template-columns: repeat(2, 1fr); } .producto-form__imagen, .producto-form__ancho { grid-column: 1 / -1; } }
+    @media (max-width: 1200px) {
+      .kpis-4 { grid-template-columns: repeat(2, 1fr); }
+      .producto-form, .catalogo-admin { grid-template-columns: repeat(2, 1fr); }
+      .producto-form__imagen, .producto-form__ancho, .producto-form__preview { grid-column: 1 / -1; grid-row: auto; position: static; }
+    }
     @media (max-width: 720px) { .producto-form, .stock-form, .catalogo-admin, .catalogo-admin__nuevo, .lista-editor__fila { grid-template-columns: 1fr; } }
   `]
 })
@@ -389,6 +460,14 @@ export class ProductosAdminComponent {
       const lista = p[campo] ?? [];
       return { ...p, [campo]: lista.length <= 1 ? [''] : lista.filter((_, i) => i !== index) };
     });
+  }
+
+  previewItems(campo: 'beneficios' | 'recomendaciones' | 'modoUso'): string[] {
+    const lista = (this.borrador()[campo] ?? []).map(v => v.trim()).filter(Boolean);
+    if (lista.length) { return lista.slice(0, 4); }
+    if (campo === 'beneficios') { return ['Beneficio principal que verá la paciente']; }
+    if (campo === 'modoUso') { return ['Indicación de aplicación del producto']; }
+    return ['Cuidado o advertencia importante antes de comprar'];
   }
 
   guardar(): void {

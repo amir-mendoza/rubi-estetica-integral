@@ -407,32 +407,56 @@ export const PRODUCTOS: Producto[] = [
   {
     id: 1, nombre: 'Sérum vitamina C 20 %', marca: 'Rubí Skin', categoria: 'Sérums',
     descripcion: 'Antioxidante de uso diario que ilumina, unifica el tono y protege del daño ambiental.',
-    precio: 89, precioAntes: 120, stock: 24, imagen: 'img/prod-1.jpg', activo: true
+    precio: 89, precioAntes: 120, stock: 24, imagen: 'img/prod-1.jpg',
+    beneficios: ['Ayuda a iluminar la piel opaca', 'Apoya la uniformidad del tono', 'Refuerza la rutina antioxidante diaria'],
+    modoUso: ['Aplicar de 2 a 3 gotas sobre piel limpia por la mañana', 'Sellar con hidratante y protector solar'],
+    recomendaciones: ['Evitar contacto directo con los ojos', 'Suspender si aparece irritación persistente'],
+    activo: true
   },
   {
     id: 2, nombre: 'Protector solar SPF 50 toque seco', marca: 'Rubí Skin', categoria: 'Protección solar',
     descripcion: 'Alta protección UVA/UVB con acabado mate, indispensable después de cualquier tratamiento.',
-    precio: 75, stock: 40, imagen: 'img/prod-2.jpg', activo: true
+    precio: 75, stock: 40, imagen: 'img/prod-2.jpg',
+    beneficios: ['Protege la piel luego de limpiezas, peeling o aparatología', 'Acabado mate para uso diario', 'Ayuda a prevenir manchas por exposición solar'],
+    modoUso: ['Aplicar como último paso de la rutina de día', 'Reaplicar cada 2 o 3 horas si hay exposición solar'],
+    recomendaciones: ['Usar todos los días, incluso con cielo nublado', 'No aplicar sobre piel irritada sin evaluación previa'],
+    activo: true
   },
   {
     id: 3, nombre: 'Crema regeneradora nocturna', marca: 'Dermalux', categoria: 'Cremas',
     descripcion: 'Reparación nocturna con péptidos y ácido hialurónico para pieles maduras.',
-    precio: 135, stock: 12, imagen: 'img/prod-3.jpg', activo: true
+    precio: 135, stock: 12, imagen: 'img/prod-3.jpg',
+    beneficios: ['Aporta hidratación durante la noche', 'Ayuda a mejorar textura y suavidad', 'Complementa protocolos de rejuvenecimiento facial'],
+    modoUso: ['Aplicar una capa fina por la noche sobre piel limpia', 'Masajear suavemente hasta su absorción'],
+    recomendaciones: ['Usar protector solar al día siguiente', 'Evitar mezclar con ácidos sin indicación profesional'],
+    activo: true
   },
   {
     id: 4, nombre: 'Limpiador facial en gel', marca: 'Rubí Skin', categoria: 'Limpieza',
     descripcion: 'Gel de limpieza suave con pH balanceado, apto para piel mixta y grasa.',
-    precio: 55, stock: 33, imagen: 'img/prod-4.jpg', activo: true
+    precio: 55, stock: 33, imagen: 'img/prod-4.jpg',
+    beneficios: ['Retira impurezas sin resecar en exceso', 'Prepara la piel para sérums o cremas', 'Ideal para rutina diaria de mañana y noche'],
+    modoUso: ['Aplicar sobre rostro húmedo y masajear por 30 segundos', 'Enjuagar con agua y secar sin friccionar'],
+    recomendaciones: ['Evitar el contacto con los ojos', 'Si hay ardor, retirar con abundante agua'],
+    activo: true
   },
   {
     id: 5, nombre: 'Ampolla de ácido hialurónico', marca: 'Biocare', categoria: 'Sérums',
     descripcion: 'Hidratación intensiva en formato ampolla, ideal para tratamientos de 15 días.',
-    precio: 45, stock: 6, imagen: 'img/prod-5.jpg', activo: true
+    precio: 45, stock: 6, imagen: 'img/prod-5.jpg',
+    beneficios: ['Hidratación intensiva de rápida absorción', 'Ayuda a mejorar elasticidad superficial', 'Acompaña tratamientos faciales de luminosidad'],
+    modoUso: ['Aplicar sobre piel limpia antes de la crema', 'Usar de noche o según indicación de la especialista'],
+    recomendaciones: ['Conservar en lugar fresco', 'No compartir el aplicador para evitar contaminación'],
+    activo: true
   },
   {
     id: 6, nombre: 'Kit post tratamiento corporal', marca: 'Rubí Body', categoria: 'Kits',
     descripcion: 'Incluye gel reductor, aceite de masaje y venda fría para uso en casa.',
-    precio: 160, precioAntes: 200, stock: 0, imagen: 'img/prod-6.jpg', activo: true
+    precio: 160, precioAntes: 200, stock: 0, imagen: 'img/prod-6.jpg',
+    beneficios: ['Apoya el cuidado en casa luego de protocolos corporales', 'Ayuda a mantener sensación de firmeza y frescura', 'Incluye productos complementarios para rutina corporal'],
+    modoUso: ['Aplicar el gel según indicación y masajear la zona', 'Usar la venda fría solo por el tiempo recomendado'],
+    recomendaciones: ['No aplicar sobre heridas o irritación', 'Consultar si hay embarazo, lactancia o condición médica activa'],
+    activo: true
   }
 ];
 

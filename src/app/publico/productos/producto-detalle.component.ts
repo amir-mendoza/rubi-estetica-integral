@@ -42,33 +42,42 @@ import { CarritoService } from '../../compartido/carrito.service';
             <div class="detalle-prod__entrega">
               <h4>Entrega del producto</h4>
               <ul>
-                <li>Recojo en Sede Las Flores 1522 — sin costo</li>
-                <li>Recojo en Sede Las Flores 1544 — sin costo</li>
+                <li>Recojo en Sede Las Flores 1522 sin costo</li>
+                <li>Recojo en Sede Las Flores 1544 sin costo</li>
                 <li>Por ahora no realizamos envíos a domicilio</li>
               </ul>
             </div>
+          </div>
+        </div>
+      </section>
 
-            @if (p.beneficios?.length || p.modoUso?.length || p.recomendaciones?.length) {
-              <div class="detalle-prod__info">
-                @if (p.beneficios?.length) {
-                  <div>
-                    <h4>Beneficios</h4>
-                    <ul>@for (b of p.beneficios; track b) { <li>{{ b }}</li> }</ul>
-                  </div>
-                }
-                @if (p.modoUso?.length) {
-                  <div>
-                    <h4>Modo de uso</h4>
-                    <ul>@for (u of p.modoUso; track u) { <li>{{ u }}</li> }</ul>
-                  </div>
-                }
-                @if (p.recomendaciones?.length) {
-                  <div>
-                    <h4>Recomendaciones</h4>
-                    <ul>@for (r of p.recomendaciones; track r) { <li>{{ r }}</li> }</ul>
-                  </div>
-                }
-              </div>
+      <section class="seccion detalle-prod-info">
+        <div class="contenedor detalle-prod-info__grid">
+          <div>
+            <span class="eyebrow">Información del producto</span>
+            <h2>Cómo ayuda en tu rutina</h2>
+            <div class="filete"></div>
+            <p>{{ p.descripcion }}</p>
+          </div>
+
+          <div class="detalle-prod-info__bloques">
+            @if (p.beneficios?.length) {
+              <article>
+                <h3>Beneficios</h3>
+                <ul>@for (b of p.beneficios; track b) { <li>{{ b }}</li> }</ul>
+              </article>
+            }
+            @if (p.modoUso?.length) {
+              <article>
+                <h3>Modo de uso</h3>
+                <ul>@for (u of p.modoUso; track u) { <li>{{ u }}</li> }</ul>
+              </article>
+            }
+            @if (p.recomendaciones?.length) {
+              <article>
+                <h3>Recomendaciones</h3>
+                <ul>@for (r of p.recomendaciones; track r) { <li>{{ r }}</li> }</ul>
+              </article>
             }
           </div>
         </div>
@@ -99,11 +108,21 @@ import { CarritoService } from '../../compartido/carrito.service';
     .detalle-prod__imagen img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
     .detalle-prod__acciones { display: flex; gap: 14px; margin: 28px 0; flex-wrap: wrap; }
     .detalle-prod__entrega { border-top: 1px solid var(--linea); padding-top: 22px; }
-    .detalle-prod__entrega ul, .detalle-prod__info ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-    .detalle-prod__entrega li, .detalle-prod__info li { font-size: .9rem; color: var(--gris); padding-left: 18px; position: relative; }
-    .detalle-prod__entrega li::before, .detalle-prod__info li::before { content: ''; position: absolute; left: 0; top: 10px; width: 6px; height: 6px; border-radius: 50%; background: var(--magenta-300); }
-    .detalle-prod__info { display: grid; gap: 18px; margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--linea); }
+    .detalle-prod__entrega ul, .detalle-prod-info ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    .detalle-prod__entrega li, .detalle-prod-info li { font-size: .9rem; color: var(--gris); padding-left: 18px; position: relative; }
+    .detalle-prod__entrega li::before, .detalle-prod-info li::before { content: ''; position: absolute; left: 0; top: 10px; width: 6px; height: 6px; border-radius: 50%; background: var(--magenta-300); }
+    .detalle-prod-info { padding-top: 0; }
+    .detalle-prod-info__grid { display: grid; grid-template-columns: .82fr 1.18fr; gap: 60px; align-items: start; }
+    .detalle-prod-info__bloques { display: grid; gap: 18px; }
+    .detalle-prod-info article {
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      padding: 24px;
+      background: #fff;
+    }
+    .detalle-prod-info h3 { font-size: 1.3rem; margin-bottom: 12px; }
     @media (max-width: 960px) { .detalle-prod { grid-template-columns: 1fr; gap: 32px; } }
+    @media (max-width: 960px) { .detalle-prod-info__grid { grid-template-columns: 1fr; gap: 28px; } }
   `]
 })
 export class ProductoDetalleComponent {
