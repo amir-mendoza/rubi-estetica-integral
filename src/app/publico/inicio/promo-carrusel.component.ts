@@ -150,6 +150,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
     }
     .promo--activa {
       display: grid;
+      animation: promo-contenedor .72s cubic-bezier(.2, .72, .18, 1) both;
     }
     .promo__arte {
       position: relative;
@@ -173,6 +174,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
       max-height: min(78vh, 720px);
       object-fit: contain;
       padding: 0;
+      will-change: transform;
     }
     .promo__sello {
       position: absolute;
@@ -321,6 +323,24 @@ import { PromocionesService } from '../../compartido/promociones.service';
       gap: 12px;
       flex-wrap: wrap;
     }
+    .promo--activa .promo__arte img {
+      animation: promo-imagen .82s cubic-bezier(.2, .72, .18, 1) both;
+    }
+    .promo--activa .promo__etiqueta,
+    .promo--activa h3,
+    .promo--activa .promo__subtitulo,
+    .promo--activa .promo__texto,
+    .promo--activa .promo__incluye,
+    .promo--activa .promo__datos,
+    .promo--activa .promo__acciones {
+      animation: promo-texto .72s cubic-bezier(.2, .72, .18, 1) both;
+    }
+    .promo--activa h3 { animation-delay: .06s; }
+    .promo--activa .promo__subtitulo { animation-delay: .12s; }
+    .promo--activa .promo__texto { animation-delay: .18s; }
+    .promo--activa .promo__incluye { animation-delay: .24s; }
+    .promo--activa .promo__datos { animation-delay: .3s; }
+    .promo--activa .promo__acciones { animation-delay: .36s; }
     .promo__flecha {
       width: 42px;
       height: 42px;
@@ -373,7 +393,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
     .promo-mini--activa {
       border-color: rgba(176, 27, 114, .42);
       box-shadow: var(--sombra);
-      transform: translateY(-2px);
+      transform: translateY(-5px) scale(1.015);
     }
     .promo-mini span {
       display: block;
@@ -425,6 +445,20 @@ import { PromocionesService } from '../../compartido/promociones.service';
       }
       .promo__contenido { padding: 28px 22px 24px; }
       .promo__acciones .btn { width: 100%; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      @keyframes promo-contenedor {
+        from { opacity: 0; transform: translateY(26px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes promo-imagen {
+        from { opacity: 0; transform: translateX(-42px) scale(.96); }
+        to { opacity: 1; transform: translateX(0) scale(1); }
+      }
+      @keyframes promo-texto {
+        from { opacity: 0; transform: translateX(38px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
     }
   `]
 })

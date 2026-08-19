@@ -11,7 +11,9 @@
 .portada__imagen img { width: 100%; height: 100%; object-fit: cover; }
 .portada__velo {
   position: absolute; inset: 0;
-  background: linear-gradient(100deg, rgba(77, 13, 39, .92) 0%, rgba(110, 19, 56, .78) 42%, rgba(110, 19, 56, .25) 100%);
+  background:
+    linear-gradient(100deg, rgba(77, 13, 39, .9) 0%, rgba(110, 19, 56, .72) 45%, rgba(110, 19, 56, .18) 100%),
+    radial-gradient(circle at 74% 24%, rgba(255, 255, 255, .12), transparent 34%);
 }
 .portada__contenido { position: relative; padding: 96px 28px; max-width: 1240px; }
 .portada h1 { color: #fff; max-width: 16ch; }
@@ -29,8 +31,19 @@
 .portada__datos span { font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.62); }
 
 /* -------------------------------------------------------------- Pilares */
+.pilar {
+  position: relative;
+  padding: 22px 18px 18px;
+  border-radius: var(--radio-lg);
+  transition: transform .25s ease, background .25s ease, box-shadow .25s ease;
+}
+.pilar:hover {
+  transform: translateY(-7px);
+  background: #fff;
+  box-shadow: var(--sombra);
+}
 .pilar h4 { margin-bottom: .4rem; }
-.pilar p { font-size: .92rem; margin: 0; }
+.pilar p { font-size: .98rem; margin: 0; }
 
 /* ---------------------------------------------------------------- Pasos */
 .pasos { display: grid; grid-template-columns: 1fr 1.15fr; gap: 72px; align-items: start; }
@@ -39,6 +52,12 @@
 .paso {
   display: flex; gap: 22px; align-items: flex-start;
   padding: 26px; border: 1px solid var(--linea); border-radius: var(--radio-lg); background: #fff;
+  transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+}
+.paso:hover {
+  transform: translateX(10px);
+  border-color: rgba(176, 27, 114, .32);
+  box-shadow: var(--sombra);
 }
 .paso__n {
   font-family: 'Cormorant Garamond', Georgia, serif;
@@ -49,10 +68,28 @@
 
 /* ---------------------------------------------------------- Testimonios */
 .testimonio {
+  position: relative;
   margin: 0; padding: 34px;
   border: 1px solid rgba(255, 255, 255, .16);
   border-radius: var(--radio-lg);
   background: rgba(255, 255, 255, .04);
+  overflow: hidden;
+  transition: transform .28s ease, border-color .28s ease, background .28s ease;
+}
+.testimonio::before {
+  content: '“';
+  position: absolute;
+  top: -34px;
+  right: 18px;
+  color: rgba(255, 255, 255, .08);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 9rem;
+  line-height: 1;
+}
+.testimonio:hover {
+  transform: translateY(-9px);
+  border-color: rgba(255, 255, 255, .34);
+  background: rgba(255, 255, 255, .08);
 }
 .testimonio p {
   font-family: 'Cormorant Garamond', Georgia, serif;
@@ -65,7 +102,7 @@
 /* ------------------------------------------------------------------ CTA */
 .cta { position: relative; padding: 104px 0; color: #fff; overflow: hidden; }
 .cta img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.cta__velo { position: absolute; inset: 0; background: rgba(77, 13, 39, .85); }
+.cta__velo { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(77, 13, 39, .88), rgba(77, 13, 39, .68)); }
 .cta__contenido { position: relative; text-align: center; }
 .cta__contenido h2 { color: #fff; max-width: 22ch; margin: 0 auto .8rem; }
 .cta__contenido p { color: rgba(255, 255, 255, .78); margin-bottom: 30px; }
@@ -73,4 +110,31 @@
 @media (max-width: 960px) {
   .pasos { grid-template-columns: 1fr; gap: 44px; }
   .portada__datos { gap: 32px; flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes portada-imagen {
+    from { transform: scale(1.08); }
+    to { transform: scale(1); }
+  }
+
+  @keyframes portada-texto {
+    from { opacity: 0; transform: translateX(-54px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes portada-dato {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .portada__imagen img { animation: portada-imagen 1.6s cubic-bezier(.2, .72, .18, 1) both; }
+  .portada .eyebrow { animation: portada-texto .75s .1s both cubic-bezier(.2, .72, .18, 1); }
+  .portada h1 { animation: portada-texto .85s .22s both cubic-bezier(.2, .72, .18, 1); }
+  .portada__texto { animation: portada-texto .85s .36s both cubic-bezier(.2, .72, .18, 1); }
+  .portada__acciones { animation: portada-dato .8s .52s both cubic-bezier(.2, .72, .18, 1); }
+  .portada__datos div { animation: portada-dato .75s both cubic-bezier(.2, .72, .18, 1); }
+  .portada__datos div:nth-child(1) { animation-delay: .68s; }
+  .portada__datos div:nth-child(2) { animation-delay: .8s; }
+  .portada__datos div:nth-child(3) { animation-delay: .92s; }
 }

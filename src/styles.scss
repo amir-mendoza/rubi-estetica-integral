@@ -19,7 +19,7 @@
   --gris-claro: #9a919d;
   --linea: #ebe0e7;
   --blanco: #ffffff;
-  --fondo: #ffffff;
+  --fondo: #fffaf7;
 
   /* Estados */
   --ok: #1f7a55;
@@ -146,6 +146,7 @@ hr { border: none; border-top: 1px solid var(--linea); margin: 2.5rem 0; }
 
 .seccion { padding: 96px 0; }
 .seccion--compacta { padding: 64px 0; }
+.seccion:not(.seccion--rosa):not(.seccion--nude):not(.seccion--vino) { background: var(--fondo); }
 .seccion--rosa { background: var(--rosa-50); }
 .seccion--nude { background: var(--nude); }
 .seccion--vino { background: var(--vino); color: #f4e8ee; }
@@ -175,22 +176,42 @@ hr { border: none; border-top: 1px solid var(--linea); margin: 2.5rem 0; }
   letter-spacing: .18em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background .2s ease, color .2s ease, border-color .2s ease;
+  transition: transform .22s ease, box-shadow .22s ease, background .2s ease, color .2s ease, border-color .2s ease;
   white-space: nowrap;
 }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 
 .btn--primario { background: var(--magenta); color: #fff; }
-.btn--primario:hover:not(:disabled) { background: var(--vino); color: #fff; }
+.btn--primario:hover:not(:disabled) {
+  background: var(--vino);
+  color: #fff;
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(110, 19, 56, .22);
+}
 
 .btn--vino { background: var(--vino); color: #fff; }
-.btn--vino:hover:not(:disabled) { background: var(--vino-900); color: #fff; }
+.btn--vino:hover:not(:disabled) {
+  background: var(--vino-900);
+  color: #fff;
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(110, 19, 56, .22);
+}
 
 .btn--linea { border-color: var(--vino); color: var(--vino); background: transparent; }
-.btn--linea:hover:not(:disabled) { background: var(--vino); color: #fff; }
+.btn--linea:hover:not(:disabled) {
+  background: var(--vino);
+  color: #fff;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(110, 19, 56, .14);
+}
 
 .btn--claro { border-color: rgba(255,255,255,.6); color: #fff; background: transparent; }
-.btn--claro:hover:not(:disabled) { background: #fff; color: var(--vino); }
+.btn--claro:hover:not(:disabled) {
+  background: #fff;
+  color: var(--vino);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, .18);
+}
 
 .btn--sm { padding: .6rem 1.15rem; font-size: .68rem; letter-spacing: .12em; }
 .btn--bloque { width: 100%; }
@@ -350,7 +371,7 @@ table.tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
   overflow: hidden; display: flex; flex-direction: column;
   transition: transform .25s ease, box-shadow .25s ease;
 }
-.tarjeta-trat:hover { transform: translateY(-4px); box-shadow: var(--sombra-alta); }
+.tarjeta-trat:hover { transform: translateY(-9px); box-shadow: var(--sombra-alta); border-color: rgba(176, 27, 114, .28); }
 .tarjeta-trat__imagen { display: block; position: relative; aspect-ratio: 4/3; overflow: hidden; background: var(--rosa-50); }
 .tarjeta-trat__imagen img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
 .tarjeta-trat:hover .tarjeta-trat__imagen img { transform: scale(1.05); }
@@ -390,9 +411,10 @@ table.tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
   overflow: hidden; display: flex; flex-direction: column;
   transition: box-shadow .25s ease;
 }
-.tarjeta-prod:hover { box-shadow: var(--sombra-alta); }
+.tarjeta-prod:hover { transform: translateY(-9px); box-shadow: var(--sombra-alta); border-color: rgba(176, 27, 114, .28); }
 .tarjeta-prod__imagen { display: block; aspect-ratio: 1/1; overflow: hidden; background: var(--rosa-50); }
-.tarjeta-prod__imagen img { width: 100%; height: 100%; object-fit: cover; }
+.tarjeta-prod__imagen img { width: 100%; height: 100%; object-fit: cover; transition: transform .55s ease; }
+.tarjeta-prod:hover .tarjeta-prod__imagen img { transform: scale(1.06); }
 .tarjeta-prod__cuerpo { padding: 22px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
 .tarjeta-prod__marca {
   font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--gris-claro);
@@ -400,8 +422,16 @@ table.tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
 .tarjeta-prod__cuerpo h4 { margin: 0; font-size: 1.12rem; }
 
 /* Tarjeta de local */
-.tarjeta-local { background: #fff; border: 1px solid var(--linea); border-radius: var(--radio-lg); overflow: hidden; }
-.tarjeta-local img { width: 100%; height: auto; aspect-ratio: 16/9; object-fit: cover; }
+.tarjeta-local {
+  background: #fff;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-lg);
+  overflow: hidden;
+  transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+}
+.tarjeta-local:hover { transform: translateY(-8px); box-shadow: var(--sombra-alta); border-color: rgba(176, 27, 114, .24); }
+.tarjeta-local img { width: 100%; height: auto; aspect-ratio: 16/9; object-fit: cover; transition: transform .55s ease; }
+.tarjeta-local:hover img { transform: scale(1.05); }
 .tarjeta-local__cuerpo { padding: 30px; }
 .tarjeta-local__horarios { display: flex; flex-direction: column; gap: 8px; margin: 20px 0 24px; }
 .tarjeta-local__horarios div {
@@ -486,32 +516,100 @@ table.tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
 .mini-dato span { font-size: .76rem; color: var(--gris-claro); }
 
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes entrada-publica {
+  @keyframes entrada-arriba {
     from {
       opacity: 0;
-      transform: translateY(24px) scale(.985);
-      filter: blur(4px);
+      transform: translateY(52px);
     }
     to {
       opacity: 1;
-      transform: translateY(0) scale(1);
-      filter: blur(0);
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes entrada-izquierda {
+    from {
+      opacity: 0;
+      transform: translateX(-64px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes entrada-derecha {
+    from {
+      opacity: 0;
+      transform: translateX(64px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes zoom-suave {
+    from {
+      opacity: .72;
+      transform: scale(.94);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes filete-entrada {
+    from {
+      opacity: 0;
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+    to {
+      opacity: 1;
+      transform: scaleX(1);
     }
   }
 
   app-publico-layout .cabecera-pagina .contenedor,
-  app-publico-layout .seccion > .contenedor,
-  app-publico-layout .detalle__grid,
-  app-publico-layout .detalle-prod,
-  app-publico-layout .tarjeta,
-  app-publico-layout .tarjeta-trat,
-  app-publico-layout .tarjeta-prod,
-  app-publico-layout .tarjeta-esp,
-  app-publico-layout .tarjeta-local,
-  app-publico-layout .panel {
-    animation: entrada-publica 1ms both ease-out;
+  app-publico-layout .encabezado-seccion,
+  app-publico-layout .pasos__intro,
+  app-publico-layout .detalle__contenido > div:first-child {
+    animation: entrada-izquierda .9s both cubic-bezier(.2, .72, .18, 1);
     animation-timeline: view();
-    animation-range: entry 0% cover 32%;
+    animation-range: entry 4% cover 38%;
+  }
+
+  app-publico-layout .encabezado-seccion.texto-centro,
+  app-publico-layout .detalle__grid,
+  app-publico-layout .detalle-prod {
+    animation-name: entrada-arriba;
+  }
+
+  app-publico-layout .grid > *,
+  app-publico-layout .paso,
+  app-publico-layout .panel {
+    animation: entrada-arriba .85s both cubic-bezier(.2, .72, .18, 1);
+    animation-timeline: view();
+    animation-range: entry 5% cover 34%;
+  }
+
+  app-publico-layout .grid > *:nth-child(3n + 1) { animation-name: entrada-izquierda; }
+  app-publico-layout .grid > *:nth-child(3n) { animation-name: entrada-derecha; }
+
+  app-publico-layout .detalle__imagen,
+  app-publico-layout .detalle-prod__imagen,
+  app-publico-layout .cta__contenido {
+    animation: zoom-suave .9s both cubic-bezier(.2, .72, .18, 1);
+    animation-timeline: view();
+    animation-range: entry 8% cover 40%;
+  }
+
+  app-publico-layout .filete {
+    animation: filete-entrada .8s both ease-out;
+    animation-timeline: view();
+    animation-range: entry 12% cover 32%;
   }
 
   app-publico-layout .tarjeta-trat,
