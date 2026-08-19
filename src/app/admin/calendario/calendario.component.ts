@@ -1,11 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
-  DIAS_SEMANA, HOY_ISO, LOCALES, MESES, aISO, cupoDeSede,
+  DIAS_SEMANA, HOY_ISO, LOCALES, MESES, TRATAMIENTOS, aISO, cupoDeSede,
   formatoFechaLarga, localPorId, nombreCabina, nombreEspecialista,
   pacientePorId, soles, tratamientoPorId
 } from '../../data/datos';
-import { Cita, ESTADOS_CITA, EstadoCita } from '../../data/modelos';
+import { Cita, ESTADOS_CITA, EstadoCita, MetodoPago, Paciente } from '../../data/modelos';
 import { AgendaService } from '../../compartido/agenda.service';
 import { SesionService } from '../../compartido/sesion.service';
 
@@ -37,10 +37,13 @@ export class CalendarioComponent {
   private sesion = inject(SesionService);
 
   soles = soles;
+  Number = Number;
   meses = MESES;
   diasSemana = DIAS_SEMANA;
   locales = LOCALES;
+  tratamientosCatalogo = TRATAMIENTOS.filter(t => t.activo);
   estadosCita = ESTADOS_CITA;
+  metodosPago: MetodoPago[] = ['Efectivo', 'Yape', 'Plin', 'Tarjeta POS', 'Transferencia'];
 
   private hoy = new Date();
   mes = signal(this.hoy.getMonth());
@@ -52,6 +55,22 @@ export class CalendarioComponent {
   filtroEstado = signal('Todos');
   filtroPago = signal('Todos');
   busqueda = signal('');
+  mostrarManual = signal(false);
+  pacientesManuales = signal<Paciente[]>([]);
+  pagoMetodo = signal<MetodoPago>('Efectivo');
+  pagoMonto = signal<Record<number, number>>({});
+  pagoCodigo = signal<Record<number, string>>({});
+
+  manualDni = '';
+  manualCelular = '';
+  manualNombre = '';
+  manualLocalId = LOCALES[0]?.id ?? 1;
+  manualFecha = HOY_ISO;
+  manualHora = '09:00';
+  manualTratamientos = signal<number[]>([TRATAMIENTOS[0]?.id ?? 1]);
+  manualTotal = TRATAMIENTOS[0]?.precio ?? 0;
+  manualPagado = 0;
+  manualMetodo: MetodoPago = 'Efectivo';
 
   estados = ['Todos', ...ESTADOS_CITA];
   estadosPago = ['Todos', 'Pagado', 'Pago en local', 'Pendiente', 'Reembolsado'];
@@ -117,7 +136,7 @@ export class CalendarioComponent {
       if (this.filtroEstado() !== 'Todos' && c.estado !== this.filtroEstado()) { return false; }
       if (this.filtroPago() !== 'Todos' && c.estadoPago !== this.filtroPago()) { return false; }
       if (texto) {
-        const p = pacientePorId(c.pacienteId);
+        const p = this.paciente(c.pacienteId);
         const blob = `${p?.nombre} ${p?.apellido} ${p?.dni} ${p?.celular} ${c.codigo}`.toLowerCase();
         if (!blob.includes(texto)) { return false; }
       }
@@ -149,12 +168,99 @@ export class CalendarioComponent {
     this.agenda.registrarPagoEfectivo(c.id, this.responsable());
   }
 
+  registrarPago(c: Cita): void {
+    const monto = Number(this.pagoMonto()[c.id] ?? (c.montoTotal - c.montoPagado));
+    this.agenda.registrarPago(c.id, this.responsable(), this.pagoMetodo(), monto, this.pagoCodigo()[c.id]);
+    this.pagoMonto.update(m => ({ ...m, [c.id]: 0 }));
+    this.pagoCodigo.update(m => ({ ...m, [c.id]: '' }));
+  }
+
+  setPagoMonto(id: number, monto: number): void {
+    this.pagoMonto.update(v => ({ ...v, [id]: monto }));
+  }
+
+  setPagoCodigo(id: number, codigo: string): void {
+    this.pagoCodigo.update(v => ({ ...v, [id]: codigo }));
+  }
+
+  agregarTratamientoManual(): void {
+    this.manualTratamientos.update(ids => [...ids, this.tratamientosCatalogo[0]?.id ?? 1]);
+    this.recalcularManual();
+  }
+
+  cambiarTratamientoManual(indice: number, id: number): void {
+    this.manualTratamientos.update(ids => ids.map((item, i) => i === indice ? id : item));
+    this.recalcularManual();
+  }
+
+  quitarTratamientoManual(indice: number): void {
+    this.manualTratamientos.update(ids => ids.length === 1 ? ids : ids.filter((_, i) => i !== indice));
+    this.recalcularManual();
+  }
+
+  recalcularManual(): void {
+    this.manualTotal = this.manualTratamientos().reduce((total, id) => total + (tratamientoPorId(id)?.precio ?? 0), 0);
+  }
+
+  registrarCitaManual(): void {
+    const [nombre, ...resto] = this.manualNombre.trim().split(/\s+/);
+    const pacienteId = 9000 + this.pacientesManuales().length + 1;
+    const paciente: Paciente = {
+      id: pacienteId,
+      nombre: nombre || 'Paciente',
+      apellido: resto.join(' ') || '',
+      dni: this.manualDni,
+      celular: this.manualCelular,
+      correo: '',
+      fechaRegistro: HOY_ISO,
+      observaciones: 'Registro creado desde recepción.',
+      citasTotales: 1,
+      ultimaVisita: this.manualFecha,
+      totalGastado: Number(this.manualPagado)
+    };
+    this.pacientesManuales.update(lista => [paciente, ...lista]);
+    const principal = this.manualTratamientos()[0];
+    const duracion = Math.max(...this.manualTratamientos().map(id => tratamientoPorId(id)?.duracionMin ?? 60));
+    const fin = this.sumarMinutos(this.manualHora, duracion);
+    this.agenda.crearCita({
+      fecha: this.manualFecha,
+      horaInicio: this.manualHora,
+      horaFin: fin,
+      pacienteId,
+      tratamientoId: principal,
+      tratamientosIncluidos: [...this.manualTratamientos()],
+      localId: Number(this.manualLocalId),
+      estado: 'Programada',
+      estadoPago: this.manualPagado >= this.manualTotal ? 'Pagado' : this.manualPagado > 0 ? 'Pago en local' : 'Pendiente',
+      metodoPago: this.manualPagado > 0 ? this.manualMetodo : undefined,
+      montoTotal: Number(this.manualTotal),
+      montoPagado: Number(this.manualPagado),
+      registradaPor: this.responsable(),
+      confirmadaPor: this.manualPagado > 0 ? this.responsable() : undefined,
+      codigoOperacion: this.manualPagado > 0 ? `${this.manualMetodo.toUpperCase().replace(/\s/g, '-')}-${Date.now().toString().slice(-5)}` : undefined,
+      pagadaEl: this.manualPagado > 0 ? `${HOY_ISO} ${new Date().toTimeString().slice(0, 5)}` : undefined,
+      origen: 'Recepción',
+      notas: this.manualTratamientos().length > 1 ? 'Cita manual con varios tratamientos.' : undefined
+    });
+    this.diaSeleccionado.set(this.manualFecha);
+    this.mostrarManual.set(false);
+    this.manualDni = '';
+    this.manualCelular = '';
+    this.manualNombre = '';
+    this.manualPagado = 0;
+    this.manualTratamientos.set([TRATAMIENTOS[0]?.id ?? 1]);
+    this.recalcularManual();
+  }
+
   private responsable(): string {
     return this.sesion.nombreCompleto() || 'Recepción';
   }
 
-  paciente = pacientePorId;
+  paciente = (id: number) => this.pacientesManuales().find(p => p.id === id) ?? pacientePorId(id);
   tratamiento = (id: number) => tratamientoPorId(id);
+  tratamientosCita = (c: Cita) => (c.tratamientosIncluidos?.length ? c.tratamientosIncluidos : [c.tratamientoId])
+    .map(id => tratamientoPorId(id)?.nombre ?? 'Tratamiento')
+    .join(' + ');
   especialista = nombreEspecialista;
   local = (id: number) => localPorId(id)?.nombre ?? '—';
   cabina = nombreCabina;
@@ -175,5 +281,11 @@ export class CalendarioComponent {
     if (estado === 'Pagado') { return 'chip chip--ok chip--punto'; }
     if (estado === 'Reembolsado' || estado === 'Fallido') { return 'chip chip--error chip--punto'; }
     return 'chip chip--alerta chip--punto';
+  }
+
+  private sumarMinutos(hora: string, minutos: number): string {
+    const [h, m] = hora.split(':').map(Number);
+    const total = h * 60 + m + minutos;
+    return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
   }
 }

@@ -29,7 +29,7 @@ export type EstadoPago =
   | 'Fallido'
   | 'Reembolsado';
 
-export type MetodoPago = 'Izipay' | 'Efectivo' | 'Yape' | 'Tarjeta POS' | 'Transferencia';
+export type MetodoPago = 'Izipay' | 'Efectivo' | 'Yape' | 'Plin' | 'Tarjeta POS' | 'Transferencia';
 
 export type EstadoPedido =
   | 'Pendiente'
@@ -150,6 +150,8 @@ export interface Cita {
   horaFin: string;        // HH:mm
   pacienteId: number;
   tratamientoId: number;
+  tratamientosIncluidos?: number[];
+  promocionId?: number;
   /** Se asigna en el local al momento de la atencion, no al reservar. */
   especialistaId?: number;
   localId: number;

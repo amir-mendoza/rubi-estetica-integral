@@ -1,5 +1,18 @@
 .calendario-grid { display: grid; grid-template-columns: minmax(520px, .9fr) 1.35fr; gap: 24px; align-items: start; }
 
+.cita-manual { margin-bottom: 22px; }
+.cita-manual__form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap: 14px;
+  align-items: end;
+  padding: 20px 22px 24px;
+}
+.cita-manual__ancho { grid-column: span 2; }
+.cita-manual__tratamientos { grid-column: 1 / -1; border: 1px solid var(--linea); border-radius: var(--radio); padding: 14px; background: var(--rosa-50); }
+.cita-manual__sub { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 10px; }
+.trat-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 8px; }
+
 /* Calendario */
 .calendario { position: sticky; top: 96px; }
 .calendario__cabecera { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
@@ -97,6 +110,8 @@
 .accion--activa { background: var(--vino); border-color: var(--vino); color: #fff; }
 .cobro { font-size: .76rem; color: var(--gris); }
 .cobro--ok { color: var(--ok); }
+.cobro-flex { display: grid !important; grid-template-columns: 1fr; gap: 7px !important; width: 100%; }
+.cobro-flex select, .cobro-flex input { width: 100%; min-height: 34px; }
 
 .cita__titulo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .cita__titulo h4 { margin: 0; font-size: 1.2rem; }
@@ -128,6 +143,9 @@
   .calendario { position: static; }
 }
 @media (max-width: 900px) {
+  .cita-manual__form { grid-template-columns: 1fr; }
+  .cita-manual__ancho { grid-column: auto; }
+  .trat-row { grid-template-columns: 1fr; }
   .cita { grid-template-columns: 1fr; }
   .cita__datos { grid-template-columns: repeat(2, 1fr); }
   .cita__montos { align-items: flex-start; padding-left: 0; border-left: none; border-top: 1px dashed var(--linea); padding-top: 14px; }

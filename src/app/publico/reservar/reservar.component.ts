@@ -62,6 +62,11 @@ export class ReservarComponent {
     { n: 5, titulo: 'Pago' }
   ];
 
+  pasosVisibles = computed(() => this.promocion()
+    ? this.pasos.filter(p => p.n !== 2)
+    : this.pasos
+  );
+
   tratamientosFiltrados = computed<Tratamiento[]>(() => {
     const cat = this.categoria();
     const etq = this.etiqueta();
@@ -91,11 +96,22 @@ export class ReservarComponent {
   });
 
   duracionEstimada = computed(() => {
+    const promo = this.promocion();
+    if (promo) {
+      return promo.sesionesDetalle?.reduce((total, s) => {
+        const t = s.tratamientoId ? TRATAMIENTOS.find(item => item.id === s.tratamientoId) : undefined;
+        return total + (t?.duracionMin ?? 0);
+      }, 0) || this.tratamiento()?.duracionMin || 0;
+    }
     const t = this.tratamiento();
     return t ? t.duracionMin : 0;
   });
 
   totalReserva = computed(() => this.promocion()?.precio ?? this.tratamiento()?.precio ?? 0);
+
+  nombreReserva = computed(() => this.promocion()?.titulo ?? this.tratamiento()?.nombre ?? '—');
+
+  sesionesPromo = computed(() => this.promocion()?.sesionesDetalle ?? []);
 
   datosCompletos(): boolean {
     return !!(this.nombre && this.apellido && this.dni && this.celular);
@@ -122,14 +138,14 @@ export class ReservarComponent {
 
     if (localId) { this.local.set(LOCALES.find(l => l.id === localId) ?? null); }
     if (tratId) { this.tratamiento.set(TRATAMIENTOS.find(t => t.id === tratId) ?? null); }
-    if (this.local() && this.tratamiento()) { this.paso.set(3); }
-    else if (this.local()) { this.paso.set(2); }
+    if (this.local() && (this.tratamiento() || this.promocion())) { this.paso.set(3); }
+    else if (this.local()) { this.paso.set(this.promocion() ? 3 : 2); }
   }
 
   elegirLocal(l: Local): void {
     this.local.set(l);
     this.bloque.set(null);
-    this.paso.set(2);
+    this.paso.set(this.promocion() ? 3 : 2);
   }
 
   elegirTratamiento(t: Tratamiento): void {
@@ -162,8 +178,15 @@ export class ReservarComponent {
     if (n < this.paso()) { this.paso.set(n); }
   }
 
-  siguiente(): void { this.paso.set(Math.min(this.paso() + 1, 5)); }
-  anterior(): void { this.paso.set(Math.max(this.paso() - 1, 1)); }
+  siguiente(): void {
+    const actual = this.paso();
+    this.paso.set(this.promocion() && actual === 1 ? 3 : Math.min(actual + 1, 5));
+  }
+
+  anterior(): void {
+    const actual = this.paso();
+    this.paso.set(this.promocion() && actual === 3 ? 1 : Math.max(actual - 1, 1));
+  }
 
   confirmar(): void {
     this.confirmado.set(true);

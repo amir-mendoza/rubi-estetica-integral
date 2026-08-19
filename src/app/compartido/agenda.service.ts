@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { CITAS, HOY_ISO } from '../data/datos';
-import { Cita, EstadoCita } from '../data/modelos';
+import { Cita, EstadoCita, MetodoPago } from '../data/modelos';
 
 /**
  * Estado mock de la agenda para el panel administrativo: recepcion cambia el
@@ -37,17 +37,33 @@ export class AgendaService {
     }));
   }
 
-  /** Cobro presencial: recepcion confirma el pago en efectivo del saldo pendiente. */
-  registrarPagoEfectivo(id: number, usuario: string): void {
+  crearCita(cita: Omit<Cita, 'id' | 'codigo' | 'registradaEl'>): Cita {
+    const id = this.lista().reduce((max, c) => Math.max(max, c.id), 0) + 1;
+    const nueva: Cita = {
+      ...cita,
+      id,
+      codigo: `CT-${1000 + id}`,
+      registradaEl: `${HOY_ISO} ${new Date().toTimeString().slice(0, 5)}`
+    };
+    this.lista.update(lista => [nueva, ...lista]);
+    return nueva;
+  }
+
+  /** Cobro presencial: recepcion confirma el monto recibido con el metodo elegido. */
+  registrarPago(id: number, usuario: string, metodo: MetodoPago, monto?: number, codigo?: string): void {
     const hora = new Date().toTimeString().slice(0, 5);
     this.lista.update(lista => lista.map(c => c.id === id ? {
       ...c,
-      estadoPago: 'Pagado',
-      metodoPago: 'Efectivo',
-      montoPagado: c.montoTotal,
+      estadoPago: Math.min(c.montoPagado + (monto ?? (c.montoTotal - c.montoPagado)), c.montoTotal) >= c.montoTotal ? 'Pagado' : 'Pago en local',
+      metodoPago: metodo,
+      montoPagado: Math.min(c.montoPagado + (monto ?? (c.montoTotal - c.montoPagado)), c.montoTotal),
       confirmadaPor: usuario,
       pagadaEl: `${HOY_ISO} ${hora}`,
-      codigoOperacion: c.codigoOperacion ?? `EF-${1000 + c.id}`
+      codigoOperacion: codigo || c.codigoOperacion || `${metodo.toUpperCase().replace(/\s/g, '-')}-${1000 + c.id}`
     } : c));
+  }
+
+  registrarPagoEfectivo(id: number, usuario: string): void {
+    this.registrarPago(id, usuario, 'Efectivo');
   }
 }

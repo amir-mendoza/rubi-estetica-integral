@@ -1,7 +1,7 @@
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LOCALES, formatoFechaLarga, nombrePaciente, pacientePorId, soles, PACIENTES, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
-import { ESTADOS_SESION, EstadoSesion, PlanSesiones, SesionPlan, Paciente } from '../../data/modelos';
+import { ESTADOS_SESION, EstadoSesion, PlanSesiones, SesionPlan, Paciente, MetodoPago } from '../../data/modelos';
 import { PlanesService } from '../../compartido/planes.service';
 
 @Component({
@@ -251,16 +251,20 @@ import { PlanesService } from '../../compartido/planes.service';
         <footer class="plan__pie">
           @if (plan.notas) { <p class="plan__notas">{{ plan.notas }}</p> }
           <div class="plan__acciones">
-            <button class="btn btn--linea btn--sm" (click)="planes.programarSiguiente(plan.id)">
-              Programar siguiente sesión según intervalo
-            </button>
+            <div class="accion-explicada">
+              <button class="btn btn--linea btn--sm" (click)="planes.programarSiguiente(plan.id)">
+                Agendar próxima sesión
+              </button>
+              <small>Usa el intervalo del plan y programa la siguiente sesión pendiente.</small>
+            </div>
             @if (plan.precioTotal - plan.pagado > 0) {
-              <button class="btn btn--vino btn--sm" (click)="cobrar(plan)">
-                Cobrar cuota sugerida en recepción
-              </button>
-              <button class="btn btn--linea btn--sm" (click)="cobrarSaldo(plan)">
-                Marcar saldo completo pagado
-              </button>
+              <div class="cobro-plan">
+                <div class="campo"><label>Monto recibido</label><input type="number" min="1" [placeholder]="cuotaSugerida(plan)" [ngModel]="montoPlan()[plan.id]" (ngModelChange)="setMontoPlan(plan.id, Number($event))"></div>
+                <div class="campo"><label>Método</label><select [ngModel]="metodoPlan()[plan.id] || 'Efectivo'" (ngModelChange)="setMetodoPlan(plan.id, $event)">@for (m of metodosPago; track m) { <option>{{ m }}</option> }</select></div>
+                <button class="btn btn--vino btn--sm" (click)="registrarPagoPlan(plan)">Registrar pago parcial</button>
+                <button class="btn btn--linea btn--sm" (click)="cobrarSaldo(plan)">Liquidar saldo completo</button>
+                <small>Sirve para pagos por partes en recepción: efectivo, Yape, Plin, tarjeta o transferencia.</small>
+              </div>
             }
           </div>
         </footer>
@@ -307,6 +311,13 @@ import { PlanesService } from '../../compartido/planes.service';
     .plan__pie { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 24px; border-top: 1px solid var(--linea); background: var(--rosa-50); }
     .plan__notas { margin: 0; font-size: .82rem; font-style: italic; }
     .plan__acciones { display: flex; gap: 10px; flex-wrap: wrap; }
+    .accion-explicada { display: grid; gap: 5px; max-width: 240px; }
+    .accion-explicada small, .cobro-plan small { color: var(--gris); font-size: .74rem; line-height: 1.4; }
+    .cobro-plan {
+      display: grid; grid-template-columns: 130px 130px auto auto; gap: 10px; align-items: end;
+      padding: 12px; border: 1px solid var(--linea); border-radius: var(--radio); background: #fff;
+    }
+    .cobro-plan small { grid-column: 1 / -1; }
     .vacio { text-align: center; color: var(--gris-claro); padding: 30px 0; margin: 0; }
     
     /* Estilos del formulario de registro */
@@ -319,6 +330,7 @@ import { PlanesService } from '../../compartido/planes.service';
       .kpis-4 { grid-template-columns: repeat(2, 1fr); }
       .plan__cabecera { grid-template-columns: 1fr; }
       .plan__cobro { text-align: left; }
+      .cobro-plan { grid-template-columns: 1fr; }
     }
   `]
 })
@@ -329,6 +341,9 @@ export class SesionesComponent {
   paciente = nombrePaciente;
   locales = LOCALES;
   estadosSesion = ESTADOS_SESION;
+  metodosPago: MetodoPago[] = ['Efectivo', 'Yape', 'Plin', 'Tarjeta POS', 'Transferencia'];
+  montoPlan = signal<Record<number, number>>({});
+  metodoPlan = signal<Record<number, MetodoPago>>({});
 
   // Catálogos base para el formulario
   promocionesLista = PROMOCIONES;
@@ -379,6 +394,24 @@ export class SesionesComponent {
     const saldo = plan.precioTotal - plan.pagado;
     const cuota = Math.min(saldo, Math.round(plan.precioTotal / plan.sesiones.length));
     this.planes.registrarPago(plan.id, cuota);
+  }
+
+  cuotaSugerida(plan: PlanSesiones): number {
+    return Math.min(plan.precioTotal - plan.pagado, Math.round(plan.precioTotal / plan.sesiones.length));
+  }
+
+  registrarPagoPlan(plan: PlanSesiones): void {
+    const monto = Number(this.montoPlan()[plan.id] || this.cuotaSugerida(plan));
+    this.planes.registrarPago(plan.id, monto);
+    this.montoPlan.update(v => ({ ...v, [plan.id]: 0 }));
+  }
+
+  setMontoPlan(id: number, monto: number): void {
+    this.montoPlan.update(v => ({ ...v, [id]: monto }));
+  }
+
+  setMetodoPlan(id: number, metodo: MetodoPago): void {
+    this.metodoPlan.update(v => ({ ...v, [id]: metodo }));
   }
 
   cobrarSaldo(plan: PlanSesiones): void {

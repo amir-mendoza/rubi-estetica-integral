@@ -54,7 +54,7 @@
         <!-- ============================================= Formulario -->
         <div>
           <ol class="pasos-barra">
-            @for (p of pasos; track p.n) {
+            @for (p of pasosVisibles(); track p.n) {
               <li [class.activo]="paso() === p.n" [class.hecho]="paso() > p.n" (click)="irA(p.n)">
                 <span class="pasos-barra__n">{{ p.n }}</span>
                 <span class="pasos-barra__t">{{ p.titulo }}</span>
@@ -144,6 +144,12 @@
           @if (paso() === 3) {
             <div class="bloque">
               <h3>3. Elige el día y la hora en la que llegarás</h3>
+              @if (promocion()) {
+                <div class="aviso aviso--ok" style="margin-bottom:18px">
+                  Ya reservaste la promoción <strong>{{ promocion()?.titulo }}</strong>. No necesitas elegir tratamiento:
+                  recepción atenderá los tratamientos incluidos en la oferta.
+                </div>
+              }
               <p>
                 Atendemos por hora de llegada. Cada bloque horario tiene un cupo para evitar esperas excesivas:
                 cuando una hora llega a su cupo, se cierra y puedes elegir la siguiente.
@@ -271,7 +277,14 @@
             @if (promocion()) {
               <div class="resumen__fila"><span>Promoción</span><strong>{{ promocion()?.titulo }}</strong></div>
             }
-            <div class="resumen__fila"><span>Tratamiento</span><strong>{{ tratamiento()?.nombre || '—' }}</strong></div>
+            <div class="resumen__fila"><span>{{ promocion() ? 'Incluye' : 'Tratamiento' }}</span><strong>{{ nombreReserva() }}</strong></div>
+            @if (sesionesPromo().length) {
+              <div class="resumen__sesiones">
+                @for (s of sesionesPromo(); track $index; let i = $index) {
+                  <span><b>{{ i + 1 }}</b> {{ s.titulo }}</span>
+                }
+              </div>
+            }
             <div class="resumen__fila"><span>Fecha</span><strong>{{ bloque() ? formatoFechaLarga(fecha()) : '—' }}</strong></div>
             <div class="resumen__fila"><span>Hora de llegada</span><strong>{{ bloque()?.inicio || '—' }}</strong></div>
             <div class="resumen__fila"><span>Cabina</span><strong>Se asigna al llegar</strong></div>

@@ -1,12 +1,13 @@
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { CITAS, PACIENTES, soles, tratamientoPorId } from '../../data/datos';
 import { Paciente } from '../../data/modelos';
 
 @Component({
   selector: 'app-pacientes',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   template: `
     <div class="cabecera-admin">
       <div>
@@ -74,6 +75,7 @@ import { Paciente } from '../../data/modelos';
                   <button class="boton-icono" (click)="abierta.set(abierta() === p.id ? null : p.id)">
                     {{ abierta() === p.id ? 'Cerrar' : 'Historial' }}
                   </button>
+                  <a class="boton-icono" [routerLink]="['/admin/pacientes', p.id, 'historial']">Ver completo</a>
                 </td>
               </tr>
               @if (abierta() === p.id) {

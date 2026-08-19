@@ -31,6 +31,7 @@ export const routes: Routes = [
       { path: 'dashboard', loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent) },
       { path: 'calendario', loadComponent: () => import('./admin/calendario/calendario.component').then(m => m.CalendarioComponent) },
       { path: 'pacientes', loadComponent: () => import('./admin/pacientes/pacientes.component').then(m => m.PacientesComponent) },
+      { path: 'pacientes/:id/historial', loadComponent: () => import('./admin/pacientes/paciente-historial.component').then(m => m.PacienteHistorialComponent) },
       { path: 'sesiones', loadComponent: () => import('./admin/sesiones/sesiones.component').then(m => m.SesionesComponent) },
       { path: 'promociones', loadComponent: () => import('./admin/promociones/promociones-admin.component').then(m => m.PromocionesAdminComponent) },
       { path: 'productos', loadComponent: () => import('./admin/productos/productos-admin.component').then(m => m.ProductosAdminComponent) },

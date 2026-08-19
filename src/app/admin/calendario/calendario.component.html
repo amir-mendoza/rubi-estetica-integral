@@ -8,9 +8,62 @@
   </div>
   <div class="cabecera-admin__acciones">
     <button class="btn btn--linea btn--sm" (click)="irHoy()">Ir a hoy</button>
-    <button class="btn btn--vino btn--sm">Registrar cita manual</button>
+    <button class="btn btn--vino btn--sm" (click)="mostrarManual.set(!mostrarManual())">
+      {{ mostrarManual() ? 'Cerrar registro' : 'Registrar cita manual' }}
+    </button>
   </div>
 </div>
+
+@if (mostrarManual()) {
+  <div class="tabla-panel cita-manual">
+    <div class="tabla-panel__cabecera">
+      <div>
+        <h3>Registrar cita en recepción</h3>
+        <span class="dato__label">Para clientes que llegan o llaman directo al local</span>
+      </div>
+    </div>
+    <form class="cita-manual__form" (ngSubmit)="registrarCitaManual()">
+      <div class="campo"><label>DNI</label><input required maxlength="8" [(ngModel)]="manualDni" name="manualDni"></div>
+      <div class="campo"><label>Celular</label><input required [(ngModel)]="manualCelular" name="manualCelular"></div>
+      <div class="campo cita-manual__ancho"><label>Nombre completo</label><input required [(ngModel)]="manualNombre" name="manualNombre"></div>
+      <div class="campo">
+        <label>Local</label>
+        <select [(ngModel)]="manualLocalId" name="manualLocalId">
+          @for (l of locales; track l.id) { <option [value]="l.id">{{ l.nombre }}</option> }
+        </select>
+      </div>
+      <div class="campo"><label>Fecha</label><input type="date" [(ngModel)]="manualFecha" name="manualFecha"></div>
+      <div class="campo"><label>Hora de llegada</label><input type="time" [(ngModel)]="manualHora" name="manualHora"></div>
+
+      <div class="cita-manual__tratamientos">
+        <div class="cita-manual__sub">
+          <span class="dato__label">Tratamientos de la cita</span>
+          <button type="button" class="btn btn--linea btn--sm" (click)="agregarTratamientoManual()">Agregar tratamiento</button>
+        </div>
+        @for (id of manualTratamientos(); track $index; let i = $index) {
+          <div class="trat-row">
+            <select [ngModel]="id" (ngModelChange)="cambiarTratamientoManual(i, Number($event))" [name]="'manualTrat' + i">
+              @for (t of tratamientosCatalogo; track t.id) { <option [value]="t.id">{{ t.nombre }} · {{ soles(t.precio) }}</option> }
+            </select>
+            <button type="button" class="boton-icono" (click)="quitarTratamientoManual(i)" [disabled]="manualTratamientos().length === 1">Quitar</button>
+          </div>
+        }
+      </div>
+
+      <div class="campo"><label>Total a cobrar (editable)</label><input type="number" min="0" [(ngModel)]="manualTotal" name="manualTotal"></div>
+      <div class="campo"><label>Pago inicial</label><input type="number" min="0" [(ngModel)]="manualPagado" name="manualPagado"></div>
+      <div class="campo">
+        <label>Método si paga ahora</label>
+        <select [(ngModel)]="manualMetodo" name="manualMetodo">
+          @for (m of metodosPago; track m) { <option>{{ m }}</option> }
+        </select>
+      </div>
+      <button class="btn btn--vino btn--sm" type="submit" [disabled]="!manualDni || !manualCelular || !manualNombre || !manualTratamientos().length">
+        Guardar cita
+      </button>
+    </form>
+  </div>
+}
 
 <div class="barra-filtros">
   <div class="campo barra-filtros__crecer">
@@ -139,7 +192,7 @@
             <div class="cita__datos">
               <div><span class="dato__label">DNI</span><span>{{ paciente(f.cita.pacienteId)?.dni }}</span></div>
               <div><span class="dato__label">Celular</span><span>{{ paciente(f.cita.pacienteId)?.celular }}</span></div>
-              <div><span class="dato__label">Tratamiento</span><span>{{ tratamiento(f.cita.tratamientoId)?.nombre }}</span></div>
+              <div><span class="dato__label">Tratamiento</span><span>{{ tratamientosCita(f.cita) }}</span></div>
               <div><span class="dato__label">Local</span><span>{{ local(f.cita.localId) }}</span></div>
               <div><span class="dato__label">Cabina</span><span>{{ cabina(f.cita.habitacionId) }}</span></div>
               <div><span class="dato__label">Especialista</span><span>{{ especialista(f.cita.especialistaId) }}</span></div>
@@ -171,9 +224,18 @@
                 Pagado con {{ f.cita.metodoPago }}
               </span>
             } @else if (f.cita.estado !== 'Cancelada') {
-              <button class="btn btn--vino btn--sm" (click)="registrarPagoEfectivo(f.cita)">
-                Registrar pago en efectivo
-              </button>
+              <div class="cobro-flex">
+                <select [ngModel]="pagoMetodo()" (ngModelChange)="pagoMetodo.set($event)">
+                  @for (m of metodosPago; track m) { <option>{{ m }}</option> }
+                </select>
+                <input type="number" min="1" [placeholder]="f.cita.montoTotal - f.cita.montoPagado"
+                       [ngModel]="pagoMonto()[f.cita.id]" (ngModelChange)="setPagoMonto(f.cita.id, Number($event))">
+                <input type="text" placeholder="Código op." [ngModel]="pagoCodigo()[f.cita.id]"
+                       (ngModelChange)="setPagoCodigo(f.cita.id, $event)">
+                <button class="btn btn--vino btn--sm" (click)="registrarPago(f.cita)">
+                  Registrar pago
+                </button>
+              </div>
             }
 
             <button class="boton-icono" (click)="citaAbierta.set(citaAbierta() === f.cita.id ? null : f.cita.id)">
