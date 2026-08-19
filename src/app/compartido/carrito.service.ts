@@ -9,8 +9,11 @@ export interface ItemCarrito {
 @Injectable({ providedIn: 'root' })
 export class CarritoService {
   private readonly items$ = signal<ItemCarrito[]>([]);
+  private readonly aviso$ = signal<string | null>(null);
+  private temporizadorAviso?: ReturnType<typeof setTimeout>;
 
   readonly items = this.items$.asReadonly();
+  readonly aviso = this.aviso$.asReadonly();
   readonly cantidad = computed(() => this.items$().reduce((t, i) => t + i.cantidad, 0));
   readonly subtotal = computed(() => this.items$().reduce((t, i) => t + i.cantidad * i.producto.precio, 0));
 
@@ -23,6 +26,7 @@ export class CarritoService {
       actuales.push({ producto, cantidad });
     }
     this.items$.set(actuales);
+    this.mostrarAviso(`${producto.nombre} se agregó al carrito`);
   }
 
   cambiarCantidad(productoId: number, cantidad: number): void {
@@ -39,5 +43,19 @@ export class CarritoService {
 
   vaciar(): void {
     this.items$.set([]);
+  }
+
+  cerrarAviso(): void {
+    this.aviso$.set(null);
+    if (this.temporizadorAviso) {
+      clearTimeout(this.temporizadorAviso);
+      this.temporizadorAviso = undefined;
+    }
+  }
+
+  private mostrarAviso(mensaje: string): void {
+    this.aviso$.set(mensaje);
+    if (this.temporizadorAviso) { clearTimeout(this.temporizadorAviso); }
+    this.temporizadorAviso = setTimeout(() => this.aviso$.set(null), 3200);
   }
 }

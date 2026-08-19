@@ -4,6 +4,7 @@ import { filter } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LogoComponent } from '../../compartido/logo.component';
 import { SesionService } from '../../compartido/sesion.service';
+import { CarritoService } from '../../compartido/carrito.service';
 import { LOCALES } from '../../data/datos';
 
 @Component({
@@ -15,6 +16,7 @@ import { LOCALES } from '../../data/datos';
 })
 export class PublicoLayoutComponent implements AfterViewInit, OnDestroy {
   readonly sesion = inject(SesionService);
+  readonly carrito = inject(CarritoService);
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
