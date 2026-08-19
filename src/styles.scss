@@ -516,100 +516,48 @@ table.tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
 .mini-dato span { font-size: .76rem; color: var(--gris-claro); }
 
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes entrada-arriba {
-    from {
-      opacity: 0;
-      transform: translateY(52px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  app-publico-layout .animar-scroll {
+    opacity: 0;
+    transform: translate3d(0, 96px, 0) scale(.985);
+    transition:
+      opacity .98s cubic-bezier(.2, .72, .18, 1),
+      transform .98s cubic-bezier(.2, .72, .18, 1);
+    transition-delay: var(--anim-delay, 0ms);
+    will-change: opacity, transform;
   }
 
-  @keyframes entrada-izquierda {
-    from {
-      opacity: 0;
-      transform: translateX(-64px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
+  app-publico-layout .animar-scroll--izquierda {
+    transform: translate3d(-110px, 0, 0) scale(.985);
   }
 
-  @keyframes entrada-derecha {
-    from {
-      opacity: 0;
-      transform: translateX(64px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
+  app-publico-layout .animar-scroll--derecha {
+    transform: translate3d(110px, 0, 0) scale(.985);
   }
 
-  @keyframes zoom-suave {
-    from {
-      opacity: .72;
-      transform: scale(.94);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
+  app-publico-layout .animar-scroll--zoom {
+    transform: scale(.9);
   }
 
-  @keyframes filete-entrada {
-    from {
-      opacity: 0;
-      transform: scaleX(0);
-      transform-origin: left center;
-    }
-    to {
-      opacity: 1;
-      transform: scaleX(1);
-    }
-  }
-
-  app-publico-layout .cabecera-pagina .contenedor,
-  app-publico-layout .encabezado-seccion,
-  app-publico-layout .pasos__intro,
-  app-publico-layout .detalle__contenido > div:first-child {
-    animation: entrada-izquierda .9s both cubic-bezier(.2, .72, .18, 1);
-    animation-timeline: view();
-    animation-range: entry 4% cover 38%;
-  }
-
-  app-publico-layout .encabezado-seccion.texto-centro,
-  app-publico-layout .detalle__grid,
-  app-publico-layout .detalle-prod {
-    animation-name: entrada-arriba;
-  }
-
-  app-publico-layout .grid > *,
-  app-publico-layout .paso,
-  app-publico-layout .panel {
-    animation: entrada-arriba .85s both cubic-bezier(.2, .72, .18, 1);
-    animation-timeline: view();
-    animation-range: entry 5% cover 34%;
-  }
-
-  app-publico-layout .grid > *:nth-child(3n + 1) { animation-name: entrada-izquierda; }
-  app-publico-layout .grid > *:nth-child(3n) { animation-name: entrada-derecha; }
-
-  app-publico-layout .detalle__imagen,
-  app-publico-layout .detalle-prod__imagen,
-  app-publico-layout .cta__contenido {
-    animation: zoom-suave .9s both cubic-bezier(.2, .72, .18, 1);
-    animation-timeline: view();
-    animation-range: entry 8% cover 40%;
+  app-publico-layout .animar-scroll--visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
   }
 
   app-publico-layout .filete {
-    animation: filete-entrada .8s both ease-out;
-    animation-timeline: view();
-    animation-range: entry 12% cover 32%;
+    transform-origin: left center;
+    transition: transform .75s ease, opacity .75s ease;
+  }
+
+  app-publico-layout .animar-scroll--visible .filete,
+  app-publico-layout .filete.animar-scroll--visible {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  app-publico-layout .animar-scroll:not(.animar-scroll--visible) .filete,
+  app-publico-layout .filete.animar-scroll:not(.animar-scroll--visible) {
+    opacity: 0;
+    transform: scaleX(0);
   }
 
   app-publico-layout .tarjeta-trat,
