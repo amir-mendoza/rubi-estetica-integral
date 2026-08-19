@@ -8,6 +8,7 @@ import { CategoriaTratamiento, Local, Promocion, Tratamiento } from '../../data/
 import { Bloque, DisponibilidadService } from '../../compartido/disponibilidad.service';
 import { SesionService } from '../../compartido/sesion.service';
 import { PromocionesService } from '../../compartido/promociones.service';
+import { PagosOnlineService } from '../../compartido/pagos-online.service';
 
 const CATEGORIAS: (CategoriaTratamiento | 'Todos')[] = [
   'Todos', 'Facial', 'Corporal', 'Aparatología', 'Medicina estética'
@@ -25,6 +26,7 @@ export class ReservarComponent {
   private ruta = inject(ActivatedRoute);
   readonly sesion = inject(SesionService);
   private promociones = inject(PromocionesService);
+  private pagosOnline = inject(PagosOnlineService);
 
   soles = soles;
   formatoFechaLarga = formatoFechaLarga;
@@ -44,6 +46,10 @@ export class ReservarComponent {
   fecha = signal<string>(this.dias[0].iso);
   bloque = signal<Bloque | null>(null);
   confirmado = signal(false);
+  procesandoPago = signal(false);
+  mensajePago = signal('');
+  codigoOperacion = signal<string | null>(null);
+  codigoReserva = signal('CT-1042');
 
   // Datos de la paciente: se precargan si hay una sesión iniciada.
   nombre = this.sesion.usuario()?.nombre ?? '';
@@ -189,6 +195,11 @@ export class ReservarComponent {
   }
 
   confirmar(): void {
+    if (this.metodoPago === 'Izipay') {
+      this.procesarPagoOnline();
+      return;
+    }
+    this.codigoOperacion.set(null);
     this.confirmado.set(true);
   }
 
@@ -217,5 +228,52 @@ export class ReservarComponent {
     const detalle = promo ? `la promocion ${promo.titulo}` : `el tratamiento ${t?.nombre ?? ''}`;
     const texto = `Hola, quiero reservar ${detalle}. Mi nombre es ${this.nombre || ''} ${this.apellido || ''}.`;
     return `https://wa.me/51945189720?text=${encodeURIComponent(texto)}`;
+  }
+
+  private procesarPagoOnline(): void {
+    if (this.procesandoPago()) { return; }
+    this.procesandoPago.set(true);
+    this.mensajePago.set('Preparando pago seguro con Izipay...');
+
+    this.pagosOnline.iniciarPago({
+      tipo: 'Cita',
+      referencia: this.codigoReserva(),
+      descripcion: `Reserva ${this.nombreReserva()}`,
+      monto: this.totalReserva(),
+      moneda: 'PEN',
+      localId: this.local()?.id,
+      cliente: {
+        nombre: this.nombre,
+        apellido: this.apellido,
+        dni: this.dni,
+        celular: this.celular,
+        correo: this.correo
+      },
+      items: [{
+        id: this.promocion()?.id ? `PROMO-${this.promocion()?.id}` : this.tratamiento()?.id ?? 'TRAT',
+        nombre: this.nombreReserva(),
+        cantidad: 1,
+        precioUnitario: this.totalReserva()
+      }],
+      metadata: {
+        fecha: this.fecha(),
+        hora: this.bloque()?.inicio ?? null,
+        promocionId: this.promocion()?.id ?? null,
+        tratamientoId: this.tratamiento()?.id ?? null
+      }
+    }).subscribe({
+      next: resultado => {
+        this.procesandoPago.set(false);
+        this.mensajePago.set(resultado.mensaje);
+        if (resultado.aprobado) {
+          this.codigoOperacion.set(resultado.codigoOperacion ?? null);
+          this.confirmado.set(true);
+        }
+      },
+      error: () => {
+        this.procesandoPago.set(false);
+        this.mensajePago.set('No se pudo iniciar el pago online. Puedes intentar otra vez o pagar en el local.');
+      }
+    });
   }
 }

@@ -20,7 +20,7 @@
         </span>
         <h2>Tu cita quedó {{ metodoPago === 'Izipay' ? 'pagada y confirmada' : 'registrada' }}</h2>
         <p class="lead mx-auto texto-centro">
-          Código de reserva <strong>CT-1042</strong>. Te enviaremos la confirmación por WhatsApp al
+          Código de reserva <strong>{{ codigoReserva() }}</strong>. Te enviaremos la confirmación por WhatsApp al
           {{ celular || 'número registrado' }}.
         </p>
         <div class="aviso aviso--llegada">
@@ -41,6 +41,9 @@
             <span class="dato__label">Estado de pago</span>
             <span class="dato__valor">{{ metodoPago === 'Izipay' ? 'Pagado · Izipay' : 'Pago en local' }}</span>
           </div>
+          @if (codigoOperacion()) {
+            <div class="dato"><span class="dato__label">Código operación</span><span class="dato__valor">{{ codigoOperacion() }}</span></div>
+          }
         </div>
 
         <div class="confirmacion__acciones">
@@ -255,13 +258,26 @@
               </a>
 
               <div class="aviso" style="margin:22px 0">
-                Prototipo de demostración: no se ejecuta ningún cobro real ni se guardan datos.
+                @if (metodoPago === 'Izipay') {
+                  El pago online ya está preparado para Izipay. Ahora corre en modo simulación hasta conectar Spring Boot y las credenciales reales.
+                } @else {
+                  La reserva quedará pendiente de cobro y recepción la marcará como pagada al cobrar en el local.
+                }
               </div>
+              @if (mensajePago()) {
+                <div class="aviso" [class.aviso--ok]="codigoOperacion()" style="margin-bottom:22px">
+                  {{ mensajePago() }}
+                </div>
+              }
 
               <div class="acciones-paso">
                 <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
-                <button class="btn btn--primario" (click)="confirmar()">
-                  {{ metodoPago === 'Izipay' ? 'Pagar y confirmar cita' : 'Confirmar reserva' }}
+                <button class="btn btn--primario" [disabled]="procesandoPago()" (click)="confirmar()">
+                  @if (procesandoPago()) {
+                    Procesando pago...
+                  } @else {
+                    {{ metodoPago === 'Izipay' ? 'Pagar y confirmar cita' : 'Confirmar reserva' }}
+                  }
                 </button>
               </div>
             </div>

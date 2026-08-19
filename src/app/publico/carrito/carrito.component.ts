@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CarritoService } from '../../compartido/carrito.service';
 import { SesionService } from '../../compartido/sesion.service';
+import { PagosOnlineService } from '../../compartido/pagos-online.service';
 import { LOCALES, soles } from '../../data/datos';
 
 @Component({
@@ -31,9 +32,12 @@ import { LOCALES, soles } from '../../data/datos';
             <span class="chip chip--ok chip--punto">Pedido registrado</span>
             <h3 style="margin-top:16px">Pedido {{ codigo }} generado</h3>
             <p>
-              En la versión final el pedido queda en estado <strong>Pendiente</strong> hasta que Izipay
-              confirme el pago. Recién con esa confirmación pasa a <strong>Pagado</strong> y aparece
-              en el panel administrativo.
+              @if (codigoOperacion()) {
+                Pago online aprobado con código <strong>{{ codigoOperacion() }}</strong>. El pedido queda listo para aparecer
+                como pagado en el panel administrativo cuando Spring Boot registre la confirmación.
+              } @else {
+                El pedido queda pendiente de pago hasta que recepción cobre al momento del recojo.
+              }
             </p>
             <a routerLink="/productos" class="btn btn--linea">Seguir comprando</a>
           </div>
@@ -107,9 +111,20 @@ import { LOCALES, soles } from '../../data/datos';
                 </select>
               </div>
 
-              <button class="btn btn--primario btn--bloque" (click)="confirmar()">Confirmar pedido</button>
+              @if (mensajePago()) {
+                <div class="aviso" [class.aviso--ok]="codigoOperacion()" style="margin-top:14px">
+                  {{ mensajePago() }}
+                </div>
+              }
+              <button class="btn btn--primario btn--bloque" [disabled]="procesandoPago()" (click)="confirmar()">
+                @if (procesandoPago()) {
+                  Procesando pago...
+                } @else {
+                  {{ metodo === 'Pagar en línea con Izipay' ? 'Pagar pedido con Izipay' : 'Confirmar pedido' }}
+                }
+              </button>
               <p class="campo__ayuda" style="margin-top:14px">
-                Prototipo de demostración: no se procesa ningún cobro real.
+                Pago online preparado para Izipay. Ahora está en modo simulación hasta conectar Spring Boot.
               </p>
             </aside>
           </div>
@@ -141,6 +156,7 @@ import { LOCALES, soles } from '../../data/datos';
 export class CarritoComponent {
   carrito = inject(CarritoService);
   private sesion = inject(SesionService);
+  private pagosOnline = inject(PagosOnlineService);
   soles = soles;
   locales = LOCALES;
 
@@ -149,10 +165,66 @@ export class CarritoComponent {
   nombre = this.sesion.nombreCompleto();
   celular = this.sesion.usuario()?.celular ?? '';
   confirmado = signal(false);
+  procesandoPago = signal(false);
+  mensajePago = signal('');
+  codigoOperacion = signal<string | null>(null);
   codigo = 'PD-2042';
 
   confirmar(): void {
+    if (this.metodo === 'Pagar en línea con Izipay') {
+      this.procesarPagoOnline();
+      return;
+    }
+    this.codigoOperacion.set(null);
     this.confirmado.set(true);
     this.carrito.vaciar();
+  }
+
+  private procesarPagoOnline(): void {
+    if (this.procesandoPago()) { return; }
+    this.procesandoPago.set(true);
+    this.mensajePago.set('Preparando pago seguro con Izipay...');
+
+    const items = this.carrito.items();
+    this.pagosOnline.iniciarPago({
+      tipo: 'Producto',
+      referencia: this.codigo,
+      descripcion: `Pedido ${this.codigo} · ${items.length} producto(s)`,
+      monto: this.carrito.subtotal(),
+      moneda: 'PEN',
+      localId: Number(this.localRecojoId),
+      cliente: {
+        nombre: this.nombre,
+        celular: this.celular
+      },
+      items: items.map(item => ({
+        id: item.producto.id,
+        nombre: item.producto.nombre,
+        cantidad: item.cantidad,
+        precioUnitario: item.producto.precio
+      })),
+      metadata: {
+        entrega: this.entregaSeleccionada()
+      }
+    }).subscribe({
+      next: resultado => {
+        this.procesandoPago.set(false);
+        this.mensajePago.set(resultado.mensaje);
+        if (resultado.aprobado) {
+          this.codigoOperacion.set(resultado.codigoOperacion ?? null);
+          this.confirmado.set(true);
+          this.carrito.vaciar();
+        }
+      },
+      error: () => {
+        this.procesandoPago.set(false);
+        this.mensajePago.set('No se pudo iniciar el pago online. Puedes intentar otra vez o pagar al recoger.');
+      }
+    });
+  }
+
+  private entregaSeleccionada(): string {
+    const local = this.locales.find(l => l.id === Number(this.localRecojoId)) ?? this.locales[0];
+    return `Recojo en ${local.nombre}`;
   }
 }
