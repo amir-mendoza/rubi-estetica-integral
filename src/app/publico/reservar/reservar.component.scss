@@ -4,6 +4,7 @@
   gap: 32px;
   align-items: start;
 }
+.reserva > * { min-width: 0; }
 
 /* Barra de pasos */
 .pasos-barra {
@@ -80,8 +81,19 @@
 .promo-reserva b { color: var(--magenta); font-size: 1.2rem; }
 
 /* Días */
-.dias { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 22px; }
+.dias {
+  display: flex; gap: 10px; margin-bottom: 22px;
+  overflow-x: auto; overflow-y: hidden;
+  padding-bottom: 10px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.dias::-webkit-scrollbar { height: 5px; }
+.dias::-webkit-scrollbar-thumb { background: var(--rosa); border-radius: 999px; }
 .dia {
+  scroll-snap-align: start;
+  flex: none;
   min-width: 68px; padding: 12px 8px; border: 1px solid var(--linea); border-radius: var(--radio-lg);
   background: #fff; cursor: pointer; font-family: inherit;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -201,6 +213,15 @@
   .resumen-final {
     padding: 20px;
   }
+}
+
+@media (max-width: 760px) {
+  .dias { gap: 8px; margin-inline: -14px; padding-inline: 14px; }
+  .dia { min-width: 62px; }
+  .horarios { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+  .horario { padding: 10px 6px; }
+  .horario span { font-size: .94rem; }
+  .horario small { font-size: .62rem; text-align: center; }
 }
 
 @media (max-width: 420px) {

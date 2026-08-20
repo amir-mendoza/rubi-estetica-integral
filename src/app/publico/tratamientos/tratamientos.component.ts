@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, computed, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CATEGORIAS_TRATAMIENTO, TRATAMIENTOS, soles } from '../../data/datos';
 import { PromocionesService } from '../../compartido/promociones.service';
@@ -65,11 +65,11 @@ import { PromocionesService } from '../../compartido/promociones.service';
               <div class="promo-vertical__cabecera">
                 <span class="eyebrow">Promociones vigentes</span>
                 <h2>Ofertas activas</h2>
-                <small>{{ promos().length }} promociones</small>
+                <small>{{ promos().length }} promociones · <span class="promo-vertical__hint">desliza para ver más</span></small>
               </div>
-              <div class="promo-vertical__ventana">
+              <div class="promo-vertical__ventana" #ventana>
                 <div class="promo-vertical__track">
-                  @for (p of promosLoop(); track p.id + '-' + $index) {
+                  @for (p of tarjetas(); track p.id + '-' + $index) {
                     <article class="promo-mini">
                       <img [src]="p.imagen" [alt]="p.titulo">
                       <div>
@@ -152,23 +152,79 @@ import { PromocionesService } from '../../compartido/promociones.service';
       from { transform: translateY(0); }
       to { transform: translateY(-50%); }
     }
+    .promo-vertical__hint { display: none; }
     @media (max-width: 1200px) {
       .tratamientos-layout { grid-template-columns: 1fr; }
-      .promo-vertical { position: static; order: -1; }
-      .promo-vertical__ventana { height: 430px; min-height: 430px; }
+      .promo-vertical { position: static; order: -1; padding: 16px 14px; }
+      .promo-vertical__hint { display: inline; color: var(--magenta); }
+      .promo-vertical__ventana {
+        height: auto; min-height: 0;
+        overflow-x: auto; overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        mask-image: none;
+        margin-inline: -14px;
+        padding: 4px 14px 12px;
+        scrollbar-width: none;
+      }
+      .promo-vertical__ventana::-webkit-scrollbar { display: none; }
+      .promo-vertical__track {
+        grid-auto-flow: column;
+        grid-auto-columns: min(76%, 320px);
+        animation: none;
+        gap: 12px;
+        padding: 0;
+      }
+      .promo-mini { scroll-snap-align: center; }
+      .promo-mini:hover { transform: none; }
+      .promo-mini img { aspect-ratio: 4 / 5; object-fit: contain; }
     }
   `]
 })
-export class TratamientosComponent {
+export class TratamientosComponent implements AfterViewInit, OnDestroy {
   soles = soles;
   categorias = CATEGORIAS_TRATAMIENTO;
   categoria = signal<string>('Todos');
   promos = computed(() => this.promociones.activas());
-  promosLoop = computed(() => [...this.promos(), ...this.promos()]);
+  compacto = signal(false);
+  /** En escritorio el track se duplica para el desplazamiento vertical continuo. */
+  tarjetas = computed(() =>
+    this.compacto() ? this.promos() : [...this.promos(), ...this.promos()]
+  );
+
+  private ventana = viewChild<ElementRef<HTMLElement>>('ventana');
+  private temporizador?: ReturnType<typeof setInterval>;
+  private consulta?: MediaQueryList;
 
   constructor(private promociones: PromocionesService) {}
 
   lista = computed(() =>
     TRATAMIENTOS.filter(t => this.categoria() === 'Todos' || t.categoria === this.categoria())
   );
+
+  ngAfterViewInit(): void {
+    this.consulta = window.matchMedia('(max-width: 1200px)');
+    this.compacto.set(this.consulta.matches);
+    this.consulta.addEventListener('change', this.alCambiarAncho);
+    this.temporizador = setInterval(() => this.avanzar(), 5000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.temporizador) { clearInterval(this.temporizador); }
+    this.consulta?.removeEventListener('change', this.alCambiarAncho);
+  }
+
+  private alCambiarAncho = (e: MediaQueryListEvent) => this.compacto.set(e.matches);
+
+  /** Avanza a la siguiente promoción y reinicia al llegar al final. */
+  private avanzar(): void {
+    const el = this.ventana()?.nativeElement;
+    if (!el || !this.compacto()) { return; }
+
+    const tarjeta = el.querySelector<HTMLElement>('.promo-mini');
+    const paso = tarjeta ? tarjeta.offsetWidth + 12 : el.clientWidth * .8;
+    const fin = el.scrollLeft + el.clientWidth >= el.scrollWidth - 8;
+
+    el.scrollTo({ left: fin ? 0 : el.scrollLeft + paso, behavior: 'smooth' });
+  }
 }

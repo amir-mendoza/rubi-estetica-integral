@@ -44,7 +44,29 @@ import { LOCALES, soles } from '../../data/datos';
         } @else {
           <div class="carrito">
             <div>
-              <div class="tabla-envoltura panel">
+              <div class="lista-movil">
+                @for (i of carrito.items(); track i.producto.id) {
+                  <article class="item-movil panel">
+                    <img class="img-cobertura" [src]="i.producto.imagen" [alt]="i.producto.nombre">
+                    <div class="item-movil__cuerpo">
+                      <strong>{{ i.producto.nombre }}</strong>
+                      <span class="item-movil__marca">{{ i.producto.marca }}</span>
+                      <span class="item-movil__precio">{{ soles(i.producto.precio) }} c/u</span>
+                      <div class="item-movil__pie">
+                        <div class="cantidad">
+                          <button (click)="carrito.cambiarCantidad(i.producto.id, i.cantidad - 1)">−</button>
+                          <span>{{ i.cantidad }}</span>
+                          <button (click)="carrito.cambiarCantidad(i.producto.id, i.cantidad + 1)">+</button>
+                        </div>
+                        <strong class="item-movil__subtotal">{{ soles(i.cantidad * i.producto.precio) }}</strong>
+                      </div>
+                      <button class="quitar" (click)="carrito.quitar(i.producto.id)">Quitar</button>
+                    </div>
+                  </article>
+                }
+              </div>
+
+              <div class="tabla-envoltura panel tabla-escritorio">
                 <table class="tabla">
                   <thead>
                     <tr><th>Producto</th><th>Precio</th><th>Cantidad</th><th class="num">Subtotal</th><th></th></tr>
@@ -134,6 +156,8 @@ import { LOCALES, soles } from '../../data/datos';
   `,
   styles: [`
     .carrito { display: grid; grid-template-columns: 1.6fr 1fr; gap: 32px; align-items: start; }
+    .carrito > * { min-width: 0; }
+    .lista-movil { display: none; }
     .panel { padding: 24px; }
     .linea-prod { display: flex; gap: 14px; align-items: center; }
     .linea-prod img { width: 56px; height: 56px; object-fit: cover; border-radius: var(--radio); }
@@ -150,7 +174,20 @@ import { LOCALES, soles } from '../../data/datos';
     .resumen__total strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.8rem; color: var(--vino); }
     .vacio { text-align: center; padding: 60px 20px; border: 1px dashed var(--linea); border-radius: var(--radio-lg); }
     .vacio p { max-width: 60ch; margin: 0 auto 24px; }
-    @media (max-width: 960px) { .carrito { grid-template-columns: 1fr; } }
+    @media (max-width: 960px) {
+      .carrito { grid-template-columns: 1fr; }
+      .tabla-escritorio { display: none; }
+      .lista-movil { display: grid; gap: 12px; }
+      .item-movil { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 14px; padding: 14px; align-items: start; }
+      .item-movil img { width: 74px; height: 74px; border-radius: var(--radio); }
+      .item-movil__cuerpo { display: grid; gap: 4px; min-width: 0; }
+      .item-movil strong { font-weight: 500; line-height: 1.2; }
+      .item-movil__marca { font-size: .76rem; color: var(--gris-claro); }
+      .item-movil__precio { font-size: .82rem; color: var(--gris); }
+      .item-movil__pie { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; }
+      .item-movil__subtotal { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.3rem; color: var(--vino); }
+      .item-movil .quitar { justify-self: start; padding: 0; }
+    }
   `]
 })
 export class CarritoComponent {

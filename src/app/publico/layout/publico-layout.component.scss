@@ -91,6 +91,7 @@
 }
 
 .navegacion__movil { display: none; }
+.navegacion__cta { display: none; }
 
 .cuenta {
   display: inline-flex; align-items: center; gap: 9px;
@@ -247,6 +248,12 @@
   .hamburguesa { display: flex; }
   .cabecera__ingresar { display: none; }
   .navegacion--abierta .navegacion__movil { display: block; }
+  .navegacion--abierta .navegacion__cta {
+    display: inline-flex;
+    justify-content: center;
+    margin-top: 14px;
+    border-bottom: none;
+  }
   .pie__grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 640px) {
@@ -259,7 +266,17 @@
     justify-content: center;
     text-align: center;
   }
+  .barra-superior__telefono {
+    display: none;
+  }
   .barra-superior__acciones {
+    gap: 12px;
+  }
+  .barra-superior__admin {
+    padding: 4px 10px;
+    font-size: .62rem;
+  }
+  .barra-superior__admin--acceso {
     display: none;
   }
   .cabecera__interior {

@@ -95,11 +95,33 @@
 
 .lienzo { padding: 30px 28px 60px; min-width: 0; }
 
+.topbar__movil { display: none; }
+
 @media (max-width: 1000px) {
   .admin { grid-template-columns: 78px 1fr; }
   .lateral__enlace span, .lateral__grupo-titulo, .lateral__pie { display: none; }
   .lateral__enlace { justify-content: center; }
   .topbar__rol, .topbar__reloj { display: none; }
+
+  .topbar__toggle { display: none; }
+
+  .topbar__movil { display: flex; gap: 8px; }
+
+  .topbar__movil-btn {
+    padding: 8px 14px;
+    border: 1px solid var(--linea);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--vino);
+    font-family: inherit;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .topbar__movil-btn--salir { border-color: var(--magenta-300); color: var(--magenta); }
 }
 
 @media (max-width: 760px) {
@@ -168,6 +190,11 @@
     height: auto;
     padding: 10px 14px;
     gap: 12px;
+  }
+
+  .topbar__movil-btn {
+    padding: 8px 12px;
+    font-size: .7rem;
   }
 
   .topbar__acciones {

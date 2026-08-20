@@ -32,6 +32,11 @@
         <span></span><span></span><span></span>
       </button>
 
+      <div class="topbar__movil">
+        <a routerLink="/" class="topbar__movil-btn">Ver sitio</a>
+        <button type="button" class="topbar__movil-btn topbar__movil-btn--salir" (click)="cerrarSesion()">Cerrar sesión</button>
+      </div>
+
       <div class="topbar__acciones">
         <div class="topbar__reloj">
           <span>{{ fechaActual() }}</span>

@@ -6,11 +6,11 @@
       <span>Av. Las Flores de Primavera 1522 y 1544 — San Juan de Lurigancho</span>
     </div>
     <div class="barra-superior__acciones">
-      <a href="tel:945189720">945 189 720</a>
+      <a href="tel:945189720" class="barra-superior__telefono">945 189 720</a>
       @if (sesion.esAdmin()) {
         <a routerLink="/admin/dashboard" class="barra-superior__admin">Panel administrativo</a>
       } @else {
-        <a routerLink="/ingresar" [queryParams]="{ volver: '/admin/dashboard' }" class="barra-superior__admin">Acceso administrativo</a>
+        <a routerLink="/ingresar" [queryParams]="{ volver: '/admin/dashboard' }" class="barra-superior__admin barra-superior__admin--acceso">Acceso administrativo</a>
       }
     </div>
   </div>
@@ -32,6 +32,10 @@
       <a [routerLink]="sesion.autenticado() ? '/mi-cuenta' : '/ingresar'"
          class="navegacion__movil"
          (click)="cerrarMenu()">{{ sesion.autenticado() ? 'Mi cuenta' : 'Ingresar o crear cuenta' }}</a>
+      @if (sesion.esAdmin()) {
+        <a routerLink="/admin/dashboard" class="navegacion__movil" (click)="cerrarMenu()">Panel administrativo</a>
+      }
+      <a routerLink="/reservar" class="btn btn--primario btn--sm navegacion__cta" (click)="cerrarMenu()">Reservar cita</a>
     </nav>
 
     <div class="cabecera__acciones">
