@@ -111,7 +111,7 @@ import { CarritoService } from '../../compartido/carrito.service';
       gap: 8px;
       margin-bottom: 18px;
       color: var(--vino);
-      font-size: .86rem;
+      font-size: .94rem;
       font-weight: 600;
     }
     .volver-link:hover { color: var(--magenta); }
@@ -120,7 +120,7 @@ import { CarritoService } from '../../compartido/carrito.service';
     .detalle-prod__acciones { display: flex; gap: 14px; margin: 28px 0; flex-wrap: wrap; }
     .detalle-prod__entrega { border-top: 1px solid var(--linea); padding-top: 22px; }
     .detalle-prod__entrega ul, .detalle-prod-info ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-    .detalle-prod__entrega li, .detalle-prod-info li { font-size: .9rem; color: var(--gris); padding-left: 18px; position: relative; }
+    .detalle-prod__entrega li, .detalle-prod-info li { font-size: .96rem; color: var(--gris); padding-left: 18px; position: relative; }
     .detalle-prod__entrega li::before, .detalle-prod-info li::before { content: ''; position: absolute; left: 0; top: 10px; width: 6px; height: 6px; border-radius: 50%; background: var(--magenta-300); }
     .detalle-prod-info { padding-top: 0; }
     .detalle-prod-info__grid { display: grid; grid-template-columns: .82fr 1.18fr; gap: 60px; align-items: start; }

@@ -20,20 +20,20 @@
 .lateral__grupo { margin-bottom: 22px; }
 .lateral__grupo-titulo {
   display: block; padding: 0 12px 8px;
-  font-size: .6rem; letter-spacing: .22em; text-transform: uppercase;
+  font-size: .78rem; letter-spacing: .22em; text-transform: uppercase;
   color: rgba(255,255,255,.35);
 }
 .lateral__enlace {
   display: flex; align-items: center; gap: 12px;
   padding: 10px 12px; border-radius: var(--radio);
-  color: rgba(255,255,255,.75); font-size: .875rem;
+  color: rgba(255,255,255,.75); font-size: .94rem;
   white-space: nowrap;
 }
 .lateral__enlace svg { width: 18px; height: 18px; flex: none; }
 .lateral__enlace:hover { background: rgba(255,255,255,.07); color: #fff; }
 .lateral__enlace.activo { background: var(--magenta); color: #fff; }
 .lateral__pie { padding: 18px 22px; border-top: 1px solid rgba(255,255,255,.1); }
-.lateral__salir { display: block; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.6); }
+.lateral__salir { display: block; font-size: .86rem; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.6); }
 .lateral__salir:hover { color: #fff; }
 .lateral__salir--boton {
   margin-top: 12px; background: none; border: none; padding: 0;
@@ -69,28 +69,28 @@
 }
 .topbar__reloj span {
   color: var(--gris-claro);
-  font-size: .66rem;
+  font-size: .78rem;
   letter-spacing: .12em;
   text-transform: uppercase;
 }
 .topbar__reloj strong {
   color: var(--vino);
-  font-size: .98rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: .04em;
 }
 .topbar__rol { display: flex; align-items: center; gap: 10px; }
-.topbar__rol label { font-size: .66rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris-claro); }
+.topbar__rol label { font-size: .78rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris-claro); }
 .topbar__rol select {
   border: 1px solid var(--linea); border-radius: var(--radio); padding: .45rem .7rem;
-  font-family: inherit; font-size: .82rem; color: var(--tinta); background: #fff; outline: none;
+  font-family: inherit; font-size: .9rem; color: var(--tinta); background: #fff; outline: none;
 }
 .topbar__usuario { display: flex; align-items: center; gap: 12px; }
-.topbar__usuario strong { display: block; font-size: .88rem; font-weight: 500; }
-.topbar__usuario span { font-size: .74rem; color: var(--gris-claro); }
+.topbar__usuario strong { display: block; font-size: .94rem; font-weight: 500; }
+.topbar__usuario span { font-size: .86rem; color: var(--gris-claro); }
 .topbar__avatar {
   width: 38px; height: 38px; border-radius: 50%; background: var(--rosa); color: var(--vino);
-  display: flex; align-items: center; justify-content: center; font-size: .8rem; letter-spacing: .05em;
+  display: flex; align-items: center; justify-content: center; font-size: .9rem; letter-spacing: .05em;
 }
 
 .lienzo { padding: 30px 28px 60px; min-width: 0; }
@@ -114,7 +114,7 @@
     background: #fff;
     color: var(--vino);
     font-family: inherit;
-    font-size: .72rem;
+    font-size: .82rem;
     letter-spacing: .1em;
     text-transform: uppercase;
     cursor: pointer;
@@ -194,7 +194,7 @@
 
   .topbar__movil-btn {
     padding: 8px 12px;
-    font-size: .7rem;
+    font-size: .82rem;
   }
 
   .topbar__acciones {

@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LOCALES, cabinasDeSede, cupoDeSede } from '../../data/datos';
 import { MarcaService } from '../../compartido/marca.service';
+import { FondoService } from '../../compartido/fondo.service';
 
 @Component({
   selector: 'app-configuracion',
@@ -113,6 +114,138 @@ import { MarcaService } from '../../compartido/marca.service';
             estas imágenes se subirán al backend, se guardará su URL en MySQL y toda la web leerá esa configuración.
           </p>
           <button class="btn btn--linea btn--sm" (click)="restablecerMarca()">Restablecer marca por defecto</button>
+        </div>
+      </div>
+    }
+
+    @if (pestana() === 'Fondo') {
+      <div class="grid-config">
+        <div class="panel">
+          <h4>Fondo de la web pública</h4>
+          <div class="campo">
+            <label>Tipo de fondo</label>
+            <select [ngModel]="fondo.config().modo" (ngModelChange)="fondo.actualizar({ modo: $event })">
+              <option value="color">Color sólido (o degradado)</option>
+              <option value="imagen">Imagen sobre el color</option>
+              <option value="video">Video sobre el color</option>
+            </select>
+            <span class="campo__ayuda">
+              El color siempre queda al fondo. Si eliges imagen o video, se coloca encima del color y puedes
+              bajarle la opacidad para que el contenido se lea bien.
+            </span>
+          </div>
+
+          <div class="fondo-colores">
+            <div class="campo">
+              <label>Color base</label>
+              <input type="color" [ngModel]="fondo.config().color" (ngModelChange)="fondo.actualizar({ color: $event })">
+            </div>
+            <div class="campo">
+              <label>Segundo color del degradado</label>
+              <input type="color" [ngModel]="fondo.config().colorSecundario" (ngModelChange)="fondo.actualizar({ colorSecundario: $event })">
+              <span class="campo__ayuda">Ponlo igual al color base si prefieres un color entero, sin degradado.</span>
+            </div>
+          </div>
+
+          @if (fondo.config().modo === 'imagen') {
+            <div class="campo">
+              <label>Ruta o URL de la imagen</label>
+              <input type="text" [ngModel]="fondo.config().imagen" (ngModelChange)="fondo.actualizar({ imagen: $event })"
+                     placeholder="img/fondo-petalos.png">
+              <span class="campo__ayuda">
+                Ideal: PNG con transparencia (pétalos, texturas) de 2400 px de ancho o más, comprimido a menos de 600 KB.
+              </span>
+            </div>
+            <div class="campo">
+              <label>Cargar imagen desde tu equipo</label>
+              <input type="file" accept="image/*" (change)="cargarFondoImagen($event)">
+            </div>
+            <div class="acciones-marca">
+              <button class="btn btn--linea btn--sm" (click)="fondo.actualizar({ imagen: 'img/fondo-petalos.svg' })">
+                Usar textura de pétalos incluida
+              </button>
+            </div>
+          }
+
+          @if (fondo.config().modo === 'video') {
+            <div class="campo">
+              <label>Ruta o URL del video</label>
+              <input type="text" [ngModel]="fondo.config().video" (ngModelChange)="fondo.actualizar({ video: $event })"
+                     placeholder="video/petalos-rosa.mp4">
+            </div>
+            <div class="campo">
+              <label>Cargar video desde tu equipo</label>
+              <input type="file" accept="video/*" (change)="cargarFondoVideo($event)">
+              <span class="campo__ayuda">
+                En el prototipo el video se guarda en el navegador, así que conviene uno corto (5–15 s). Con el
+                backend se subirá al servidor sin límite de peso.
+              </span>
+            </div>
+            <div class="campo">
+              <label>Imagen de respaldo mientras carga el video</label>
+              <input type="text" [ngModel]="fondo.config().posterVideo" (ngModelChange)="fondo.actualizar({ posterVideo: $event })"
+                     placeholder="img/fondo-poster.jpg">
+            </div>
+            <div class="interruptores">
+              <label>
+                <input type="checkbox" [ngModel]="fondo.config().pausarQuieto" (ngModelChange)="fondo.actualizar({ pausarQuieto: $event })">
+                Reproducir mientras se desplaza la página y pausar cuando se detiene
+              </label>
+            </div>
+          }
+
+          <div class="campo" style="margin-top:18px">
+            <label>Opacidad de la imagen o video: {{ fondo.config().opacidadMedio }} %</label>
+            <input type="range" min="5" max="100" step="5"
+                   [ngModel]="fondo.config().opacidadMedio" (ngModelChange)="fondo.actualizar({ opacidadMedio: +$event })">
+          </div>
+          <div class="campo">
+            <label>Opacidad de las secciones sobre el fondo: {{ fondo.config().velo }} %</label>
+            <input type="range" min="30" max="100" step="2"
+                   [ngModel]="fondo.config().velo" (ngModelChange)="fondo.actualizar({ velo: +$event })">
+            <span class="campo__ayuda">Menos porcentaje = se ve más el fondo. Más porcentaje = textos más legibles.</span>
+          </div>
+          <div class="campo">
+            <label>Desenfoque del fondo: {{ fondo.config().desenfoque }} px</label>
+            <input type="range" min="0" max="12" step="1"
+                   [ngModel]="fondo.config().desenfoque" (ngModelChange)="fondo.actualizar({ desenfoque: +$event })">
+          </div>
+
+          <div class="acciones-marca">
+            <button class="btn btn--linea btn--sm" (click)="fondo.restablecer()">Restablecer fondo</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h4>Vista previa</h4>
+          <div class="fondo-preview" [style.background]="previaColor()">
+            @if (fondo.config().modo === 'imagen' && fondo.config().imagen) {
+              <img [src]="fondo.config().imagen" alt="Fondo"
+                   [style.opacity]="fondo.config().opacidadMedio / 100"
+                   [style.filter]="previaFiltro()">
+            }
+            @if (fondo.config().modo === 'video' && fondo.config().video) {
+              <video [src]="fondo.config().video" autoplay muted loop playsinline
+                     [style.opacity]="fondo.config().opacidadMedio / 100"
+                     [style.filter]="previaFiltro()"></video>
+            }
+            <div class="fondo-preview__seccion" [style.opacity]="fondo.config().velo / 100">
+              <strong>Sección de la web</strong>
+              <span>Así se verá el contenido sobre el fondo elegido.</span>
+            </div>
+          </div>
+
+          <h4 style="margin-top:26px">Calidad recomendada del video</h4>
+          <ul class="fondo-recomendacion">
+            <li>Formato MP4 (H.264) y, si se puede, una copia WebM (VP9) para que pese menos.</li>
+            <li>Resolución 1920 × 1080 para pantallas normales; 2560 × 1440 si quieres nitidez en monitores grandes.</li>
+            <li>Bitrate 6–10 Mbps en 1080p. Menos de 4 Mbps se ve borroso al ampliarlo a pantalla completa.</li>
+            <li>Duración 8–20 segundos, en bucle, sin cortes bruscos y sin audio.</li>
+            <li>30 fps es suficiente para pétalos o movimiento lento; evita 60 fps porque duplica el peso.</li>
+            <li>Peso final ideal: 3–8 MB. Súbelo comprimido para que la web cargue rápido en celular.</li>
+            <li>Movimiento lento y contraste bajo: así el texto encima se lee sin esfuerzo.</li>
+            <li>En celular conviene usar la imagen de respaldo en lugar del video para no gastar datos.</li>
+          </ul>
         </div>
       </div>
     }
@@ -245,20 +378,20 @@ import { MarcaService } from '../../compartido/marca.service';
     .pestanas { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
     .pestanas button {
       background: #fff; border: 1px solid var(--linea); border-radius: 999px;
-      padding: .5rem 1.2rem; font-family: inherit; font-size: .78rem; letter-spacing: .08em;
+      padding: .5rem 1.2rem; font-family: inherit; font-size: .86rem; letter-spacing: .08em;
       color: var(--gris); cursor: pointer;
     }
     .pestanas button:hover { border-color: var(--magenta-300); color: var(--magenta); }
     .pestanas button.activa { background: var(--vino); border-color: var(--vino); color: #fff; }
     .grid-config { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
     .interruptores { display: grid; gap: 12px; }
-    .interruptores label { display: flex; gap: 10px; align-items: flex-start; font-size: .88rem; color: var(--gris); cursor: pointer; }
+    .interruptores label { display: flex; gap: 10px; align-items: flex-start; font-size: .94rem; color: var(--gris); cursor: pointer; }
     .interruptores input { margin-top: 3px; accent-color: var(--magenta); }
     .horario-config { margin-bottom: 20px; }
     .horario-config strong { display: block; margin-bottom: 10px; font-weight: 500; }
     .horario-config__fila { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
-    .horario-config__fila span { font-size: .84rem; color: var(--gris); }
-    .horario-config__fila input { border: 1px solid var(--linea); border-radius: var(--radio); padding: .45rem .6rem; font-family: inherit; font-size: .84rem; }
+    .horario-config__fila span { font-size: .9rem; color: var(--gris); }
+    .horario-config__fila input { border: 1px solid var(--linea); border-radius: var(--radio); padding: .45rem .6rem; font-family: inherit; font-size: .9rem; }
     .marca-preview {
       display: grid;
       place-items: center;
@@ -295,15 +428,44 @@ import { MarcaService } from '../../compartido/marca.service';
       background: #fff;
       box-shadow: var(--sombra);
     }
-    .marca-preview--favicon span { color: var(--gris); font-size: .86rem; }
+    .marca-preview--favicon span { color: var(--gris); font-size: .94rem; }
     .acciones-marca { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .fondo-colores { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .fondo-colores input[type="color"] { height: 46px; padding: 4px; cursor: pointer; }
+    .campo input[type="range"] { accent-color: var(--magenta); min-height: 0; border: none; background: none; padding: 0; }
+    .fondo-preview {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radio-lg);
+      border: 1px solid var(--linea);
+      min-height: 240px;
+      display: grid;
+      place-items: center;
+    }
+    .fondo-preview img, .fondo-preview video {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    }
+    .fondo-preview__seccion {
+      position: relative;
+      display: grid;
+      gap: 6px;
+      justify-items: center;
+      text-align: center;
+      background: #fff7f2;
+      border-radius: var(--radio);
+      padding: 22px 26px;
+      width: min(86%, 320px);
+    }
+    .fondo-preview__seccion strong { color: var(--vino); font-weight: 500; }
+    .fondo-preview__seccion span { font-size: .9rem; color: var(--gris); }
+    .fondo-recomendacion { margin: 0; padding-left: 20px; display: grid; gap: 8px; color: var(--gris); font-size: .94rem; }
     .marca-nota { grid-column: 1 / -1; }
     .marca-nota p { max-width: 78ch; }
     @media (max-width: 1100px) { .grid-config { grid-template-columns: 1fr; } }
   `]
 })
 export class ConfiguracionComponent {
-  constructor(public marca: MarcaService) {
+  constructor(public marca: MarcaService, public fondo: FondoService) {
     this.logoRuta.set(this.marca.logoSitio());
     this.logoAdminRuta.set(this.marca.logoAdmin());
     this.faviconRuta.set(this.marca.faviconSitio());
@@ -312,7 +474,7 @@ export class ConfiguracionComponent {
   locales = LOCALES;
   cupo = cupoDeSede;
   cabinas = (localId: number) => cabinasDeSede(localId).length;
-  pestanas = ['Negocio', 'Marca', 'Agenda', 'Pagos', 'Usuarios', 'Sincronización'];
+  pestanas = ['Negocio', 'Marca', 'Fondo', 'Agenda', 'Pagos', 'Usuarios', 'Sincronización'];
   pestana = signal('Negocio');
   logoRuta = signal('');
   logoAdminRuta = signal('');
@@ -357,6 +519,26 @@ export class ConfiguracionComponent {
       this.faviconRuta.set(ruta);
       this.guardarFavicon();
     });
+  }
+
+  previaColor(): string {
+    const c = this.fondo.config();
+    return c.colorSecundario && c.colorSecundario !== c.color
+      ? `linear-gradient(160deg, ${c.color} 0%, ${c.colorSecundario} 100%)`
+      : c.color;
+  }
+
+  previaFiltro(): string {
+    const d = this.fondo.config().desenfoque;
+    return d > 0 ? `blur(${d}px)` : 'none';
+  }
+
+  cargarFondoImagen(evento: Event): void {
+    this.cargarImagen(evento, ruta => this.fondo.actualizar({ imagen: ruta, modo: 'imagen' }));
+  }
+
+  cargarFondoVideo(evento: Event): void {
+    this.cargarImagen(evento, ruta => this.fondo.actualizar({ video: ruta, modo: 'video' }));
   }
 
   restablecerMarca(): void {

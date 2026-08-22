@@ -150,7 +150,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
     }
     .promo--activa {
       display: grid;
-      animation: promo-contenedor .72s cubic-bezier(.2, .72, .18, 1) both;
+      animation: promo-contenedor 1.05s cubic-bezier(.2, .72, .18, 1) both;
     }
     .promo__arte {
       position: relative;
@@ -188,7 +188,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
       background: var(--magenta);
       color: #fff;
       text-align: center;
-      font-size: .76rem;
+      font-size: .86rem;
       font-weight: 700;
       letter-spacing: .08em;
       line-height: 1.2;
@@ -205,7 +205,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
       align-items: center;
       margin-bottom: 16px;
       color: var(--magenta);
-      font-size: .68rem;
+      font-size: .82rem;
       font-weight: 700;
       letter-spacing: .18em;
       text-transform: uppercase;
@@ -235,7 +235,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
     .promo__incluye > span {
       display: block;
       color: var(--magenta);
-      font-size: .68rem;
+      font-size: .82rem;
       font-weight: 800;
       letter-spacing: .16em;
       text-transform: uppercase;
@@ -266,19 +266,19 @@ import { PromocionesService } from '../../compartido/promociones.service';
       place-items: center;
       background: var(--magenta);
       color: #fff;
-      font-size: .72rem;
+      font-size: .82rem;
       font-weight: 700;
     }
     .promo__incluye strong {
       display: block;
       color: var(--vino);
-      font-size: .9rem;
+      font-size: .96rem;
       margin-bottom: 2px;
     }
     .promo__incluye p {
       margin: 0;
       color: var(--gris);
-      font-size: .84rem;
+      font-size: .9rem;
       line-height: 1.45;
     }
     .promo__datos {
@@ -296,7 +296,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
     .promo__vigencia span {
       display: block;
       color: var(--gris-claro);
-      font-size: .68rem;
+      font-size: .82rem;
       letter-spacing: .14em;
       text-transform: uppercase;
     }
@@ -310,12 +310,12 @@ import { PromocionesService } from '../../compartido/promociones.service';
     }
     .promo__precio s {
       color: var(--gris-claro);
-      font-size: .88rem;
+      font-size: .94rem;
     }
     .promo__vigencia strong {
       display: block;
       color: var(--vino);
-      font-size: .98rem;
+      font-size: 1rem;
       margin-top: 10px;
     }
     .promo__acciones {
@@ -324,7 +324,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
       flex-wrap: wrap;
     }
     .promo--activa .promo__arte img {
-      animation: promo-imagen .82s cubic-bezier(.2, .72, .18, 1) both;
+      animation: promo-imagen 1.15s cubic-bezier(.2, .72, .18, 1) both;
     }
     .promo--activa .promo__etiqueta,
     .promo--activa h3,
@@ -333,7 +333,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
     .promo--activa .promo__incluye,
     .promo--activa .promo__datos,
     .promo--activa .promo__acciones {
-      animation: promo-texto .72s cubic-bezier(.2, .72, .18, 1) both;
+      animation: promo-texto 1.05s cubic-bezier(.2, .72, .18, 1) both;
     }
     .promo--activa h3 { animation-delay: .06s; }
     .promo--activa .promo__subtitulo { animation-delay: .12s; }
@@ -398,7 +398,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
     .promo-mini span {
       display: block;
       color: var(--magenta);
-      font-size: .64rem;
+      font-size: .78rem;
       font-weight: 700;
       letter-spacing: .14em;
       text-transform: uppercase;
@@ -416,7 +416,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
     .promo-mini em {
       color: var(--vino);
       font-style: normal;
-      font-size: .9rem;
+      font-size: .96rem;
       font-weight: 700;
     }
     @media (max-width: 960px) {
@@ -441,22 +441,22 @@ import { PromocionesService } from '../../compartido/promociones.service';
         height: 86px;
         right: 16px;
         bottom: 16px;
-        font-size: .66rem;
+        font-size: .78rem;
       }
       .promo__contenido { padding: 28px 22px 24px; }
       .promo__acciones .btn { width: 100%; }
     }
     @media (prefers-reduced-motion: no-preference) {
       @keyframes promo-contenedor {
-        from { opacity: 0; transform: translateY(26px); }
+        from { opacity: 0; transform: translateY(16px); }
         to { opacity: 1; transform: translateY(0); }
       }
       @keyframes promo-imagen {
-        from { opacity: 0; transform: translateX(-42px) scale(.96); }
+        from { opacity: 0; transform: translateY(16px) scale(.99); }
         to { opacity: 1; transform: translateX(0) scale(1); }
       }
       @keyframes promo-texto {
-        from { opacity: 0; transform: translateX(38px); }
+        from { opacity: 0; transform: translateY(16px); }
         to { opacity: 1; transform: translateX(0); }
       }
     }

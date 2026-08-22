@@ -38,8 +38,8 @@ import { Especialista } from '../../data/modelos';
     .ficha img { width: 100%; aspect-ratio: 4/4.4; object-fit: cover; }
     .ficha__cuerpo { padding: 26px; display: flex; flex-direction: column; flex: 1; }
     .ficha__cuerpo h3 { margin-bottom: .2rem; }
-    .ficha__rol { font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: var(--magenta); margin-bottom: 14px; }
-    .ficha__cuerpo p { font-size: .92rem; margin-bottom: 0; }
+    .ficha__rol { font-size: .82rem; letter-spacing: .18em; text-transform: uppercase; color: var(--magenta); margin-bottom: 14px; }
+    .ficha__cuerpo p { font-size: .96rem; margin-bottom: 0; }
   `]
 })
 export class EspecialistasComponent {

@@ -111,8 +111,8 @@ import { Paciente } from '../../data/modelos';
     .kpis-4 { grid-template-columns: repeat(4, 1fr); margin-bottom: 22px; }
     .fila-detalle td { background: var(--rosa-50); }
     .detalle-paciente { display: grid; grid-template-columns: 1fr 1.4fr; gap: 32px; padding: 8px 0 14px; }
-    .detalle-paciente p { font-size: .88rem; margin: 6px 0 0; }
-    .historial { display: grid; grid-template-columns: 1.1fr 1.4fr .8fr .6fr; gap: 12px; padding: 7px 0; border-bottom: 1px dashed var(--linea); font-size: .84rem; color: var(--gris); }
+    .detalle-paciente p { font-size: .94rem; margin: 6px 0 0; }
+    .historial { display: grid; grid-template-columns: 1.1fr 1.4fr .8fr .6fr; gap: 12px; padding: 7px 0; border-bottom: 1px dashed var(--linea); font-size: .9rem; color: var(--gris); }
     .historial strong { text-align: right; color: var(--tinta); font-weight: 500; }
     @media (max-width: 1200px) {
       .kpis-4 { grid-template-columns: repeat(2, 1fr); }

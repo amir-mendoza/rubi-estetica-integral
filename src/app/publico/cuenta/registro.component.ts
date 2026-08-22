@@ -91,11 +91,11 @@ import { SesionService } from '../../compartido/sesion.service';
   styles: [`
     .registro { display: grid; grid-template-columns: 1.35fr 1fr; gap: 36px; align-items: start; max-width: 1040px; }
     .panel--suave { background: var(--rosa-50); }
-    .acepto { display: flex; gap: 10px; align-items: flex-start; font-size: .82rem; color: var(--gris); margin: 6px 0 22px; }
+    .acepto { display: flex; gap: 10px; align-items: flex-start; font-size: .9rem; color: var(--gris); margin: 6px 0 22px; }
     .acepto input { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--magenta); }
-    .registro__pie { margin: 22px 0 0; font-size: .86rem; color: var(--gris); text-align: center; }
+    .registro__pie { margin: 22px 0 0; font-size: .94rem; color: var(--gris); text-align: center; }
     .registro__pie a { color: var(--magenta); font-weight: 500; }
-    .ventajas { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; font-size: .88rem; color: var(--gris); }
+    .ventajas { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; font-size: .94rem; color: var(--gris); }
     .ventajas li { padding-left: 16px; position: relative; }
     .ventajas li::before { content: ''; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 50%; background: var(--magenta); }
     @media (max-width: 860px) { .registro { grid-template-columns: 1fr; } }

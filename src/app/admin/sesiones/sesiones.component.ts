@@ -344,10 +344,10 @@ interface DiaDisponible {
       padding: 22px 24px; border-bottom: 1px solid var(--linea);
     }
     .plan__cabecera h3 { margin: 4px 0 6px; }
-    .plan__meta { font-size: .84rem; margin: 0; }
+    .plan__meta { font-size: .9rem; margin: 0; }
     .plan__estado { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
     .plan__avance { width: 100%; }
-    .plan__avance small { color: var(--gris); font-size: .76rem; }
+    .plan__avance small { color: var(--gris); font-size: .86rem; }
     .plan__cobro { display: flex; flex-direction: column; gap: 6px; text-align: right; }
     .plan__cobro div { display: flex; justify-content: space-between; gap: 14px; }
     .sesiones { list-style: none; margin: 0; padding: 8px 0; }
@@ -362,20 +362,20 @@ interface DiaDisponible {
     }
     .sesion__cuerpo { flex: 1; }
     .sesion__titulo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
-    .sesion__fecha { font-size: .82rem; margin: 0 0 4px; }
-    .sesion__obs { font-size: .8rem; color: var(--gris); margin: 0 0 8px; font-style: italic; }
+    .sesion__fecha { font-size: .9rem; margin: 0 0 4px; }
+    .sesion__obs { font-size: .9rem; color: var(--gris); margin: 0 0 8px; font-style: italic; }
     .sesion__acciones { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .accion {
       border: 1px solid var(--linea); border-radius: 999px; background: #fff;
-      min-width: 94px; padding: 6px 14px; font-family: inherit; font-size: .74rem; color: var(--gris); cursor: pointer;
+      min-width: 94px; padding: 6px 14px; font-family: inherit; font-size: .86rem; color: var(--gris); cursor: pointer;
     }
     .accion:hover { border-color: var(--magenta-300); color: var(--magenta); }
     .accion--activa { background: var(--vino); border-color: var(--vino); color: #fff; }
     .plan__pie { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 24px; border-top: 1px solid var(--linea); background: var(--rosa-50); }
-    .plan__notas { margin: 0; font-size: .82rem; font-style: italic; }
+    .plan__notas { margin: 0; font-size: .9rem; font-style: italic; }
     .plan__acciones { display: flex; gap: 10px; flex-wrap: wrap; }
     .accion-explicada { display: grid; gap: 5px; max-width: 240px; }
-    .accion-explicada small, .cobro-plan small { color: var(--gris); font-size: .74rem; line-height: 1.4; }
+    .accion-explicada small, .cobro-plan small { color: var(--gris); font-size: .86rem; line-height: 1.4; }
     .cobro-plan {
       display: grid; grid-template-columns: 130px 130px auto auto; gap: 10px; align-items: end;
       padding: 12px; border: 1px solid var(--linea); border-radius: var(--radio); background: #fff;
@@ -425,7 +425,7 @@ interface DiaDisponible {
     }
     .dia-disponible__fecha span {
       display: block;
-      font-size: .66rem;
+      font-size: .78rem;
       letter-spacing: .16em;
       text-transform: uppercase;
       color: var(--gris-claro);
@@ -447,7 +447,7 @@ interface DiaDisponible {
       background: #fff;
       padding: 6px 8px;
       font-family: inherit;
-      font-size: .74rem;
+      font-size: .86rem;
       color: var(--tinta);
       cursor: pointer;
     }

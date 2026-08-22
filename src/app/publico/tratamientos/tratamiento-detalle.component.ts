@@ -119,7 +119,7 @@ import { TRATAMIENTOS, soles, tratamientoPorId } from '../../data/datos';
       gap: 8px;
       margin-bottom: 18px;
       color: var(--vino);
-      font-size: .86rem;
+      font-size: .94rem;
       font-weight: 600;
     }
     .volver-link:hover { color: var(--magenta); }
@@ -130,7 +130,7 @@ import { TRATAMIENTOS, soles, tratamientoPorId } from '../../data/datos';
       font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2.6rem;
       color: var(--vino); font-weight: 600;
     }
-    .detalle__nota { font-size: .8rem; color: var(--gris-claro); letter-spacing: .1em; text-transform: uppercase; }
+    .detalle__nota { font-size: .9rem; color: var(--gris-claro); letter-spacing: .1em; text-transform: uppercase; }
     .detalle__datos {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
       padding: 22px 0; border-top: 1px solid var(--linea); border-bottom: 1px solid var(--linea);

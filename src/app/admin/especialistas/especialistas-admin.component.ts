@@ -122,14 +122,14 @@ function especialistaVacia(): Especialista {
     .tarjeta-esp-admin header .chip { margin-top: 8px; }
     .tarjeta-esp-admin__datos { display: grid; grid-template-columns: .7fr 1.3fr; gap: 14px; padding-bottom: 16px; border-bottom: 1px dashed var(--linea); }
     .tarjeta-esp-admin__datos div { display: flex; flex-direction: column; gap: 2px; }
-    .tarjeta-esp-admin__datos span:last-child { font-size: .85rem; color: var(--tinta); }
+    .tarjeta-esp-admin__datos span:last-child { font-size: .94rem; color: var(--tinta); }
     .tarjeta-esp-admin__metricas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 16px 0; }
     .tarjeta-esp-admin__metricas div { display: flex; flex-direction: column; }
     .tarjeta-esp-admin__metricas strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.6rem; color: var(--vino); }
-    .tarjeta-esp-admin__metricas span { font-size: .7rem; color: var(--gris-claro); letter-spacing: .08em; }
+    .tarjeta-esp-admin__metricas span { font-size: .82rem; color: var(--gris-claro); letter-spacing: .08em; }
     .movimientos-esp { border-top: 1px dashed var(--linea); border-bottom: 1px dashed var(--linea); padding: 14px 0; margin-bottom: 16px; }
     .movimientos-esp__cabecera { margin-bottom: 10px; }
-    .movimientos-esp__cabecera strong { display: block; color: var(--vino); font-size: .9rem; }
+    .movimientos-esp__cabecera strong { display: block; color: var(--vino); font-size: .96rem; }
     .movimiento-row {
       display: grid;
       grid-template-columns: minmax(170px, 1fr) minmax(150px, .8fr) auto;
@@ -137,20 +137,24 @@ function especialistaVacia(): Especialista {
       align-items: center;
       padding: 9px 0;
       border-top: 1px solid var(--linea);
-      font-size: .82rem;
+      font-size: .9rem;
     }
     .movimiento-row:first-of-type { border-top: 0; }
     .movimiento-row div { display: flex; flex-direction: column; }
     .movimiento-row span, .movimiento-row small { color: var(--gris); }
     .movimiento-row__monto { align-items: flex-end; color: var(--vino); font-weight: 700; font-variant-numeric: tabular-nums; }
-    .movimientos-esp__vacio { margin: 0; font-size: .84rem; }
+    .movimientos-esp__vacio { margin: 0; font-size: .9rem; }
     @media (max-width: 1200px) {
       .grid-esp { grid-template-columns: 1fr; }
       .tarjeta-esp-admin__datos { grid-template-columns: 1fr; }
       .esp-form { grid-template-columns: 1fr 1fr; }
       .esp-form__foto, .esp-form__ancho { grid-column: 1 / -1; }
     }
-    @media (max-width: 720px) { .esp-form { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) {
+      .esp-form { grid-template-columns: 1fr; }
+      .movimiento-row { grid-template-columns: 1fr; }
+      .movimiento-row__monto { align-items: flex-start; }
+    }
   `]
 })
 export class EspecialistasAdminComponent {

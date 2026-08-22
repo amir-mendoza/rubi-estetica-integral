@@ -5,12 +5,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LogoComponent } from '../../compartido/logo.component';
 import { SesionService } from '../../compartido/sesion.service';
 import { CarritoService } from '../../compartido/carrito.service';
+import { FondoWebComponent } from '../../compartido/fondo-web.component';
 import { LOCALES } from '../../data/datos';
 
 @Component({
   selector: 'app-publico-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent, FondoWebComponent],
   templateUrl: './publico-layout.component.html',
   styleUrl: './publico-layout.component.scss'
 })
@@ -68,8 +69,8 @@ export class PublicoLayoutComponent implements AfterViewInit, OnDestroy {
         entrada.target.classList.toggle('animar-scroll--visible', entrada.isIntersecting);
       });
     }, {
-      threshold: 0.12,
-      rootMargin: '0px 0px -12% 0px'
+      threshold: 0.1,
+      rootMargin: '0px 0px -10% 0px'
     });
 
     const selectores = [
@@ -103,13 +104,16 @@ export class PublicoLayoutComponent implements AfterViewInit, OnDestroy {
         'animar-scroll--izquierda',
         'animar-scroll--derecha',
         'animar-scroll--zoom',
+        'animar-scroll--giro',
         'animar-scroll--filete'
       );
       elemento.classList.add('animar-scroll');
-      elemento.style.setProperty('--anim-delay', `${Math.min((indice % 4) * 80, 240)}ms`);
+      elemento.style.setProperty('--anim-delay', `${Math.min((indice % 4) * 140, 420)}ms`);
 
       if (elemento.classList.contains('detalle__imagen') || elemento.classList.contains('detalle-prod__imagen')) {
         elemento.classList.add('animar-scroll--zoom');
+      } else if (elemento.classList.contains('paso')) {
+        elemento.classList.add('animar-scroll--giro');
       } else if (indice % 3 === 0) {
         elemento.classList.add('animar-scroll--izquierda');
       } else if (indice % 3 === 2) {

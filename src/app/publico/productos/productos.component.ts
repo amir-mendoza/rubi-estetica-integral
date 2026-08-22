@@ -78,7 +78,7 @@ import { Producto } from '../../data/modelos';
     .filtros__grupo { display: flex; gap: 10px; flex-wrap: wrap; }
     .filtro {
       background: none; border: 1px solid var(--linea); border-radius: 999px;
-      padding: .5rem 1.25rem; font-family: inherit; font-size: .76rem;
+      padding: .5rem 1.25rem; font-family: inherit; font-size: .86rem;
       letter-spacing: .12em; text-transform: uppercase; color: var(--gris); cursor: pointer;
     }
     .filtro:hover { border-color: var(--magenta-300); color: var(--magenta); }
@@ -86,7 +86,7 @@ import { Producto } from '../../data/modelos';
     .barra-tienda__buscador { display: flex; gap: 12px; align-items: center; }
     .barra-tienda__buscador input {
       border: 1px solid var(--linea); border-radius: var(--radio);
-      padding: .6rem .9rem; font-family: inherit; font-size: .88rem; min-width: 240px; outline: none;
+      padding: .6rem .9rem; font-family: inherit; font-size: .94rem; min-width: 240px; outline: none;
     }
     .barra-tienda__buscador input:focus { border-color: var(--magenta-300); }
     .chip { align-self: flex-start; }

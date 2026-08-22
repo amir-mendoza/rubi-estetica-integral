@@ -99,9 +99,9 @@ import { LOCALES } from '../../data/datos';
   `,
   styles: [`
     .contacto { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; align-items: start; }
-    .contacto__horario { display: flex; justify-content: space-between; gap: 12px; font-size: .86rem; color: var(--gris); padding: 6px 0; border-bottom: 1px dashed var(--linea); }
+    .contacto__horario { display: flex; justify-content: space-between; gap: 12px; font-size: .94rem; color: var(--gris); padding: 6px 0; border-bottom: 1px dashed var(--linea); }
     .contacto__horario strong { color: var(--tinta); font-weight: 500; }
-    .contacto__redes { display: flex; flex-direction: column; gap: 10px; font-size: .9rem; }
+    .contacto__redes { display: flex; flex-direction: column; gap: 10px; font-size: .96rem; }
     @media (max-width: 960px) { .contacto { grid-template-columns: 1fr; } }
   `]
 })

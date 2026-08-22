@@ -122,13 +122,13 @@ import { Local } from '../data/modelos';
       color: var(--vino);
       border: 1px solid rgba(176, 27, 114, .2);
       box-shadow: var(--sombra);
-      font-size: .78rem;
+      font-size: .86rem;
       font-weight: 600;
       pointer-events: none;
     }
     .mapa__pie {
       display: flex; justify-content: space-between; align-items: center; gap: 16px;
-      padding: 12px 16px; font-size: .8rem; color: var(--gris);
+      padding: 12px 16px; font-size: .9rem; color: var(--gris);
       border-top: 1px solid var(--linea); background: #fff;
     }
     .mapa__pie a { color: var(--magenta); font-weight: 500; white-space: nowrap; }

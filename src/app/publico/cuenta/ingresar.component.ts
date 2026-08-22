@@ -82,11 +82,11 @@ import { SesionService } from '../../compartido/sesion.service';
   styles: [`
     .acceso { display: grid; grid-template-columns: 1.1fr 1fr; gap: 36px; align-items: start; max-width: 940px; }
     .panel--suave { background: var(--rosa-50); }
-    .acceso__pie { margin: 22px 0 0; font-size: .86rem; color: var(--gris); text-align: center; }
+    .acceso__pie { margin: 22px 0 0; font-size: .94rem; color: var(--gris); text-align: center; }
     .acceso__pie a { color: var(--magenta); font-weight: 500; }
     .demo {
       display: grid; gap: 6px; padding: 16px 0;
-      border-bottom: 1px dashed var(--linea); font-size: .84rem; color: var(--gris);
+      border-bottom: 1px dashed var(--linea); font-size: .9rem; color: var(--gris);
     }
     .demo strong { color: var(--tinta); font-weight: 500; }
     .demo .btn { justify-self: start; margin-top: 6px; }

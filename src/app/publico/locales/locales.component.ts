@@ -72,11 +72,11 @@ import { HABITACIONES, LOCALES } from '../../data/datos';
     .sede__imagen { margin: 0; border-radius: var(--radio-lg); overflow: hidden; }
     .sede__imagen img { width: 100%; aspect-ratio: 4/3; object-fit: cover; }
     .sede__bloques { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin: 28px 0; }
-    .sede__horario { display: flex; justify-content: space-between; gap: 12px; font-size: .88rem; color: var(--gris); padding: 7px 0; border-bottom: 1px dashed var(--linea); }
+    .sede__horario { display: flex; justify-content: space-between; gap: 12px; font-size: .94rem; color: var(--gris); padding: 7px 0; border-bottom: 1px dashed var(--linea); }
     .sede__horario strong { color: var(--tinta); font-weight: 500; }
     .sede__cabina { padding: 7px 0; border-bottom: 1px dashed var(--linea); }
-    .sede__cabina strong { display: block; font-size: .88rem; font-weight: 500; }
-    .sede__cabina span { font-size: .78rem; color: var(--gris-claro); }
+    .sede__cabina strong { display: block; font-size: .94rem; font-weight: 500; }
+    .sede__cabina span { font-size: .86rem; color: var(--gris-claro); }
     .sede__acciones { display: flex; gap: 12px; flex-wrap: wrap; }
     .dato__label { display: block; margin-bottom: 12px; }
     @media (max-width: 960px) {

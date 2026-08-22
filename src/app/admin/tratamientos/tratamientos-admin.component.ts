@@ -225,7 +225,7 @@ function tratamientoVacio(): Tratamiento {
     .panel-form, .categorias-panel { margin-bottom: 22px; }
     .categorias-admin { display: grid; grid-template-columns: 1fr minmax(280px, .5fr); gap: 16px; padding: 18px 22px 22px; align-items: start; }
     .categorias-admin__lista { display: flex; flex-wrap: wrap; gap: 8px; }
-    .categoria-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--linea); border-radius: 999px; padding: 7px 10px 7px 13px; background: #fff; color: var(--gris); font-size: .78rem; }
+    .categoria-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--linea); border-radius: 999px; padding: 7px 10px 7px 13px; background: #fff; color: var(--gris); font-size: .86rem; }
     .categoria-chip button { border: 0; background: var(--rosa-50); color: var(--error); width: 20px; height: 20px; border-radius: 50%; cursor: pointer; line-height: 1; }
     .categorias-admin__nuevo { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
     .form-rapido {
@@ -261,24 +261,24 @@ function tratamientoVacio(): Tratamiento {
     .preview-trat-card__media img { width: 100%; height: 100%; object-fit: cover; }
     .preview-trat-card__media span {
       position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,.94); color: var(--vino);
-      font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; padding: 5px 10px; border-radius: 2px;
+      font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; padding: 5px 10px; border-radius: 2px;
     }
     .preview-trat-card__body { padding: 16px; }
     .preview-trat-card__body h4 { margin-bottom: 6px; }
-    .preview-trat-card__body p, .preview-trat-detail p { font-size: .84rem; margin-bottom: 8px; }
+    .preview-trat-card__body p, .preview-trat-detail p { font-size: .9rem; margin-bottom: 8px; }
     .preview-trat-detail {
       border: 1px dashed var(--linea);
       border-radius: var(--radio);
       padding: 12px;
       background: var(--rosa-50);
     }
-    .preview-trat-detail strong { color: var(--vino); font-size: .9rem; }
-    .preview-trat-detail ul { margin: 8px 0 0; padding-left: 18px; color: var(--gris); font-size: .8rem; }
+    .preview-trat-detail strong { color: var(--vino); font-size: .96rem; }
+    .preview-trat-detail ul { margin: 8px 0 0; padding-left: 18px; color: var(--gris); font-size: .9rem; }
     .lista-editor { border: 1px solid var(--linea); border-radius: var(--radio); padding: 14px; background: var(--rosa-50); display: grid; gap: 10px; }
     .lista-editor__cabecera { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
-    .lista-editor__cabecera strong { display: block; color: var(--vino); font-size: .92rem; }
+    .lista-editor__cabecera strong { display: block; color: var(--vino); font-size: .96rem; }
     .lista-editor__fila { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
-    .check { display: flex; gap: 8px; align-items: center; color: var(--gris); font-size: .86rem; }
+    .check { display: flex; gap: 8px; align-items: center; color: var(--gris); font-size: .94rem; }
     .boton-icono--peligro { color: var(--error); }
     .fila-trat { display: flex; gap: 12px; align-items: center; max-width: 380px; }
     .fila-trat img { width: 46px; height: 46px; border-radius: var(--radio); object-fit: cover; }

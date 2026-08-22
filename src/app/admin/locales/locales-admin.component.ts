@@ -192,6 +192,7 @@ function cabinaVacia(localId: number): Habitacion {
 
           <div>
             <span class="dato__label">Cabinas</span>
+            <div class="tabla-envoltura">
             <table class="tabla tabla--simple">
               <thead><tr><th>Cabina</th><th>Equipamiento</th><th class="num">Citas hoy</th><th>Estado</th><th></th></tr></thead>
               <tbody>
@@ -210,6 +211,7 @@ function cabinaVacia(localId: number): Habitacion {
                 }
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       </section>
@@ -224,12 +226,12 @@ function cabinaVacia(localId: number): Habitacion {
     .local-form__247-label {
       min-height: 42px; display: flex; align-items: center; padding: 0 14px;
       border: 1px solid rgba(176, 27, 114, .22); border-radius: var(--radio); background: var(--rosa-50);
-      color: var(--vino); font-weight: 700; font-size: .86rem;
+      color: var(--vino); font-weight: 700; font-size: .94rem;
     }
     .local-form__imagen { display: grid; grid-template-columns: 180px 1fr auto; gap: 12px; align-items: end; }
     .local-form__imagen img { width: 180px; height: 120px; object-fit: cover; border-radius: var(--radio); border: 1px solid var(--linea); background: var(--rosa-50); }
     .local-form__mapa { display: grid; gap: 8px; align-items: start; }
-    .local-form__mapa small { color: var(--gris); font-size: .8rem; }
+    .local-form__mapa small { color: var(--gris); font-size: .9rem; }
     .local-form__preview {
       grid-column: 4;
       grid-row: 1 / span 9;
@@ -247,9 +249,9 @@ function cabinaVacia(localId: number): Habitacion {
     .preview-local-card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--rosa-50); }
     .preview-local-card div { padding: 16px; }
     .preview-local-card h4 { margin-bottom: 6px; }
-    .preview-local-card p { margin-bottom: 6px; font-size: .84rem; }
-    .preview-local-card__meta { display: grid; gap: 4px; padding: 10px 0 !important; color: var(--vino); font-size: .82rem; }
-    .preview-local-card a { display: inline-flex; margin-top: 8px; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; }
+    .preview-local-card p { margin-bottom: 6px; font-size: .9rem; }
+    .preview-local-card__meta { display: grid; gap: 4px; padding: 10px 0 !important; color: var(--vino); font-size: .9rem; }
+    .preview-local-card a { display: inline-flex; margin-top: 8px; font-size: .82rem; letter-spacing: .14em; text-transform: uppercase; }
     .local-form__cabinas {
       border: 1px solid var(--linea);
       border-radius: var(--radio-lg);
@@ -259,7 +261,7 @@ function cabinaVacia(localId: number): Habitacion {
       gap: 10px;
     }
     .local-form__cabinas-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .local-form__cabinas-head strong { color: var(--vino); font-size: .92rem; }
+    .local-form__cabinas-head strong { color: var(--vino); font-size: .96rem; }
     .local-cabina-row {
       display: grid;
       grid-template-columns: 1fr auto auto;
@@ -271,24 +273,29 @@ function cabinaVacia(localId: number): Habitacion {
       background: #fff;
     }
     .local-cabina-row div { display: flex; flex-direction: column; gap: 2px; }
-    .local-cabina-row span { color: var(--gris); font-size: .82rem; }
-    .check { display: flex; gap: 8px; align-items: center; color: var(--gris); font-size: .86rem; }
+    .local-cabina-row span { color: var(--gris); font-size: .9rem; }
+    .check { display: flex; gap: 8px; align-items: center; color: var(--gris); font-size: .94rem; }
     .check--247 { min-height: 42px; }
     .local { margin-bottom: 20px; }
     .local__cabecera { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
     .local__cabecera h3 { margin: 0 0 4px; }
-    .local__cabecera p { margin: 0; font-size: .88rem; }
-    .local__coords { margin-top: 4px !important; font-size: .78rem !important; color: var(--gris-claro); }
+    .local__cabecera p { margin: 0; font-size: .94rem; }
+    .local__coords { margin-top: 4px !important; font-size: .86rem !important; color: var(--gris-claro); }
     .local__acciones { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .boton-icono--peligro { color: var(--error); border-color: rgba(166,40,40,.28); }
     .boton-icono--peligro:hover { background: var(--error-bg); border-color: var(--error); color: var(--error); }
     .local__metricas { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin: 22px 0; padding: 18px 0; border-top: 1px dashed var(--linea); border-bottom: 1px dashed var(--linea); }
     .local__metricas div { display: flex; flex-direction: column; }
     .local__metricas strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.7rem; color: var(--vino); }
-    .local__metricas span { font-size: .7rem; color: var(--gris-claro); letter-spacing: .08em; }
+    .local__metricas span { font-size: .82rem; color: var(--gris-claro); letter-spacing: .08em; }
     .local__columnas { display: grid; grid-template-columns: .8fr 1.4fr; gap: 30px; }
     .tabla--simple { margin-top: 10px; }
     .tabla--simple td, .tabla--simple th { padding: 9px 10px; }
+    .local__columnas > * { min-width: 0; }
+    @media (max-width: 900px) {
+      .tabla--simple { min-width: 0; }
+      .tabla--simple th, .tabla--simple td { white-space: normal; }
+    }
     @media (max-width: 1200px) {
       .local__metricas { grid-template-columns: repeat(2, 1fr); }
       .local__columnas, .local-form, .cabina-form { grid-template-columns: 1fr; }

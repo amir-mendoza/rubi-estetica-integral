@@ -344,7 +344,7 @@ function promocionVacia(): Promocion {
     .categorias-admin__lista { display: flex; flex-wrap: wrap; gap: 8px; }
     .categoria-chip {
       display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--linea);
-      border-radius: 999px; padding: 7px 10px 7px 13px; background: #fff; color: var(--gris); font-size: .78rem;
+      border-radius: 999px; padding: 7px 10px 7px 13px; background: #fff; color: var(--gris); font-size: .86rem;
     }
     .categoria-chip button {
       border: 0; background: var(--rosa-50); color: var(--error); width: 20px; height: 20px;
@@ -355,7 +355,7 @@ function promocionVacia(): Promocion {
     .promo-form { padding: 20px 22px 24px; }
     .promo-form__fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
     .promo-form__acciones { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
-    .promo-form__aviso { font-size: .8rem; color: var(--ok); }
+    .promo-form__aviso { font-size: .9rem; color: var(--ok); }
     .sesiones-editor {
       margin: 18px 0;
       padding: 18px;
@@ -382,7 +382,7 @@ function promocionVacia(): Promocion {
     .sesion-edit__numero {
       width: 30px; height: 30px; border-radius: 50%;
       display: grid; place-items: center; align-self: center;
-      background: var(--magenta); color: #fff; font-size: .8rem; font-weight: 700;
+      background: var(--magenta); color: #fff; font-size: .9rem; font-weight: 700;
     }
     .sesion-edit__descripcion { grid-column: 2 / 4; }
     .sesiones-editor__vacio {
@@ -390,10 +390,10 @@ function promocionVacia(): Promocion {
       border-radius: var(--radio);
       padding: 14px;
       color: var(--gris);
-      font-size: .86rem;
+      font-size: .94rem;
       background: #fff;
     }
-    .interruptores { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; font-size: .84rem; color: var(--gris); }
+    .interruptores { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; font-size: .9rem; color: var(--gris); }
     .interruptores label { display: flex; align-items: center; gap: 9px; }
     .vista-previa {
       display: grid;
@@ -421,19 +421,19 @@ function promocionVacia(): Promocion {
     }
     .vista-previa__texto { padding: 28px; color: var(--tinta); align-self: center; }
     .vista-previa__texto h4 { color: var(--vino); margin-bottom: 6px; }
-    .vista-previa__texto p { color: var(--gris); font-size: .88rem; }
+    .vista-previa__texto p { color: var(--gris); font-size: .94rem; }
     .vista-previa__etiqueta {
       display: inline-block; border: 1px solid rgba(176,27,114,.3); border-radius: 999px;
-      padding: 4px 12px; font-size: .64rem; letter-spacing: .16em; text-transform: uppercase; margin-bottom: 14px;
+      padding: 4px 12px; font-size: .78rem; letter-spacing: .16em; text-transform: uppercase; margin-bottom: 14px;
       color: var(--magenta);
     }
     .vista-previa__precio { display: flex; align-items: baseline; gap: 10px; }
     .vista-previa__precio strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.7rem; color: var(--magenta); }
-    .vista-previa__precio s { color: var(--gris-claro); font-size: .84rem; }
+    .vista-previa__precio s { color: var(--gris-claro); font-size: .9rem; }
     .fila-prod { display: flex; gap: 12px; align-items: center; }
     .fila-prod img { width: 52px; height: 40px; border-radius: var(--radio); object-fit: cover; background: var(--rosa-50); }
     .estados-promo { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
-    .tachado { display: block; text-decoration: line-through; color: var(--gris-claro); font-size: .74rem; }
+    .tachado { display: block; text-decoration: line-through; color: var(--gris-claro); font-size: .86rem; }
     .boton-icono--peligro { color: var(--error); }
     .vacio { text-align: center; color: var(--gris-claro); padding: 26px 0; }
     @media (max-width: 1200px) { .kpis-4 { grid-template-columns: repeat(2, 1fr); } .promo-columnas, .categorias-admin { grid-template-columns: 1fr; } }

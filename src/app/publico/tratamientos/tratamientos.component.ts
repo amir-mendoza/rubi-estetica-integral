@@ -114,7 +114,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
     }
     .promo-vertical__cabecera { margin-bottom: 14px; }
     .promo-vertical__cabecera h2 { margin: 4px 0 2px; font-size: 1.5rem; }
-    .promo-vertical__cabecera small { color: var(--gris-claro); font-size: .76rem; }
+    .promo-vertical__cabecera small { color: var(--gris-claro); font-size: .86rem; }
     .promo-vertical__ventana {
       height: min(680px, calc(100vh - 220px));
       min-height: 420px;
@@ -130,24 +130,24 @@ import { PromocionesService } from '../../compartido/promociones.service';
     .promo-mini:hover { transform: scale(1.025); border-color: var(--magenta-300); box-shadow: 0 18px 40px rgba(122, 13, 63, .12); }
     .promo-mini img { width: 100%; aspect-ratio: 16 / 11; object-fit: contain; background: #fff; display: block; }
     .promo-mini > div { padding: 14px 15px 16px; }
-    .promo-mini__tag { font-size: .62rem; color: var(--magenta); letter-spacing: .16em; text-transform: uppercase; font-weight: 700; }
+    .promo-mini__tag { font-size: .78rem; color: var(--magenta); letter-spacing: .16em; text-transform: uppercase; font-weight: 700; }
     .promo-mini h3 { margin: 7px 0 5px; font-size: 1.05rem; line-height: 1.15; }
-    .promo-mini p { font-size: .78rem; margin: 0 0 10px; line-height: 1.45; }
+    .promo-mini p { font-size: .86rem; margin: 0 0 10px; line-height: 1.45; }
     .promo-mini ul { list-style: none; display: grid; gap: 4px; margin: 0 0 12px; padding: 0; }
-    .promo-mini li { position: relative; padding-left: 12px; font-size: .7rem; color: var(--gris); line-height: 1.35; }
+    .promo-mini li { position: relative; padding-left: 12px; font-size: .82rem; color: var(--gris); line-height: 1.35; }
     .promo-mini li::before { content: ''; position: absolute; left: 0; top: .58em; width: 5px; height: 5px; border-radius: 50%; background: var(--magenta); }
     .promo-mini__pie { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1px solid var(--linea); }
     .promo-mini__pie strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.35rem; color: var(--vino); }
-    .promo-mini__pie a { color: var(--magenta); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; }
+    .promo-mini__pie a { color: var(--magenta); font-size: .82rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; }
     .filtro {
       background: none; border: 1px solid var(--linea); border-radius: 999px;
-      padding: .5rem 1.25rem; font-family: inherit; font-size: .76rem;
+      padding: .5rem 1.25rem; font-family: inherit; font-size: .86rem;
       letter-spacing: .12em; text-transform: uppercase; color: var(--gris); cursor: pointer;
       transition: all .18s ease;
     }
     .filtro:hover { border-color: var(--magenta-300); color: var(--magenta); }
     .filtro--activo { background: var(--vino); border-color: var(--vino); color: #fff; }
-    .filtros__conteo { font-size: .8rem; color: var(--gris-claro); }
+    .filtros__conteo { font-size: .9rem; color: var(--gris-claro); }
     @keyframes promosVertical {
       from { transform: translateY(0); }
       to { transform: translateY(-50%); }

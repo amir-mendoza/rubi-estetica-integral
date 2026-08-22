@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200" viewBox="0 0 1600 1200">
+  <defs>
+    <radialGradient id="brillo" cx="50%" cy="18%" r="82%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity=".5"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="tono" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e07bad" stop-opacity=".5"/>
+      <stop offset="100%" stop-color="#b01b72" stop-opacity=".28"/>
+    </linearGradient>
+    <g id="petalo">
+      <path d="M0 0 C 34 -22 76 -6 84 30 C 90 58 60 78 30 68 C 4 60 -14 26 0 0 Z"
+            fill="url(#tono)"/>
+      <path d="M2 6 C 30 -8 66 6 78 34" fill="none" stroke="#6e1338" stroke-opacity=".12" stroke-width="1.6"/>
+      <path d="M14 46 C 34 34 54 30 74 38" fill="none" stroke="#ffffff" stroke-opacity=".22" stroke-width="1.4"/>
+    </g>
+  </defs>
+
+  <rect width="1600" height="1200" fill="url(#brillo)"/>
+
+  <g opacity=".55">
+    <use href="#petalo" x="80" y="110" transform="rotate(-24 80 110) scale(.5)"/>
+    <use href="#petalo" x="390" y="60" transform="rotate(28 390 60) scale(.34)"/>
+    <use href="#petalo" x="690" y="170" transform="rotate(-48 690 170) scale(.62)"/>
+    <use href="#petalo" x="1030" y="90" transform="rotate(14 1030 90) scale(.3)"/>
+    <use href="#petalo" x="1330" y="200" transform="rotate(-34 1330 200) scale(.46)"/>
+    <use href="#petalo" x="170" y="430" transform="rotate(40 170 430) scale(.4)"/>
+    <use href="#petalo" x="530" y="360" transform="rotate(-10 530 360) scale(.7)"/>
+    <use href="#petalo" x="890" y="470" transform="rotate(58 890 470) scale(.32)"/>
+    <use href="#petalo" x="1210" y="400" transform="rotate(-28 1210 400) scale(.52)"/>
+    <use href="#petalo" x="1470" y="540" transform="rotate(20 1470 540) scale(.38)"/>
+    <use href="#petalo" x="60" y="700" transform="rotate(-58 60 700) scale(.56)"/>
+    <use href="#petalo" x="430" y="770" transform="rotate(34 430 770) scale(.28)"/>
+    <use href="#petalo" x="770" y="700" transform="rotate(-16 770 700) scale(.48)"/>
+    <use href="#petalo" x="1090" y="810" transform="rotate(48 1090 810) scale(.42)"/>
+    <use href="#petalo" x="1390" y="760" transform="rotate(-40 1390 760) scale(.64)"/>
+    <use href="#petalo" x="230" y="1010" transform="rotate(22 230 1010) scale(.36)"/>
+    <use href="#petalo" x="610" y="1070" transform="rotate(-30 610 1070) scale(.54)"/>
+    <use href="#petalo" x="950" y="1020" transform="rotate(10 950 1020) scale(.3)"/>
+    <use href="#petalo" x="1290" y="1090" transform="rotate(-50 1290 1090) scale(.44)"/>
+  </g>
+</svg>

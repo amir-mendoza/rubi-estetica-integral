@@ -97,10 +97,10 @@ import { RouterLink } from '@angular/router';
       font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2.2rem;
       color: var(--vino); font-weight: 500;
     }
-    .historia__firmas span { font-size: .78rem; color: var(--gris-claro); letter-spacing: .06em; }
+    .historia__firmas span { font-size: .86rem; color: var(--gris-claro); letter-spacing: .06em; }
     .lista-check { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
     .lista-check li {
-      position: relative; padding-left: 34px; color: var(--gris); font-size: .95rem;
+      position: relative; padding-left: 34px; color: var(--gris); font-size: 1rem;
     }
     .lista-check li::before {
       content: ''; position: absolute; left: 0; top: 8px;

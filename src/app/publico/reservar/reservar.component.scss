@@ -13,13 +13,13 @@
 .pasos-barra li {
   display: flex; align-items: center; gap: 8px;
   padding: 8px 14px; border: 1px solid var(--linea); border-radius: 999px;
-  font-size: .76rem; color: var(--gris-claro); cursor: default;
+  font-size: .86rem; color: var(--gris-claro); cursor: default;
 }
 .pasos-barra li.hecho { border-color: var(--magenta-300); color: var(--magenta); cursor: pointer; }
 .pasos-barra li.activo { background: var(--vino); border-color: var(--vino); color: #fff; }
 .pasos-barra__n {
   width: 20px; height: 20px; border-radius: 50%; display: inline-flex;
-  align-items: center; justify-content: center; font-size: .68rem;
+  align-items: center; justify-content: center; font-size: .82rem;
   background: rgba(0,0,0,.06);
 }
 .pasos-barra li.activo .pasos-barra__n { background: rgba(255,255,255,.2); }
@@ -42,8 +42,8 @@
 .opcion img { width: 116px; height: 96px; object-fit: cover; flex: none; }
 .opcion > div { padding: 16px 18px; display: flex; flex-direction: column; gap: 3px; }
 .opcion strong { font-size: 1rem; font-weight: 500; color: var(--tinta); }
-.opcion span { font-size: .84rem; color: var(--gris); }
-.opcion__meta { font-size: .76rem !important; color: var(--gris-claro) !important; }
+.opcion span { font-size: .9rem; color: var(--gris); }
+.opcion__meta { font-size: .86rem !important; color: var(--gris-claro) !important; }
 .opcion--fila { margin-bottom: 12px; }
 .opcion__texto { flex: 1; }
 .opcion__precio {
@@ -77,7 +77,7 @@
   font-size: 1.08rem;
   margin: 3px 0;
 }
-.promo-reserva p { margin: 0 0 6px; font-size: .86rem; }
+.promo-reserva p { margin: 0 0 6px; font-size: .94rem; }
 .promo-reserva b { color: var(--magenta); font-size: 1.2rem; }
 
 /* Días */
@@ -100,21 +100,21 @@
 }
 .dia:hover { border-color: var(--magenta-300); }
 .dia--activo { background: var(--vino); border-color: var(--vino); color: #fff; }
-.dia__nombre { font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--gris-claro); }
+.dia__nombre { font-size: .82rem; letter-spacing: .12em; text-transform: uppercase; color: var(--gris-claro); }
 .dia--activo .dia__nombre, .dia--activo .dia__mes { color: rgba(255,255,255,.7); }
 .dia__num { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.5rem; color: inherit; }
-.dia__mes { font-size: .68rem; color: var(--gris-claro); }
+.dia__mes { font-size: .82rem; color: var(--gris-claro); }
 
 /* Filtros de tratamiento */
 .filtros { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .filtros--suaves { margin-bottom: 18px; }
 .filtro {
   border: 1px solid var(--linea); border-radius: 999px; background: #fff;
-  padding: 8px 16px; font-family: inherit; font-size: .8rem; color: var(--gris);
+  padding: 8px 16px; font-family: inherit; font-size: .9rem; color: var(--gris);
   cursor: pointer; letter-spacing: .02em;
 }
 .filtro:hover { border-color: var(--magenta-300); color: var(--magenta); }
-.filtro--chip { background: var(--rosa-50); border-color: var(--rosa); font-size: .74rem; }
+.filtro--chip { background: var(--rosa-50); border-color: var(--rosa); font-size: .86rem; }
 .filtro--activo { background: var(--vino); border-color: var(--vino); color: #fff; }
 .campo--busqueda { margin-bottom: 20px; }
 
@@ -126,7 +126,7 @@
   display: flex; flex-direction: column; gap: 2px; align-items: center;
 }
 .horario span { font-size: 1rem; color: var(--tinta); }
-.horario small { font-size: .68rem; color: var(--gris-claro); }
+.horario small { font-size: .82rem; color: var(--gris-claro); }
 .horario:hover:not(:disabled) { border-color: var(--magenta); }
 .horario--activo { background: var(--vino); border-color: var(--vino); }
 .horario--activo span, .horario--activo small { color: #fff; }
@@ -138,22 +138,22 @@
 /* Resumen lateral */
 .resumen__fila {
   display: grid; grid-template-columns: minmax(110px, .75fr) minmax(150px, 1fr); gap: 16px;
-  padding: 10px 0; border-bottom: 1px dashed var(--linea); font-size: .88rem; color: var(--gris);
+  padding: 10px 0; border-bottom: 1px dashed var(--linea); font-size: .94rem; color: var(--gris);
 }
 .resumen__fila strong { color: var(--tinta); font-weight: 500; text-align: left; overflow-wrap: anywhere; }
 .resumen__total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 16px; }
-.resumen__total span { font-size: .78rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris-claro); }
+.resumen__total span { font-size: .86rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris-claro); }
 .resumen__total strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2rem; color: var(--vino); }
 .resumen__sesiones {
   display: grid; gap: 8px; padding: 12px 0; border-bottom: 1px dashed var(--linea);
 }
-.resumen__sesiones span { font-size: .8rem; color: var(--gris); display: flex; gap: 8px; align-items: center; }
+.resumen__sesiones span { font-size: .9rem; color: var(--gris); display: flex; gap: 8px; align-items: center; }
 .resumen__sesiones b {
   width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
-  background: var(--magenta); color: #fff; font-size: .72rem;
+  background: var(--magenta); color: #fff; font-size: .82rem;
 }
 .reglas { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.reglas li { position: relative; padding-left: 18px; font-size: .84rem; color: var(--gris); }
+.reglas li { position: relative; padding-left: 18px; font-size: .9rem; color: var(--gris); }
 .reglas li::before { content: ''; position: absolute; left: 0; top: 9px; width: 6px; height: 6px; border-radius: 50%; background: var(--magenta-300); }
 
 /* Confirmación */
@@ -220,8 +220,8 @@
   .dia { min-width: 62px; }
   .horarios { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
   .horario { padding: 10px 6px; }
-  .horario span { font-size: .94rem; }
-  .horario small { font-size: .62rem; text-align: center; }
+  .horario span { font-size: 1rem; }
+  .horario small { font-size: .78rem; text-align: center; }
 }
 
 @media (max-width: 420px) {

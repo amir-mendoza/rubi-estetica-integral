@@ -126,8 +126,8 @@ import { Cita, Pedido } from '../../data/modelos';
       padding: 14px 0; border-bottom: 1px dashed var(--linea);
     }
     .fila:last-child { border-bottom: none; }
-    .fila strong { display: block; font-weight: 500; font-size: .94rem; }
-    .fila span { display: block; font-size: .82rem; color: var(--gris); }
+    .fila strong { display: block; font-weight: 500; font-size: 1rem; }
+    .fila span { display: block; font-size: .9rem; color: var(--gris); }
     .fila__estado { text-align: right; display: grid; gap: 8px; justify-items: end; }
     @media (max-width: 900px) { .cuenta { grid-template-columns: 1fr; } }
   `]

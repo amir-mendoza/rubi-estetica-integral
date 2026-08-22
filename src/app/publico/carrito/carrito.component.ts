@@ -162,13 +162,13 @@ import { LOCALES, soles } from '../../data/datos';
     .linea-prod { display: flex; gap: 14px; align-items: center; }
     .linea-prod img { width: 56px; height: 56px; object-fit: cover; border-radius: var(--radio); }
     .linea-prod strong { display: block; font-weight: 500; }
-    .linea-prod span { font-size: .78rem; color: var(--gris-claro); }
+    .linea-prod span { font-size: .86rem; color: var(--gris-claro); }
     .cantidad { display: inline-flex; align-items: center; border: 1px solid var(--linea); border-radius: var(--radio); }
     .cantidad button { background: none; border: none; width: 30px; height: 32px; cursor: pointer; color: var(--vino); font-size: 1rem; }
-    .cantidad span { min-width: 28px; text-align: center; font-size: .9rem; }
-    .quitar { background: none; border: none; color: var(--gris-claro); cursor: pointer; font-family: inherit; font-size: .8rem; text-decoration: underline; }
+    .cantidad span { min-width: 28px; text-align: center; font-size: .96rem; }
+    .quitar { background: none; border: none; color: var(--gris-claro); cursor: pointer; font-family: inherit; font-size: .9rem; text-decoration: underline; }
     .quitar:hover { color: var(--error); }
-    .resumen__linea { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--linea); font-size: .92rem; color: var(--gris); }
+    .resumen__linea { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--linea); font-size: .96rem; color: var(--gris); }
     .resumen__linea strong { color: var(--tinta); font-weight: 500; }
     .resumen__total { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 0 0; }
     .resumen__total strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.8rem; color: var(--vino); }
@@ -182,8 +182,8 @@ import { LOCALES, soles } from '../../data/datos';
       .item-movil img { width: 74px; height: 74px; border-radius: var(--radio); }
       .item-movil__cuerpo { display: grid; gap: 4px; min-width: 0; }
       .item-movil strong { font-weight: 500; line-height: 1.2; }
-      .item-movil__marca { font-size: .76rem; color: var(--gris-claro); }
-      .item-movil__precio { font-size: .82rem; color: var(--gris); }
+      .item-movil__marca { font-size: .86rem; color: var(--gris-claro); }
+      .item-movil__precio { font-size: .9rem; color: var(--gris); }
       .item-movil__pie { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; }
       .item-movil__subtotal { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.3rem; color: var(--vino); }
       .item-movil .quitar { justify-self: start; padding: 0; }

@@ -220,7 +220,7 @@ interface ResumenPeriodo {
     .grid-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
     .tabla-caja td { vertical-align: top; }
     .estado-stack { display: grid; gap: 4px; justify-items: start; }
-    .estado-stack small { color: var(--gris-claro); font-size: .72rem; }
+    .estado-stack small { color: var(--gris-claro); font-size: .82rem; }
     .vacio { text-align: center; color: var(--gris-claro); padding: 24px 0; }
     @media (max-width: 1400px) { .kpis-5 { grid-template-columns: repeat(3, 1fr); } .resumen-rapido { grid-template-columns: 1fr; } }
     @media (max-width: 1100px) { .grid-dos { grid-template-columns: 1fr; } .kpis-5 { grid-template-columns: repeat(2, 1fr); } }

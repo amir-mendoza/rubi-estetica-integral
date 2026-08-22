@@ -28,7 +28,7 @@
 .portada__datos strong {
   font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2.1rem; font-weight: 500; color: #fff;
 }
-.portada__datos span { font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.62); }
+.portada__datos span { font-size: .82rem; letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.62); }
 
 /* -------------------------------------------------------------- Pilares */
 .pilar {
@@ -43,7 +43,7 @@
   box-shadow: var(--sombra);
 }
 .pilar h4 { margin-bottom: .4rem; }
-.pilar p { font-size: .98rem; margin: 0; }
+.pilar p { font-size: 1rem; margin: 0; }
 
 /* ---------------------------------------------------------------- Pasos */
 .pasos { display: grid; grid-template-columns: 1fr 1.15fr; gap: 72px; align-items: start; }
@@ -52,7 +52,7 @@
 .paso {
   display: flex; gap: 22px; align-items: flex-start;
   padding: 26px; border: 1px solid var(--linea); border-radius: var(--radio-lg); background: #fff;
-  transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+  transition: transform .45s cubic-bezier(.22,.61,.36,1), box-shadow .45s cubic-bezier(.22,.61,.36,1), border-color .45s ease;
 }
 .paso:hover {
   transform: translateX(10px);
@@ -64,7 +64,7 @@
   font-size: 1.8rem; color: var(--magenta-300); line-height: 1; min-width: 42px;
 }
 .paso h4 { margin-bottom: .25rem; }
-.paso p { margin: 0; font-size: .92rem; }
+.paso p { margin: 0; font-size: .96rem; }
 
 /* ---------------------------------------------------------- Testimonios */
 .testimonio {
@@ -87,7 +87,7 @@
   line-height: 1;
 }
 .testimonio:hover {
-  transform: translateY(-9px);
+  transform: translateY(-5px);
   border-color: rgba(255, 255, 255, .34);
   background: rgba(255, 255, 255, .08);
 }
@@ -96,8 +96,8 @@
   font-size: 1.28rem; line-height: 1.55; color: rgba(255, 255, 255, .9); margin-bottom: 22px;
 }
 .testimonio footer { display: flex; flex-direction: column; gap: 3px; }
-.testimonio strong { color: #fff; font-size: .95rem; font-weight: 500; }
-.testimonio span { font-size: .76rem; letter-spacing: .1em; color: rgba(255, 255, 255, .5); }
+.testimonio strong { color: #fff; font-size: 1rem; font-weight: 500; }
+.testimonio span { font-size: .86rem; letter-spacing: .1em; color: rgba(255, 255, 255, .5); }
 
 /* ------------------------------------------------------------------ CTA */
 .cta { position: relative; padding: 104px 0; color: #fff; overflow: hidden; }
@@ -114,27 +114,27 @@
 
 @media (prefers-reduced-motion: no-preference) {
   @keyframes portada-imagen {
-    from { transform: scale(1.08); }
+    from { transform: scale(1.05); }
     to { transform: scale(1); }
   }
 
   @keyframes portada-texto {
-    from { opacity: 0; transform: translateX(-54px); }
+    from { opacity: 0; transform: translateY(18px); }
     to { opacity: 1; transform: translateX(0); }
   }
 
   @keyframes portada-dato {
-    from { opacity: 0; transform: translateY(28px); }
+    from { opacity: 0; transform: translateY(18px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .portada__imagen img { animation: portada-imagen 1.6s cubic-bezier(.2, .72, .18, 1) both; }
-  .portada .eyebrow { animation: portada-texto .75s .1s both cubic-bezier(.2, .72, .18, 1); }
-  .portada h1 { animation: portada-texto .85s .22s both cubic-bezier(.2, .72, .18, 1); }
-  .portada__texto { animation: portada-texto .85s .36s both cubic-bezier(.2, .72, .18, 1); }
-  .portada__acciones { animation: portada-dato .8s .52s both cubic-bezier(.2, .72, .18, 1); }
-  .portada__datos div { animation: portada-dato .75s both cubic-bezier(.2, .72, .18, 1); }
-  .portada__datos div:nth-child(1) { animation-delay: .68s; }
-  .portada__datos div:nth-child(2) { animation-delay: .8s; }
-  .portada__datos div:nth-child(3) { animation-delay: .92s; }
+  .portada__imagen img { animation: portada-imagen 2.4s cubic-bezier(.2, .72, .18, 1) both; }
+  .portada .eyebrow { animation: portada-texto 1.05s .1s both cubic-bezier(.2, .72, .18, 1); }
+  .portada h1 { animation: portada-texto 1.15s .28s both cubic-bezier(.2, .72, .18, 1); }
+  .portada__texto { animation: portada-texto 1.15s .46s both cubic-bezier(.2, .72, .18, 1); }
+  .portada__acciones { animation: portada-dato 1.1s .64s both cubic-bezier(.2, .72, .18, 1); }
+  .portada__datos div { animation: portada-dato 1.05s both cubic-bezier(.2, .72, .18, 1); }
+  .portada__datos div:nth-child(1) { animation-delay: .82s; }
+  .portada__datos div:nth-child(2) { animation-delay: .98s; }
+  .portada__datos div:nth-child(3) { animation-delay: 1.14s; }
 }

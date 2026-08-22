@@ -165,7 +165,7 @@ type PeriodoPago = 'hoy' | 'semana' | 'mes' | 'todo';
     }
     .cobro-inline > div:first-child { display: grid; gap: 2px; align-self: center; }
     .cobro-inline > div:first-child strong { color: var(--vino); }
-    .cobro-inline > div:first-child span { color: var(--gris); font-size: .82rem; }
+    .cobro-inline > div:first-child span { color: var(--gris); font-size: .9rem; }
     .cobro-inline .campo { margin: 0; }
     .cobro-resumen,
     .codigo-auto {
@@ -180,7 +180,7 @@ type PeriodoPago = 'hoy' | 'semana' | 'mes' | 'todo';
     .cobro-resumen span,
     .codigo-auto span {
       color: var(--gris-claro);
-      font-size: .62rem;
+      font-size: .78rem;
       font-weight: 700;
       letter-spacing: .14em;
       text-transform: uppercase;
@@ -188,7 +188,7 @@ type PeriodoPago = 'hoy' | 'semana' | 'mes' | 'todo';
     .cobro-resumen strong,
     .codigo-auto strong {
       color: var(--vino);
-      font-size: .95rem;
+      font-size: 1rem;
       line-height: 1.1;
     }
     .fila-cobro td { background: #fff; }

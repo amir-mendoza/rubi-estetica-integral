@@ -1,4 +1,5 @@
-.calendario-grid { display: grid; grid-template-columns: minmax(520px, .9fr) 1.35fr; gap: 24px; align-items: start; }
+.calendario-grid { display: grid; grid-template-columns: minmax(430px, .9fr) 1.35fr; gap: 24px; align-items: start; }
+.calendario-grid > * { min-width: 0; }
 
 .cita-manual { margin-bottom: 22px; }
 .cita-manual__form {
@@ -16,7 +17,7 @@
   border-radius: var(--radio);
   background: #fff;
   color: var(--gris);
-  font-size: .86rem;
+  font-size: .94rem;
   line-height: 1.55;
 }
 .estado-cuenta {
@@ -26,7 +27,7 @@
   gap: 12px;
   padding: 11px 14px;
   border-radius: var(--radio);
-  font-size: .84rem;
+  font-size: .9rem;
 }
 .estado-cuenta strong { color: var(--vino); white-space: nowrap; }
 .estado-cuenta span { color: var(--gris); }
@@ -49,8 +50,8 @@
 
 .calendario__semana { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 8px; }
 .calendario__semana span {
-  text-align: center; font-size: .7rem; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--gris-claro);
+  text-align: center; font-size: .82rem; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--gris-claro); overflow: hidden;
 }
 .calendario__dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
 
@@ -64,8 +65,8 @@
 .celda:hover { border-color: var(--magenta-300); }
 .celda--fuera { opacity: .38; }
 .celda__num { font-size: 1.08rem; color: var(--tinta); font-weight: 700; }
-.celda__citas { font-size: .72rem; color: var(--magenta); letter-spacing: .02em; font-weight: 600; }
-.celda__monto { font-size: .68rem; color: var(--gris-claro); font-weight: 600; }
+.celda__citas { font-size: .82rem; color: var(--magenta); letter-spacing: .02em; font-weight: 600; }
+.celda__monto { font-size: .82rem; color: var(--gris-claro); font-weight: 600; }
 .celda__punto { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); margin-top: auto; }
 .celda__punto--pendiente { background: var(--alerta); }
 .celda--hoy { border-color: var(--magenta); }
@@ -74,7 +75,7 @@
 .celda--activa .celda__num, .celda--activa .celda__citas, .celda--activa .celda__monto { color: #fff; }
 
 .calendario__leyenda { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--linea); }
-.calendario__leyenda span { display: inline-flex; align-items: center; gap: 7px; font-size: .72rem; color: var(--gris-claro); }
+.calendario__leyenda span { display: inline-flex; align-items: center; gap: 7px; font-size: .82rem; color: var(--gris-claro); }
 .punto { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
 .punto--ok { background: var(--ok); }
 .punto--alerta { background: var(--alerta); }
@@ -83,9 +84,9 @@
 /* Resumen del día */
 .resumen-dia { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
 .resumen-dia h3 { margin: 6px 0 0; font-size: 1.35rem; }
-.resumen-dia__montos { display: flex; gap: 30px; flex-wrap: wrap; }
+.resumen-dia__montos { display: flex; gap: 18px 24px; flex-wrap: wrap; min-width: 0; }
 .resumen-dia__montos div { display: flex; flex-direction: column; gap: 2px; }
-.resumen-dia__montos span { font-size: .64rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris-claro); }
+.resumen-dia__montos span { font-size: .78rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris-claro); }
 .resumen-dia__montos strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.6rem; color: var(--vino); }
 
 /* Agenda */
@@ -95,6 +96,7 @@
   background: #fff; border: 1px solid var(--linea); border-left: 3px solid var(--magenta);
   border-radius: var(--radio-lg); padding: 18px 20px;
 }
+.cita > * { min-width: 0; }
 .cita--cancelada { border-left-color: var(--error); background: #fdfafa; }
 .cita__orden { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
 .cita__posicion {
@@ -103,14 +105,14 @@
   font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.15rem;
 }
 .cita__orden strong { font-size: 1rem; color: var(--tinta); font-weight: 500; }
-.cita__orden small { font-size: .66rem; color: var(--gris-claro); letter-spacing: .1em; }
+.cita__orden small { font-size: .78rem; color: var(--gris-claro); letter-spacing: .1em; }
 
 /* Ocupacion por bloque horario */
 .ocupacion { display: grid; gap: 10px; margin-bottom: 12px; }
 .ocupacion__lista { display: flex; flex-wrap: wrap; gap: 8px; }
 .ocupacion__bloque {
   border: 1px solid var(--linea); border-radius: 999px; padding: 5px 12px;
-  font-size: .76rem; color: var(--gris); background: var(--rosa-50);
+  font-size: .86rem; color: var(--gris); background: var(--rosa-50);
 }
 .ocupacion__bloque--lleno { border-color: var(--alerta); color: var(--alerta); background: #fffaf2; }
 .politica-llegada {
@@ -120,8 +122,8 @@
   margin-bottom: 12px;
   border-left: 3px solid var(--magenta);
 }
-.politica-llegada strong { color: var(--vino); font-size: .92rem; white-space: nowrap; }
-.politica-llegada span { color: var(--gris); font-size: .86rem; }
+.politica-llegada strong { color: var(--vino); font-size: .96rem; white-space: nowrap; }
+.politica-llegada span { color: var(--gris); font-size: .94rem; }
 
 /* Acciones de recepcion */
 .cita__acciones { margin-top: 14px; display: grid; gap: 6px; }
@@ -129,11 +131,11 @@
 .cita__botones { display: flex; flex-wrap: wrap; gap: 6px; }
 .accion {
   border: 1px solid var(--linea); border-radius: 999px; background: #fff;
-  padding: 6px 12px; font-family: inherit; font-size: .74rem; color: var(--gris); cursor: pointer;
+  padding: 6px 12px; font-family: inherit; font-size: .86rem; color: var(--gris); cursor: pointer;
 }
 .accion:hover { border-color: var(--magenta-300); color: var(--magenta); }
 .accion--activa { background: var(--vino); border-color: var(--vino); color: #fff; }
-.cobro { font-size: .76rem; color: var(--gris); }
+.cobro { font-size: .86rem; color: var(--gris); }
 .cobro--ok { color: var(--ok); }
 .cobro-flex { display: grid !important; grid-template-columns: 1fr; gap: 7px !important; width: 100%; }
 .cobro-flex select, .cobro-flex input { width: 100%; min-height: 34px; }
@@ -142,10 +144,10 @@
 .cita__titulo h4 { margin: 0; font-size: 1.2rem; }
 .cita__datos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 18px; }
 .cita__datos div { display: flex; flex-direction: column; gap: 1px; }
-.cita__datos span:last-child { font-size: .86rem; color: var(--tinta); }
+.cita__datos span:last-child { font-size: .94rem; color: var(--tinta); }
 .cita__nota {
   margin: 14px 0 0; padding: 10px 14px; background: var(--rosa-50);
-  border-radius: var(--radio); font-size: .84rem; color: var(--gris);
+  border-radius: var(--radio); font-size: .9rem; color: var(--gris);
 }
 .reprogramar {
   margin-top: 14px;
@@ -154,14 +156,14 @@
   border-radius: var(--radio);
   background: #fff;
 }
-.reprogramar strong { display: block; color: var(--vino); margin-bottom: 10px; font-size: .9rem; }
+.reprogramar strong { display: block; color: var(--vino); margin-bottom: 10px; font-size: .96rem; }
 .reprogramar__campos { display: grid; grid-template-columns: repeat(2, minmax(140px, 1fr)) auto; gap: 10px; align-items: end; }
 
 .cita__montos {
   display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
   padding-left: 20px; border-left: 1px dashed var(--linea);
 }
-.cita__montos div { display: flex; justify-content: space-between; gap: 14px; width: 100%; font-size: .82rem; color: var(--gris); }
+.cita__montos div { display: flex; justify-content: space-between; gap: 14px; width: 100%; font-size: .9rem; color: var(--gris); }
 .cita__montos strong { font-weight: 500; }
 .cita__montos .boton-icono { margin-top: auto; }
 
@@ -170,7 +172,7 @@
   margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--linea);
 }
 .cita__traza div { display: flex; flex-direction: column; gap: 2px; }
-.cita__traza span:last-child { font-size: .85rem; color: var(--tinta); }
+.cita__traza span:last-child { font-size: .94rem; color: var(--tinta); }
 
 @media (max-width: 1400px) {
   .calendario-grid { grid-template-columns: 1fr; }

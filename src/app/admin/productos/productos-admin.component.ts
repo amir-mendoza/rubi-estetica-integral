@@ -301,11 +301,11 @@ function enriquecerProducto(p: Producto): Producto {
     .panel-form, .categorias-panel { margin-bottom: 22px; }
     .catalogo-admin { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; padding: 18px 22px 22px; }
     .chips-admin { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
-    .categoria-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--linea); border-radius: 999px; padding: 7px 10px 7px 13px; background: #fff; color: var(--gris); font-size: .78rem; }
+    .categoria-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--linea); border-radius: 999px; padding: 7px 10px 7px 13px; background: #fff; color: var(--gris); font-size: .86rem; }
     .categoria-chip button { border: 0; background: var(--rosa-50); color: var(--error); width: 20px; height: 20px; border-radius: 50%; cursor: pointer; line-height: 1; }
     .catalogo-admin__nuevo { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
     .producto-form { display: grid; grid-template-columns: 180px repeat(2, minmax(150px, 1fr)) minmax(340px, .9fr); gap: 14px; padding: 20px 22px 24px; align-items: end; }
-    .producto-form__imagen { grid-row: span 3; display: grid; gap: 10px; align-content: start; color: var(--gris-claro); font-size: .76rem; }
+    .producto-form__imagen { grid-row: span 3; display: grid; gap: 10px; align-content: start; color: var(--gris-claro); font-size: .86rem; }
     .producto-form__imagen img { width: 160px; height: 160px; border-radius: var(--radio); object-fit: contain; background: var(--rosa-50); border: 1px solid var(--linea); padding: 8px; }
     .producto-form__ancho { grid-column: 2 / 4; }
     .producto-form__preview {
@@ -326,10 +326,10 @@ function enriquecerProducto(p: Producto): Producto {
     .preview-prod-card__media img { width: 100%; height: 100%; object-fit: cover; }
     .preview-prod-card__body { padding: 16px; display: grid; gap: 7px; }
     .preview-prod-card__body > span, .preview-prod-detail__head span {
-      color: var(--gris-claro); font-size: .64rem; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--gris-claro); font-size: .78rem; letter-spacing: .18em; text-transform: uppercase;
     }
     .preview-prod-card__body h4 { margin: 0; }
-    .preview-prod-card__body p { margin: 0; font-size: .84rem; }
+    .preview-prod-card__body p { margin: 0; font-size: .9rem; }
     .preview-prod-detail {
       display: grid;
       gap: 12px;
@@ -339,16 +339,16 @@ function enriquecerProducto(p: Producto): Producto {
       background: var(--rosa-50);
     }
     .preview-prod-detail__head { display: grid; gap: 3px; }
-    .preview-prod-detail__head strong { color: var(--vino); font-size: .88rem; }
-    .preview-prod-detail h5 { margin: 0 0 5px; font-size: .95rem; }
-    .preview-prod-detail ul { margin: 0; padding-left: 18px; color: var(--gris); font-size: .8rem; }
+    .preview-prod-detail__head strong { color: var(--vino); font-size: .94rem; }
+    .preview-prod-detail h5 { margin: 0 0 5px; font-size: 1rem; }
+    .preview-prod-detail ul { margin: 0; padding-left: 18px; color: var(--gris); font-size: .9rem; }
     .stock-form { display: grid; grid-template-columns: 1fr 220px auto; gap: 14px; align-items: end; padding: 20px 22px 24px; }
     .lista-editor { border: 1px solid var(--linea); border-radius: var(--radio); padding: 14px; background: var(--rosa-50); display: grid; gap: 10px; }
     .lista-editor__cabecera { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
-    .lista-editor__cabecera strong { display: block; color: var(--vino); font-size: .92rem; }
+    .lista-editor__cabecera strong { display: block; color: var(--vino); font-size: .96rem; }
     .lista-editor__fila { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
     .boton-icono--peligro { color: var(--error); }
-    .check { display: flex; gap: 8px; align-items: center; color: var(--gris); font-size: .86rem; }
+    .check { display: flex; gap: 8px; align-items: center; color: var(--gris); font-size: .94rem; }
     .fila-prod { display: flex; gap: 12px; align-items: center; }
     .fila-prod img { width: 44px; height: 44px; border-radius: var(--radio); object-fit: cover; background: var(--rosa-50); }
     @media (max-width: 1200px) {
