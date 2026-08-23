@@ -19,8 +19,14 @@
 .portada h1 { color: #fff; max-width: 16ch; }
 .portada__texto { color: rgba(255, 255, 255, .82); max-width: 54ch; font-size: 1.06rem; margin-bottom: 34px; }
 .portada__acciones { display: flex; gap: 14px; flex-wrap: wrap; }
+.portada__redes {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 28px; min-width: 0;
+}
+.portada__redes > span {
+  font-size: .82rem; letter-spacing: .18em; text-transform: uppercase; color: rgba(255, 255, 255, .68);
+}
 .portada__datos {
-  display: flex; gap: 56px; margin-top: 64px;
+  display: flex; gap: 56px; margin-top: 48px;
   padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, .2);
   max-width: 620px;
 }

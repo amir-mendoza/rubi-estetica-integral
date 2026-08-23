@@ -2,11 +2,12 @@ import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ESPECIALISTAS, LOCALES, PRODUCTOS, TRATAMIENTOS, soles } from '../../data/datos';
 import { PromoCarruselComponent } from './promo-carrusel.component';
+import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
 
 @Component({
   selector: 'app-inicio',
   standalone: true,
-  imports: [RouterLink, PromoCarruselComponent],
+  imports: [RouterLink, PromoCarruselComponent, RedesEnlacesComponent],
   templateUrl: './inicio.component.html',
   styleUrl: './inicio.component.scss'
 })

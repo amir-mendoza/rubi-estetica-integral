@@ -134,7 +134,7 @@
 .pie a { color: rgba(255, 255, 255, .7); font-size: 1rem; }
 .pie a:hover { color: #fff; }
 .pie__texto { margin: 20px 0 18px; font-size: 1rem; color: rgba(255, 255, 255, .72); max-width: 40ch; }
-.pie__redes { display: flex; gap: 18px; font-size: .9rem; letter-spacing: .12em; text-transform: uppercase; }
+.pie__redes { display: block; margin-top: 18px; }
 .pie__lista-datos li { font-size: 1rem; }
 .pie__legal {
   display: flex; justify-content: space-between; gap: 16px;

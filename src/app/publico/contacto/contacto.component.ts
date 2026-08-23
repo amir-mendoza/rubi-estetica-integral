@@ -1,13 +1,15 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MapaSedeComponent } from '../../compartido/mapa-sede.component';
+import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
+import { RedesService } from '../../compartido/redes.service';
 import { LOCALES } from '../../data/datos';
 
 @Component({
   selector: 'app-contacto',
   standalone: true,
-  imports: [RouterLink, FormsModule, MapaSedeComponent],
+  imports: [RouterLink, FormsModule, MapaSedeComponent, RedesEnlacesComponent],
   template: `
     <section class="cabecera-pagina">
       <div class="contenedor">
@@ -66,9 +68,11 @@ import { LOCALES } from '../../data/datos';
           <div class="panel">
             <h4>Atención inmediata</h4>
             <p>Para reservas del mismo día, escríbenos por WhatsApp.</p>
-            <a href="https://wa.me/51945189720" target="_blank" rel="noopener" class="btn btn--primario btn--sm btn--bloque">
-              Escribir por WhatsApp
-            </a>
+            @if (redes.whatsapp()) {
+              <a [href]="redes.whatsapp()" target="_blank" rel="noopener" class="btn btn--primario btn--sm btn--bloque">
+                Escribir por WhatsApp
+              </a>
+            }
             <a href="tel:945189720" class="btn btn--linea btn--sm btn--bloque" style="margin-top:10px">945 189 720</a>
           </div>
 
@@ -85,14 +89,12 @@ import { LOCALES } from '../../data/datos';
             </div>
           }
 
-          <div class="panel" style="margin-top:22px">
-            <h4>Síguenos</h4>
-            <div class="contacto__redes">
-              <a href="https://www.instagram.com/rubiesteticaintegral346" target="_blank" rel="noopener">Instagram</a>
-              <a href="https://www.tiktok.com/@rubiesteticaintegral" target="_blank" rel="noopener">TikTok</a>
-              <a href="https://www.facebook.com/share/1EmkVciVwj/" target="_blank" rel="noopener">Facebook</a>
+          @if (redes.activas().length) {
+            <div class="panel" style="margin-top:22px">
+              <h4>Síguenos</h4>
+              <app-redes-enlaces [conTexto]="true" />
             </div>
-          </div>
+          }
         </aside>
       </div>
     </section>
@@ -101,11 +103,11 @@ import { LOCALES } from '../../data/datos';
     .contacto { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; align-items: start; }
     .contacto__horario { display: flex; justify-content: space-between; gap: 12px; font-size: .94rem; color: var(--gris); padding: 6px 0; border-bottom: 1px dashed var(--linea); }
     .contacto__horario strong { color: var(--tinta); font-weight: 500; }
-    .contacto__redes { display: flex; flex-direction: column; gap: 10px; font-size: .96rem; }
     @media (max-width: 960px) { .contacto { grid-template-columns: 1fr; } }
   `]
 })
 export class ContactoComponent {
+  readonly redes = inject(RedesService);
   locales = LOCALES;
   nombre = '';
   celular = '';

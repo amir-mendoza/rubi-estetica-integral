@@ -6,18 +6,21 @@ import { LogoComponent } from '../../compartido/logo.component';
 import { SesionService } from '../../compartido/sesion.service';
 import { CarritoService } from '../../compartido/carrito.service';
 import { FondoWebComponent } from '../../compartido/fondo-web.component';
+import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
+import { RedesService } from '../../compartido/redes.service';
 import { LOCALES } from '../../data/datos';
 
 @Component({
   selector: 'app-publico-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent, FondoWebComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent, FondoWebComponent, RedesEnlacesComponent],
   templateUrl: './publico-layout.component.html',
   styleUrl: './publico-layout.component.scss'
 })
 export class PublicoLayoutComponent implements AfterViewInit, OnDestroy {
   readonly sesion = inject(SesionService);
   readonly carrito = inject(CarritoService);
+  readonly redes = inject(RedesService);
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);

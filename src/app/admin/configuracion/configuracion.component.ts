@@ -1,13 +1,15 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LOCALES, cabinasDeSede, cupoDeSede } from '../../data/datos';
 import { MarcaService } from '../../compartido/marca.service';
 import { FondoService } from '../../compartido/fondo.service';
+import { RedesService } from '../../compartido/redes.service';
+import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
 
 @Component({
   selector: 'app-configuracion',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RedesEnlacesComponent],
   template: `
     <div class="cabecera-admin">
       <div>
@@ -36,10 +38,29 @@ import { FondoService } from '../../compartido/fondo.service';
         </div>
         <div class="panel">
           <h4>Redes y canales</h4>
-          <div class="campo"><label>Instagram</label><input type="text" value="@rubiesteticaintegral346"></div>
-          <div class="campo"><label>TikTok</label><input type="text" value="@rubiesteticaintegral"></div>
-          <div class="campo"><label>Facebook</label><input type="text" value="Rubí Estética Integral"></div>
-          <div class="campo"><label>WhatsApp de reservas</label><input type="text" value="+51 945 189 720"></div>
+          <p class="campo__ayuda" style="margin-bottom:18px">
+            El enlace que guardes aquí se usa en el banner del inicio, el pie de página y la página de
+            contacto. Desmarca una red para ocultarla de toda la web.
+          </p>
+
+          @for (r of redes.redes(); track r.red) {
+            <div class="red-config">
+              <label class="red-config__visible">
+                <input type="checkbox" [ngModel]="r.visible" (ngModelChange)="redes.cambiarVisibilidad(r.red, $event)">
+                <span>{{ r.nombre }}</span>
+              </label>
+              <input type="text" [ngModel]="r.url" (ngModelChange)="redes.cambiarUrl(r.red, $event)"
+                     [placeholder]="r.red === 'whatsapp' ? '+51 945 189 720 o https://wa.me/51945189720' : 'https://...'">
+            </div>
+          }
+
+          <div class="red-config__pie">
+            <div>
+              <span class="campo__ayuda">Vista previa de lo que verá la paciente</span>
+              <app-redes-enlaces [conTexto]="true" />
+            </div>
+            <button class="btn btn--linea btn--sm" (click)="redes.restablecer()">Restablecer enlaces</button>
+          </div>
         </div>
       </div>
     }
@@ -384,6 +405,24 @@ import { FondoService } from '../../compartido/fondo.service';
     .pestanas button:hover { border-color: var(--magenta-300); color: var(--magenta); }
     .pestanas button.activa { background: var(--vino); border-color: var(--vino); color: #fff; }
     .grid-config { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+    .red-config {
+      display: grid; grid-template-columns: minmax(min(100%, 130px), 26%) minmax(0, 1fr);
+      gap: 12px; align-items: center; margin-bottom: 12px;
+    }
+    .red-config__visible { display: flex; align-items: center; gap: 9px; font-size: .96rem; color: var(--tinta); cursor: pointer; }
+    .red-config__visible input { accent-color: var(--magenta); }
+    .red-config input[type="text"] {
+      width: 100%; min-width: 0; border: 1px solid var(--linea); border-radius: var(--radio);
+      padding: .6rem .9rem; font-family: inherit; font-size: .94rem; outline: none;
+    }
+    .red-config__pie {
+      display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+      gap: 16px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--linea);
+    }
+    .red-config__pie > div { display: grid; gap: 10px; min-width: 0; }
+    @media (max-width: 720px) {
+      .red-config { grid-template-columns: 1fr; gap: 6px; }
+    }
     .interruptores { display: grid; gap: 12px; }
     .interruptores label { display: flex; gap: 10px; align-items: flex-start; font-size: .94rem; color: var(--gris); cursor: pointer; }
     .interruptores input { margin-top: 3px; accent-color: var(--magenta); }
@@ -474,6 +513,7 @@ export class ConfiguracionComponent {
   locales = LOCALES;
   cupo = cupoDeSede;
   cabinas = (localId: number) => cabinasDeSede(localId).length;
+  readonly redes = inject(RedesService);
   pestanas = ['Negocio', 'Marca', 'Fondo', 'Agenda', 'Pagos', 'Usuarios', 'Sincronización'];
   pestana = signal('Negocio');
   logoRuta = signal('');
