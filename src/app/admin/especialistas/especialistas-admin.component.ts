@@ -111,7 +111,7 @@ function especialistaVacia(): Especialista {
   `,
   styles: [`
     .panel-form { margin-bottom: 22px; }
-    .esp-form { display: grid; grid-template-columns: 150px repeat(4, minmax(150px, 1fr)); gap: 14px; padding: 20px 22px 24px; align-items: end; }
+    .esp-form { display: grid; grid-template-columns: minmax(min(100%, 120px), 150px) repeat(4, minmax(min(100%, 150px), 1fr)); gap: 14px; padding: 20px 4% 24px; align-items: end; }
     .esp-form__foto { grid-row: span 3; display: grid; gap: 10px; align-content: start; }
     .esp-form__foto img { width: 126px; height: 126px; object-fit: cover; border-radius: 50%; border: 1px solid var(--linea); background: var(--rosa-50); }
     .esp-form__ancho { grid-column: 2 / -1; }

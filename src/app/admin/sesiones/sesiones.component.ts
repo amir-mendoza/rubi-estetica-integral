@@ -371,13 +371,14 @@ interface DiaDisponible {
     }
     .accion:hover { border-color: var(--magenta-300); color: var(--magenta); }
     .accion--activa { background: var(--vino); border-color: var(--vino); color: #fff; }
-    .plan__pie { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 24px; border-top: 1px solid var(--linea); background: var(--rosa-50); }
+    .plan__pie { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px; padding: 18px 4%; border-top: 1px solid var(--linea); background: var(--rosa-50); }
+    .plan__pie > * { min-width: 0; max-width: 100%; }
     .plan__notas { margin: 0; font-size: .9rem; font-style: italic; }
     .plan__acciones { display: flex; gap: 10px; flex-wrap: wrap; }
-    .accion-explicada { display: grid; gap: 5px; max-width: 240px; }
+    .accion-explicada { display: grid; gap: 5px; max-width: min(100%, 240px); }
     .accion-explicada small, .cobro-plan small { color: var(--gris); font-size: .86rem; line-height: 1.4; }
     .cobro-plan {
-      display: grid; grid-template-columns: 130px 130px auto auto; gap: 10px; align-items: end;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: 10px; align-items: end; min-width: 0;
       padding: 12px; border: 1px solid var(--linea); border-radius: var(--radio); background: #fff;
     }
     .cobro-plan small { grid-column: 1 / -1; }
@@ -469,6 +470,13 @@ interface DiaDisponible {
       .cobro-plan { grid-template-columns: 1fr; }
       .programador-sesion__controles { grid-template-columns: 1fr; }
       .semana-disponible { grid-template-columns: repeat(7, 128px); }
+    }
+
+    @media (max-width: 720px) {
+      .plan__acciones { width: 100%; }
+      .plan__acciones > * { flex: 1 1 100%; }
+      .cobro-plan { grid-template-columns: 1fr; }
+      .cobro-plan .btn { width: 100%; }
     }
   `]
 })

@@ -145,8 +145,13 @@ hr { border: none; border-top: 1px solid var(--linea); margin: 2.5rem 0; }
   width: 100%;
   max-width: var(--contenedor);
   margin: 0 auto;
-  padding: 0 28px;
+  padding: 0 clamp(14px, 4%, 28px);
 }
+
+/* Todo lo que puede desbordar en pantallas estrechas queda contenido */
+img, svg, video, iframe, canvas { max-width: 100%; }
+.contenedor > *,
+.grid > * { min-width: 0; }
 
 .seccion { padding: 96px 0; }
 .seccion--compacta { padding: 64px 0; }
@@ -161,9 +166,9 @@ hr { border: none; border-top: 1px solid var(--linea); margin: 2.5rem 0; }
 .encabezado-seccion.texto-centro { margin-left: auto; margin-right: auto; }
 
 .grid { display: grid; gap: 28px; }
-.grid-2 { grid-template-columns: repeat(2, 1fr); }
-.grid-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
 /* ---------------------------------------------------------------- Botones */
 .btn {
@@ -497,10 +502,10 @@ table.tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
   background: #fff; border: 1px solid var(--linea); border-radius: var(--radio-lg);
   padding: 16px 18px; margin-bottom: 22px;
 }
-.barra-filtros .campo { margin: 0; min-width: 170px; }
+.barra-filtros .campo { margin: 0; min-width: min(100%, 170px); }
 .barra-filtros .campo > label { font-size: .78rem; }
 .barra-filtros .campo input, .barra-filtros .campo select { padding: .55rem .7rem; font-size: .94rem; }
-.barra-filtros__crecer { flex: 1; min-width: 220px; }
+.barra-filtros__crecer { flex: 1 1 55%; min-width: min(100%, 220px); }
 
 .tabla-panel { background: #fff; border: 1px solid var(--linea); border-radius: var(--radio-lg); overflow: hidden; }
 .tabla-panel__cabecera {
@@ -780,9 +785,26 @@ html.fondo-medios app-publico-layout .cabecera-pagina { background: rgba(255, 24
     transition: transform .45s cubic-bezier(.22,.61,.36,1), box-shadow .45s cubic-bezier(.22,.61,.36,1), border-color .45s ease;
   }
 
-  @media (max-width: 900px) {
-    app-publico-layout .animar-scroll--izquierda { transform: translate3d(-34px, 26px, 0) scale(.99); }
-    app-publico-layout .animar-scroll--derecha { transform: translate3d(34px, 26px, 0) scale(.99); }
-    app-publico-layout .animar-scroll--giro { transform: translate3d(0, 32px, 0) rotate(-2.5deg) scale(.96); }
+  /* Las entradas laterales se recortan dentro de su sección para que nunca
+     generen ancho extra en la página */
+  app-publico-layout .seccion,
+  app-publico-layout .pie,
+  app-publico-layout .cabecera-pagina { overflow-x: clip; }
+
+  /* En móvil y tablet la entrada es solo vertical: cualquier desplazamiento
+     lateral rompe el ancho de la página en pantallas estrechas. */
+  @media (max-width: 1024px) {
+    app-publico-layout .animar-scroll,
+    app-publico-layout .animar-scroll--izquierda,
+    app-publico-layout .animar-scroll--derecha,
+    app-publico-layout .animar-scroll--giro,
+    app-publico-layout .animar-scroll--zoom {
+      transform: translate3d(0, 26px, 0);
+      transition:
+        opacity 1.1s cubic-bezier(.16, .68, .2, 1),
+        transform 1.1s cubic-bezier(.16, .68, .2, 1);
+    }
+
+    app-publico-layout .animar-scroll--visible { transform: none; }
   }
 }

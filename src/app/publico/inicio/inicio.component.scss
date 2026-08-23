@@ -15,7 +15,7 @@
     linear-gradient(100deg, rgba(77, 13, 39, .9) 0%, rgba(110, 19, 56, .72) 45%, rgba(110, 19, 56, .18) 100%),
     radial-gradient(circle at 74% 24%, rgba(255, 255, 255, .12), transparent 34%);
 }
-.portada__contenido { position: relative; padding: 96px 28px; max-width: 1240px; }
+.portada__contenido { position: relative; padding: 96px clamp(14px, 4%, 28px); max-width: 1240px; }
 .portada h1 { color: #fff; max-width: 16ch; }
 .portada__texto { color: rgba(255, 255, 255, .82); max-width: 54ch; font-size: 1.06rem; margin-bottom: 34px; }
 .portada__acciones { display: flex; gap: 14px; flex-wrap: wrap; }

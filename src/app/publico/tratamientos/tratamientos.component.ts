@@ -105,7 +105,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
       padding-bottom: 20px; border-bottom: 1px solid var(--linea);
     }
     .filtros__grupo { display: flex; gap: 10px; flex-wrap: wrap; }
-    .tratamientos-layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 28px; align-items: start; }
+    .tratamientos-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(min(100%, 260px), 24%); gap: 28px; align-items: start; }
     .tratamientos-lista { min-width: 0; }
     .promo-vertical {
       position: sticky; top: 96px; min-width: 0; padding: 18px;

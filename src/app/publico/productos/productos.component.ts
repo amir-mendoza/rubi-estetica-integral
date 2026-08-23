@@ -83,13 +83,18 @@ import { Producto } from '../../data/modelos';
     }
     .filtro:hover { border-color: var(--magenta-300); color: var(--magenta); }
     .filtro--activo { background: var(--vino); border-color: var(--vino); color: #fff; }
-    .barra-tienda__buscador { display: flex; gap: 12px; align-items: center; }
+    .barra-tienda__buscador { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; min-width: 0; }
     .barra-tienda__buscador input {
       border: 1px solid var(--linea); border-radius: var(--radio);
-      padding: .6rem .9rem; font-family: inherit; font-size: .94rem; min-width: 240px; outline: none;
+      padding: .6rem .9rem; font-family: inherit; font-size: .94rem; outline: none;
+      flex: 1 1 55%; min-width: 0; width: 100%; max-width: 100%;
     }
     .barra-tienda__buscador input:focus { border-color: var(--magenta-300); }
     .chip { align-self: flex-start; }
+    @media (max-width: 640px) {
+      .barra-tienda, .barra-tienda__buscador { width: 100%; }
+      .barra-tienda__buscador .btn { flex: 1 1 100%; }
+    }
   `]
 })
 export class ProductosComponent {

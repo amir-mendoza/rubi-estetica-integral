@@ -145,7 +145,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
     .promociones__marco:active { cursor: grabbing; }
     .promo {
       display: none;
-      grid-template-columns: minmax(300px, 470px) minmax(0, 1fr);
+      grid-template-columns: minmax(min(100%, 300px), 470px) minmax(0, 1fr);
       align-items: stretch;
     }
     .promo--activa {
