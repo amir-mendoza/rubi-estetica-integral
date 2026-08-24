@@ -8,6 +8,7 @@ import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component'
 import { CargadorService } from '../../compartido/cargador.service';
 import { CargadorRuedaComponent } from '../../compartido/cargador-rueda.component';
 import { SubidasService } from '../../compartido/subidas.service';
+import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartido/configuracion-panel.service';
 
 @Component({
   selector: 'app-configuracion',
@@ -20,7 +21,10 @@ import { SubidasService } from '../../compartido/subidas.service';
         <p>Parámetros del negocio, agenda, pagos, usuarios y preparación para la etapa offline.</p>
       </div>
       <div class="cabecera-admin__acciones">
-        <button class="btn btn--vino btn--sm">Guardar cambios</button>
+        @if (configPanel.ultimaActualizacion()) {
+          <span class="chip chip--ok">Guardado {{ configPanel.ultimaActualizacion() }}</span>
+        }
+        <button class="btn btn--vino btn--sm" (click)="guardarTodo()">Guardar cambios</button>
       </div>
     </div>
 
@@ -34,10 +38,18 @@ import { SubidasService } from '../../compartido/subidas.service';
       <div class="grid-config">
         <div class="panel">
           <h4>Datos del negocio</h4>
-          <div class="campo"><label>Nombre comercial</label><input type="text" value="Rubí Estética Integral"></div>
-          <div class="campo"><label>RUC</label><input type="text" value="10 4XX XXX XX1"></div>
-          <div class="campo"><label>Teléfono principal</label><input type="text" value="945 189 720"></div>
-          <div class="campo"><label>Correo de contacto</label><input type="email" value="contacto@rubiestetica.pe"></div>
+          <div class="campo"><label>Nombre comercial</label>
+            <input type="text" [ngModel]="configPanel.negocio().nombreComercial" (ngModelChange)="configPanel.actualizarNegocio({ nombreComercial: $event })">
+          </div>
+          <div class="campo"><label>RUC</label>
+            <input type="text" [ngModel]="configPanel.negocio().ruc" (ngModelChange)="configPanel.actualizarNegocio({ ruc: $event })">
+          </div>
+          <div class="campo"><label>Teléfono principal</label>
+            <input type="text" [ngModel]="configPanel.negocio().telefonoPrincipal" (ngModelChange)="configPanel.actualizarNegocio({ telefonoPrincipal: $event })">
+          </div>
+          <div class="campo"><label>Correo de contacto</label>
+            <input type="email" [ngModel]="configPanel.negocio().correoContacto" (ngModelChange)="configPanel.actualizarNegocio({ correoContacto: $event })">
+          </div>
         </div>
         <div class="panel">
           <h4>Redes y canales</h4>
@@ -385,30 +397,39 @@ import { SubidasService } from '../../compartido/subidas.service';
         <div class="panel">
           <h4>Reglas de la agenda</h4>
           <div class="campo"><label>Duración del bloque horario</label>
-            <select><option>60 minutos</option><option>90 minutos</option><option>30 minutos</option></select>
+            <select [ngModel]="configPanel.agenda().bloqueMin" (ngModelChange)="cambiarBloqueMin($event)">
+              <option [ngValue]="60">60 minutos</option><option [ngValue]="90">90 minutos</option><option [ngValue]="30">30 minutos</option>
+            </select>
           </div>
           <div class="campo"><label>Días entre sesiones de un plan multisesión</label>
-            <select><option>15 días</option><option>30 días</option><option>7 días</option></select>
+            <select [ngModel]="configPanel.agenda().intervaloDias" (ngModelChange)="cambiarIntervaloDias($event)">
+              <option [ngValue]="15">15 días</option><option [ngValue]="30">30 días</option><option [ngValue]="7">7 días</option>
+            </select>
             <span class="campo__ayuda">Valor sugerido al programar la siguiente sesión de un plan.</span>
           </div>
           <div class="campo"><label>Llegada recomendada antes de la hora reservada</label>
-            <select><option>20 minutos antes</option><option>30 minutos antes</option><option>15 minutos antes</option></select>
+            <select [ngModel]="configPanel.agenda().llegadaMin" (ngModelChange)="cambiarLlegadaMin($event)">
+              <option [ngValue]="20">20 minutos antes</option><option [ngValue]="30">30 minutos antes</option><option [ngValue]="15">15 minutos antes</option>
+            </select>
             <span class="campo__ayuda">Mensaje visible para pacientes: si llegan tarde no pierden la reserva, pero podrían esperar cabina disponible.</span>
           </div>
           @for (l of locales; track l.id) {
             <div class="campo">
               <label>Pacientes por hora en {{ l.nombre }} ({{ cabinas(l.id) }} cabinas)</label>
-              <input type="number" [value]="cupo(l.id)" min="1" max="20">
+              <input type="number" [ngModel]="configPanel.obtenerCupoLocal(l.id)" (ngModelChange)="configPanel.actualizarCupoLocal(l.id, +$event)" min="1" max="20">
               <span class="campo__ayuda">
-                Al llegar a {{ cupo(l.id) }} reservas, esa hora se cierra y la paciente pasa a la siguiente.
+                Al llegar a {{ configPanel.obtenerCupoLocal(l.id) }} reservas, esa hora se cierra y la paciente pasa a la siguiente.
               </span>
             </div>
           }
           <div class="interruptores">
-            <label><input type="checkbox" checked> Cerrar el bloque horario al llegar a su cupo</label>
-            <label><input type="checkbox" checked> Atención las 24 horas en ambas sedes</label>
-            <label><input type="checkbox" checked> Asignar cabina y especialista en el local, al llegar la paciente</label>
-            <label><input type="checkbox" checked> Aceptar pacientes sin cita según disponibilidad del momento</label>
+            <label><input type="checkbox" [ngModel]="configPanel.agenda().cerrarAlLlegarCupo" (ngModelChange)="configPanel.actualizarAgenda({ cerrarAlLlegarCupo: $event })"> Cerrar el bloque horario al llegar a su cupo</label>
+            <label><input type="checkbox" [ngModel]="configPanel.agenda().atencion24h" (ngModelChange)="configPanel.actualizarAgenda({ atencion24h: $event })"> Atención las 24 horas en ambas sedes</label>
+            <label><input type="checkbox" [ngModel]="configPanel.agenda().asignarAlLlegar" (ngModelChange)="configPanel.actualizarAgenda({ asignarAlLlegar: $event })"> Asignar cabina y especialista en el local, al llegar la paciente</label>
+            <label><input type="checkbox" [ngModel]="configPanel.agenda().aceptarSinCita" (ngModelChange)="configPanel.actualizarAgenda({ aceptarSinCita: $event })"> Aceptar pacientes sin cita según disponibilidad del momento</label>
+          </div>
+          <div class="acciones-marca">
+            <button class="btn btn--linea btn--sm" (click)="configPanel.restablecerAgenda()">Restablecer agenda</button>
           </div>
         </div>
 
@@ -417,11 +438,11 @@ import { SubidasService } from '../../compartido/subidas.service';
           @for (l of locales; track l.id) {
             <div class="horario-config">
               <strong>{{ l.nombre }}</strong>
-              @for (h of l.horario; track h.dias) {
+              @for (h of configPanel.obtenerHorariosLocal(l.id); track h.dias; let i = $index) {
                 <div class="horario-config__fila">
                   <span>{{ h.dias }}</span>
-                  <input type="time" [value]="h.apertura">
-                  <input type="time" [value]="h.cierre">
+                  <input type="time" [ngModel]="h.apertura" (ngModelChange)="configPanel.actualizarAgendaHorario(l.id, i, 'apertura', $event)" [disabled]="configPanel.agenda().atencion24h">
+                  <input type="time" [ngModel]="h.cierre" (ngModelChange)="configPanel.actualizarAgendaHorario(l.id, i, 'cierre', $event)" [disabled]="configPanel.agenda().atencion24h">
                 </div>
               }
             </div>
@@ -434,23 +455,40 @@ import { SubidasService } from '../../compartido/subidas.service';
       <div class="grid-config">
         <div class="panel">
           <h4>Pasarela Izipay</h4>
-          <div class="campo"><label>Modo</label><select><option>Pruebas (sandbox)</option><option>Producción</option></select></div>
-          <div class="campo"><label>Identificador de comercio</label><input type="text" value="—" placeholder="Se configura en la etapa de integración"></div>
-          <div class="campo"><label>URL del webhook de confirmación</label><input type="text" value="https://api.rubiestetica.pe/pagos/izipay/webhook"></div>
+          <div class="campo"><label>Modo</label>
+            <select [ngModel]="configPanel.pagos().modoIzipay" (ngModelChange)="configPanel.actualizarPagos({ modoIzipay: $event })">
+              <option value="sandbox">Pruebas (sandbox)</option><option value="produccion">Producción</option>
+            </select>
+          </div>
+          <div class="campo"><label>Identificador de comercio</label>
+            <input type="text" [ngModel]="configPanel.pagos().merchantId" (ngModelChange)="configPanel.actualizarPagos({ merchantId: $event })" placeholder="Se configura en la etapa de integración">
+          </div>
+          <div class="campo"><label>URL del webhook de confirmación</label>
+            <input type="text" [ngModel]="configPanel.pagos().webhookUrl" (ngModelChange)="configPanel.actualizarPagos({ webhookUrl: $event })">
+          </div>
           <div class="interruptores">
-            <label><input type="checkbox" checked> Marcar la cita como pagada solo con la confirmación del webhook</label>
-            <label><input type="checkbox" checked> Registrar el código de operación en cada movimiento</label>
+            <label><input type="checkbox" [ngModel]="configPanel.pagos().confirmarConWebhook" (ngModelChange)="configPanel.actualizarPagos({ confirmarConWebhook: $event })"> Marcar la cita como pagada solo con la confirmación del webhook</label>
+            <label><input type="checkbox" [ngModel]="configPanel.pagos().registrarCodigoOperacion" (ngModelChange)="configPanel.actualizarPagos({ registrarCodigoOperacion: $event })"> Registrar el código de operación en cada movimiento</label>
           </div>
         </div>
         <div class="panel">
           <h4>Cobros en local</h4>
           <div class="interruptores">
-            <label><input type="checkbox" checked> Efectivo (único método presencial habilitado)</label>
-            <label><input type="checkbox" checked> Registrar quién confirmó cada cobro en efectivo</label>
+            <label><input type="checkbox" [ngModel]="configPanel.pagos().metodosPresenciales['Efectivo']" (ngModelChange)="configPanel.actualizarMetodoPresencial('Efectivo', $event)"> Efectivo</label>
+            <label><input type="checkbox" [ngModel]="configPanel.pagos().metodosPresenciales['Yape']" (ngModelChange)="configPanel.actualizarMetodoPresencial('Yape', $event)"> Yape</label>
+            <label><input type="checkbox" [ngModel]="configPanel.pagos().metodosPresenciales['Plin']" (ngModelChange)="configPanel.actualizarMetodoPresencial('Plin', $event)"> Plin</label>
+            <label><input type="checkbox" [ngModel]="configPanel.pagos().metodosPresenciales['Tarjeta POS']" (ngModelChange)="configPanel.actualizarMetodoPresencial('Tarjeta POS', $event)"> Tarjeta POS</label>
+            <label><input type="checkbox" [ngModel]="configPanel.pagos().metodosPresenciales['Transferencia']" (ngModelChange)="configPanel.actualizarMetodoPresencial('Transferencia', $event)"> Transferencia</label>
+            <label><input type="checkbox" [ngModel]="configPanel.pagos().registrarQuienCobra" (ngModelChange)="configPanel.actualizarPagos({ registrarQuienCobra: $event })"> Registrar quién confirmó cada cobro</label>
           </div>
           <div class="campo" style="margin-top:18px">
             <label>Adelanto requerido para reservar en línea</label>
-            <select><option>Sin adelanto</option><option>30 % del tratamiento</option><option>50 % del tratamiento</option><option>Pago completo</option></select>
+            <select [ngModel]="configPanel.pagos().adelantoReserva" (ngModelChange)="configPanel.actualizarPagos({ adelantoReserva: $event })">
+              <option value="ninguno">Sin adelanto</option><option value="30">30 % del tratamiento</option><option value="50">50 % del tratamiento</option><option value="100">Pago completo</option>
+            </select>
+          </div>
+          <div class="acciones-marca">
+            <button class="btn btn--linea btn--sm" (click)="configPanel.restablecerPagos()">Restablecer pagos</button>
           </div>
         </div>
       </div>
@@ -460,20 +498,48 @@ import { SubidasService } from '../../compartido/subidas.service';
       <div class="tabla-panel">
         <div class="tabla-panel__cabecera">
           <h3>Usuarios del sistema</h3>
-          <button class="btn btn--linea btn--sm">Nuevo usuario</button>
+          <button class="btn btn--linea btn--sm" (click)="nuevoUsuario()">Nuevo usuario</button>
         </div>
+        @if (mostrarFormularioUsuario()) {
+          <div class="panel" style="margin-bottom:18px">
+            <h4>{{ indiceUsuarioEditando() === null ? 'Nuevo usuario' : 'Editar usuario' }}</h4>
+            <div class="grid-config">
+              <div class="campo"><label>Nombre visible</label><input type="text" [ngModel]="usuarioForm().nombre" (ngModelChange)="actualizarUsuarioForm('nombre', $event)"></div>
+              <div class="campo"><label>Usuario</label><input type="text" [ngModel]="usuarioForm().usuario" (ngModelChange)="actualizarUsuarioForm('usuario', $event)"></div>
+              <div class="campo"><label>Rol</label>
+                <select [ngModel]="usuarioForm().rol" (ngModelChange)="actualizarUsuarioForm('rol', $event)">
+                  <option value="Administrador">Administrador</option>
+                  <option value="Recepcionista">Recepcionista</option>
+                  <option value="Especialista">Especialista</option>
+                </select>
+              </div>
+              <div class="campo"><label>Local</label><input type="text" [ngModel]="usuarioForm().local" (ngModelChange)="actualizarUsuarioForm('local', $event)"></div>
+            </div>
+            <div class="campo"><label>Permisos</label><input type="text" [ngModel]="usuarioForm().permisos" (ngModelChange)="actualizarUsuarioForm('permisos', $event)"></div>
+            <div class="interruptores">
+              <label><input type="checkbox" [ngModel]="usuarioForm().activo" (ngModelChange)="actualizarUsuarioForm('activo', $event)"> Usuario activo</label>
+            </div>
+            <div class="acciones-marca">
+              <button class="btn btn--vino btn--sm" (click)="guardarUsuario()" [disabled]="!usuarioFormValido()">Guardar usuario</button>
+              <button class="btn btn--linea btn--sm" (click)="cancelarEdicionUsuario()">Cancelar</button>
+            </div>
+          </div>
+        }
         <div class="tabla-envoltura">
           <table class="tabla">
             <thead><tr><th>Usuario</th><th>Rol</th><th>Local</th><th>Permisos</th><th>Estado</th><th></th></tr></thead>
             <tbody>
-              @for (u of usuarios; track u.usuario) {
+              @for (u of configPanel.usuarios(); track u.usuario; let i = $index) {
                 <tr>
                   <td><div class="mini-dato"><strong>{{ u.nombre }}</strong><span>{{ u.usuario }}</span></div></td>
                   <td>{{ u.rol }}</td>
                   <td>{{ u.local }}</td>
                   <td>{{ u.permisos }}</td>
-                  <td><span class="chip chip--ok chip--punto">Activo</span></td>
-                  <td class="num"><button class="boton-icono">Editar</button></td>
+                  <td><span class="chip" [class.chip--ok]="u.activo" [class.chip--neutro]="!u.activo">{{ u.activo ? 'Activo' : 'Inactivo' }}</span></td>
+                  <td class="num">
+                    <button class="boton-icono" (click)="editarUsuario(i)">Editar</button>
+                    <button class="boton-icono" (click)="eliminarUsuario(i)">Eliminar</button>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -491,15 +557,26 @@ import { SubidasService } from '../../compartido/subidas.service';
         </p>
         <div class="grid-config" style="margin-top:20px">
           <div>
-            <div class="campo"><label>Frecuencia de sincronización</label><select><option>Cada 5 minutos</option><option>Cada 15 minutos</option></select></div>
-            <div class="campo"><label>Bloquear reservas del día si un local no sincroniza hace</label><select><option>30 minutos</option><option>60 minutos</option></select></div>
+            <div class="campo"><label>Frecuencia de sincronización</label>
+              <select [ngModel]="configPanel.sincronizacion().frecuenciaMin" (ngModelChange)="cambiarFrecuenciaSync($event)">
+                <option [ngValue]="5">Cada 5 minutos</option><option [ngValue]="15">Cada 15 minutos</option>
+              </select>
+            </div>
+            <div class="campo"><label>Bloquear reservas del día si un local no sincroniza hace</label>
+              <select [ngModel]="configPanel.sincronizacion().bloquearReservasTrasMin" (ngModelChange)="cambiarBloqueoSync($event)">
+                <option [ngValue]="30">30 minutos</option><option [ngValue]="60">60 minutos</option>
+              </select>
+            </div>
           </div>
           <div class="interruptores">
-            <label><input type="checkbox" checked> Registrar uuid global en cada operación</label>
-            <label><input type="checkbox" checked> Registrar el local de origen de cada registro</label>
-            <label><input type="checkbox" checked> Usar borrado lógico en lugar de borrado físico</label>
-            <label><input type="checkbox" checked> Mantener marcas de creación y actualización</label>
+            <label><input type="checkbox" [ngModel]="configPanel.sincronizacion().registrarUuid" (ngModelChange)="configPanel.actualizarSincronizacion({ registrarUuid: $event })"> Registrar uuid global en cada operación</label>
+            <label><input type="checkbox" [ngModel]="configPanel.sincronizacion().registrarLocalOrigen" (ngModelChange)="configPanel.actualizarSincronizacion({ registrarLocalOrigen: $event })"> Registrar el local de origen de cada registro</label>
+            <label><input type="checkbox" [ngModel]="configPanel.sincronizacion().usarBorradoLogico" (ngModelChange)="configPanel.actualizarSincronizacion({ usarBorradoLogico: $event })"> Usar borrado lógico en lugar de borrado físico</label>
+            <label><input type="checkbox" [ngModel]="configPanel.sincronizacion().mantenerTimestamps" (ngModelChange)="configPanel.actualizarSincronizacion({ mantenerTimestamps: $event })"> Mantener marcas de creación y actualización</label>
           </div>
+        </div>
+        <div class="acciones-marca">
+          <button class="btn btn--linea btn--sm" (click)="configPanel.restablecerSincronizacion()">Restablecer sincronización</button>
         </div>
       </div>
     }
@@ -673,8 +750,8 @@ export class ConfiguracionComponent {
   }
 
   locales = LOCALES;
-  cupo = cupoDeSede;
   cabinas = (localId: number) => cabinasDeSede(localId).length;
+  readonly configPanel = inject(ConfiguracionPanelService);
   readonly redes = inject(RedesService);
   readonly cargador = inject(CargadorService);
   readonly subidas = inject(SubidasService);
@@ -683,6 +760,16 @@ export class ConfiguracionComponent {
   logoRuta = signal('');
   logoAdminRuta = signal('');
   faviconRuta = signal('');
+  mostrarFormularioUsuario = signal(false);
+  indiceUsuarioEditando = signal<number | null>(null);
+  usuarioForm = signal<UsuarioSistemaConfig>({
+    nombre: '',
+    usuario: '',
+    rol: 'Recepcionista',
+    local: 'Sede Las Flores 1522',
+    permisos: '',
+    activo: true
+  });
   tamanosCarga = [
     { id: 'compacto' as const, nombre: 'Compacto' },
     { id: 'medio' as const, nombre: 'Medio' },
@@ -690,13 +777,29 @@ export class ConfiguracionComponent {
     { id: 'personalizado' as const, nombre: 'Personalizado' }
   ];
 
-  usuarios = [
-    { nombre: 'Rubí Salazar', usuario: 'rubi.admin', rol: 'Administradora', local: 'Ambas sedes', permisos: 'Acceso total' },
-    { nombre: 'Milagros Ríos', usuario: 'milagros.recepcion', rol: 'Recepcionista', local: 'Sede Las Flores 1522', permisos: 'Agenda, pacientes y cobros' },
-    { nombre: 'Jazmín Cabrera', usuario: 'jazmin.recepcion', rol: 'Recepcionista', local: 'Sede Las Flores 1544', permisos: 'Agenda, pacientes y cobros' },
-    { nombre: 'Ana Torres', usuario: 'ana.especialista', rol: 'Especialista', local: 'Sede Las Flores 1522', permisos: 'Sus citas y observaciones' },
-    { nombre: 'Lucía Ramos', usuario: 'lucia.especialista', rol: 'Especialista', local: 'Sede Las Flores 1544', permisos: 'Sus citas y observaciones' }
-  ];
+  guardarTodo(): void {
+    this.configPanel.guardarTodo();
+  }
+
+  cambiarBloqueMin(valor: string | number): void {
+    this.configPanel.actualizarAgenda({ bloqueMin: Number(valor) as 30 | 60 | 90 });
+  }
+
+  cambiarIntervaloDias(valor: string | number): void {
+    this.configPanel.actualizarAgenda({ intervaloDias: Number(valor) as 7 | 15 | 30 });
+  }
+
+  cambiarLlegadaMin(valor: string | number): void {
+    this.configPanel.actualizarAgenda({ llegadaMin: Number(valor) as 15 | 20 | 30 });
+  }
+
+  cambiarFrecuenciaSync(valor: string | number): void {
+    this.configPanel.actualizarSincronizacion({ frecuenciaMin: Number(valor) as 5 | 15 });
+  }
+
+  cambiarBloqueoSync(valor: string | number): void {
+    this.configPanel.actualizarSincronizacion({ bloquearReservasTrasMin: Number(valor) as 30 | 60 });
+  }
 
   guardarLogo(): void {
     this.marca.cambiarLogo(this.logoRuta());
@@ -768,6 +871,66 @@ export class ConfiguracionComponent {
     this.logoRuta.set(this.marca.logoSitio());
     this.logoAdminRuta.set(this.marca.logoAdmin());
     this.faviconRuta.set(this.marca.faviconSitio());
+  }
+
+  nuevoUsuario(): void {
+    this.indiceUsuarioEditando.set(null);
+    this.usuarioForm.set({
+      nombre: '',
+      usuario: '',
+      rol: 'Recepcionista',
+      local: 'Sede Las Flores 1522',
+      permisos: '',
+      activo: true
+    });
+    this.mostrarFormularioUsuario.set(true);
+  }
+
+  editarUsuario(indice: number): void {
+    const usuario = this.configPanel.usuarios()[indice];
+    if (!usuario) { return; }
+    this.indiceUsuarioEditando.set(indice);
+    this.usuarioForm.set({ ...usuario });
+    this.mostrarFormularioUsuario.set(true);
+  }
+
+  actualizarUsuarioForm<K extends keyof UsuarioSistemaConfig>(campo: K, valor: UsuarioSistemaConfig[K]): void {
+    this.usuarioForm.set({ ...this.usuarioForm(), [campo]: valor });
+  }
+
+  usuarioFormValido(): boolean {
+    const form = this.usuarioForm();
+    return !!(form.nombre.trim() && form.usuario.trim() && form.local.trim() && form.permisos.trim());
+  }
+
+  guardarUsuario(): void {
+    if (!this.usuarioFormValido()) { return; }
+    const form = {
+      ...this.usuarioForm(),
+      nombre: this.usuarioForm().nombre.trim(),
+      usuario: this.usuarioForm().usuario.trim(),
+      local: this.usuarioForm().local.trim(),
+      permisos: this.usuarioForm().permisos.trim()
+    };
+    const indice = this.indiceUsuarioEditando();
+    if (indice === null) {
+      this.configPanel.agregarUsuario(form);
+    } else {
+      this.configPanel.actualizarUsuario(indice, form);
+    }
+    this.cancelarEdicionUsuario();
+  }
+
+  cancelarEdicionUsuario(): void {
+    this.mostrarFormularioUsuario.set(false);
+    this.indiceUsuarioEditando.set(null);
+  }
+
+  eliminarUsuario(indice: number): void {
+    this.configPanel.eliminarUsuario(indice);
+    if (this.indiceUsuarioEditando() === indice) {
+      this.cancelarEdicionUsuario();
+    }
   }
 
   private cargarImagen(evento: Event, listo: (ruta: string) => void): void {

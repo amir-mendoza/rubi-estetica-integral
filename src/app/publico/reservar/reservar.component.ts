@@ -11,12 +11,12 @@ import { PromocionesService } from '../../compartido/promociones.service';
 import { PagosOnlineService } from '../../compartido/pagos-online.service';
 import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
 import { RedesService } from '../../compartido/redes.service';
+import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
 
 const MINUTOS_RESERVA_PROCESO = 8;
 const MINUTOS_EXTENSION_RESERVA = 5;
 const SEGUNDOS_RESPUESTA_EXTENSION = 30;
 const CLAVE_PROCESO_RESERVA = 'rubi.reserva-en-proceso';
-const PORCENTAJE_ADELANTO_RESERVA = 30;
 
 const CATEGORIAS: (CategoriaTratamiento | 'Todos')[] = [
   'Todos', 'Facial', 'Corporal', 'Aparatología', 'Medicina estética'
@@ -36,10 +36,11 @@ export class ReservarComponent {
   private promociones = inject(PromocionesService);
   private pagosOnline = inject(PagosOnlineService);
   readonly redes = inject(RedesService);
+  readonly configPanel = inject(ConfiguracionPanelService);
 
   soles = soles;
   formatoFechaLarga = formatoFechaLarga;
-  adelantoPorcentaje = PORCENTAJE_ADELANTO_RESERVA;
+  adelantoPorcentaje = computed(() => this.configPanel.adelantoReservaPorcentaje());
 
   locales = LOCALES;
   categorias = CATEGORIAS;
@@ -141,7 +142,8 @@ export class ReservarComponent {
     const total = this.totalReserva();
     if (this.metodoPago() !== 'Izipay') { return total; }
     if (this.modalidadPagoOnline() === 'adelanto') {
-      return Math.max(1, Math.round(total * (PORCENTAJE_ADELANTO_RESERVA / 100)));
+      const porcentaje = this.adelantoPorcentaje();
+      return porcentaje > 0 ? Math.max(1, Math.round(total * (porcentaje / 100))) : total;
     }
     return total;
   });

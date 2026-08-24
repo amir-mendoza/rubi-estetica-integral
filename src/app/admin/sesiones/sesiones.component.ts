@@ -1,8 +1,9 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CITAS, LOCALES, formatoFechaLarga, nombrePaciente, pacientePorId, soles, PACIENTES, TRATAMIENTOS, PROMOCIONES, aISO, cupoDeSede } from '../../data/datos';
+import { CITAS, LOCALES, formatoFechaLarga, nombrePaciente, pacientePorId, soles, PACIENTES, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
 import { ESTADOS_SESION, EstadoSesion, PlanSesiones, SesionPlan, Paciente, MetodoPago } from '../../data/modelos';
 import { PlanesService } from '../../compartido/planes.service';
+import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
 
 interface HoraDisponible {
   hora: string;
@@ -481,6 +482,7 @@ interface DiaDisponible {
   `]
 })
 export class SesionesComponent {
+  private configPanel = inject(ConfiguracionPanelService);
   Number = Number;
   soles = soles;
   fechaLarga = formatoFechaLarga;
@@ -625,7 +627,7 @@ export class SesionesComponent {
 
   horasDisponibles(plan: PlanSesiones, fecha: string): HoraDisponible[] {
     const localId = plan.localId || LOCALES[0]?.id || 1;
-    const cupo = cupoDeSede(localId);
+    const cupo = this.configPanel.obtenerCupoLocal(localId);
     return this.horasAgenda.map(hora => {
       const ocupadas = CITAS.filter(c =>
         c.fecha === fecha &&

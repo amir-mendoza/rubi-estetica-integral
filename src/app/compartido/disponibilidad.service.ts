@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
-import { AGENDA, CITAS, LOCALES, aISO, cabinasDeSede, cupoDeSede } from '../data/datos';
+import { Injectable, inject } from '@angular/core';
+import { CITAS, LOCALES, aISO, cabinasDeSede } from '../data/datos';
 import { Cita, Local } from '../data/modelos';
+import { ConfiguracionPanelService } from './configuracion-panel.service';
 
 /**
  * Bloque horario de la agenda. La paciente reserva la hora a la que piensa
@@ -45,16 +46,18 @@ const CLAVE_SESION_RETENCION = 'rubi.retenciones-sesion';
 
 @Injectable({ providedIn: 'root' })
 export class DisponibilidadService {
+  private configPanel = inject(ConfiguracionPanelService);
   private sessionId = this.leerSessionId();
 
   /** Horario del local para la fecha indicada (respetando el horario configurable). */
   horarioDelDia(local: Local, fechaISO: string): { apertura: number; cierre: number } | null {
     const [a, m, d] = fechaISO.split('-').map(Number);
     const dia = new Date(a, m - 1, d).getDay(); // 0 = domingo
-    const general = local.horario.find(h => h.dias.toLowerCase().includes('todos'));
+    const horarios = this.configPanel.obtenerHorariosLocal(local.id);
+    const general = horarios.find(h => h.dias.toLowerCase().includes('todos'));
     const bloque = general ?? (dia === 0
-      ? local.horario.find(h => h.dias.toLowerCase().includes('domingo'))
-      : local.horario.find(h => !h.dias.toLowerCase().includes('domingo')));
+      ? horarios.find(h => h.dias.toLowerCase().includes('domingo'))
+      : horarios.find(h => !h.dias.toLowerCase().includes('domingo')));
     if (!bloque) { return null; }
     return { apertura: aMinutos(bloque.apertura), cierre: aMinutos(bloque.cierre) };
   }
@@ -68,7 +71,7 @@ export class DisponibilidadService {
     );
   }
 
-  cupo(local: Local): number { return cupoDeSede(local.id); }
+  cupo(local: Local): number { return this.configPanel.obtenerCupoLocal(local.id); }
   cabinas(local: Local): number { return cabinasDeSede(local.id).length; }
 
   /**
@@ -87,8 +90,9 @@ export class DisponibilidadService {
     );
     const salida: Bloque[] = [];
 
-    for (let inicio = horario.apertura; inicio + AGENDA.bloqueMin <= horario.cierre; inicio += AGENDA.bloqueMin) {
-      const fin = inicio + AGENDA.bloqueMin;
+    const bloqueMin = this.configPanel.agenda().bloqueMin;
+    for (let inicio = horario.apertura; inicio + bloqueMin <= horario.cierre; inicio += bloqueMin) {
+      const fin = inicio + bloqueMin;
       const reservados = citas.filter(c => {
         const h = aMinutos(c.horaInicio);
         return h >= inicio && h < fin;

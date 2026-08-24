@@ -1,13 +1,14 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
-  DIAS_SEMANA, HOY_ISO, LOCALES, MESES, PACIENTES, TRATAMIENTOS, aISO, cupoDeSede,
+  DIAS_SEMANA, HOY_ISO, LOCALES, MESES, PACIENTES, TRATAMIENTOS, aISO,
   formatoFechaLarga, localPorId, nombreCabina, nombreEspecialista,
   pacientePorId, soles, tratamientoPorId
 } from '../../data/datos';
 import { Cita, ESTADOS_CITA, EstadoCita, MetodoPago, Paciente } from '../../data/modelos';
 import { AgendaService } from '../../compartido/agenda.service';
 import { SesionService } from '../../compartido/sesion.service';
+import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
 
 interface Celda {
   iso: string;
@@ -35,6 +36,7 @@ interface EnLista {
 export class CalendarioComponent {
   private agenda = inject(AgendaService);
   private sesion = inject(SesionService);
+  private configPanel = inject(ConfiguracionPanelService);
 
   soles = soles;
   Number = Number;
@@ -123,7 +125,7 @@ export class CalendarioComponent {
       const clave = `${c.localId}-${hora}`;
       const actual = mapa.get(clave);
       if (actual) { actual.total += 1; }
-      else { mapa.set(clave, { hora, total: 1, cupo: cupoDeSede(c.localId) }); }
+      else { mapa.set(clave, { hora, total: 1, cupo: this.configPanel.obtenerCupoLocal(c.localId) }); }
     }
     return Array.from(mapa.values()).sort((a, b) => a.hora.localeCompare(b.hora));
   });

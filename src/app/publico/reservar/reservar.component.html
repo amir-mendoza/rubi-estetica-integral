@@ -313,7 +313,7 @@
                   <button class="opcion opcion--fila" [class.opcion--activa]="modalidadPagoOnline() === 'adelanto'" (click)="modalidadPagoOnline.set('adelanto')">
                     <div class="opcion__texto">
                       <strong>Pagar solo el adelanto</strong>
-                      <span>Se cobra el {{ adelantoPorcentaje }} % online y el saldo restante queda pendiente para recepción.</span>
+                      <span>Se cobra el {{ adelantoPorcentaje() }} % online y el saldo restante queda pendiente para recepción.</span>
                     </div>
                     <div class="opcion__precio">{{ soles(montoPagoOnline()) }}</div>
                   </button>
