@@ -126,6 +126,12 @@ Para no romper el proyecto, conviene seguir este orden:
 - Las claves privadas de Izipay nunca deben ir en el frontend.
 - La retención de bloque horario debe migrar luego de `localStorage/sessionStorage` a base de datos o caché del backend.
 - El código de operación del pago debe generarlo o validarlo el backend, no el panel manualmente.
+- Si una cita se paga solo con adelanto, Izipay puede cobrar ese monto parcial y el sistema debe guardar:
+  - `monto_total`
+  - `monto_pagado`
+  - `saldo_pendiente`
+  - `estado_pago` (`Pendiente`, `Parcial`, `Pagado`)
+  Esto es lógica nuestra de negocio; no se debe esperar que Izipay administre por sí solo el saldo restante del tratamiento.
 
 ## 7. Siguiente paso recomendado
 
