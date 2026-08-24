@@ -358,7 +358,7 @@ import { SubidasService } from '../../compartido/subidas.service';
 
         <div class="panel">
           <h4>Vista previa</h4>
-          <div class="carga-preview">
+          <div class="carga-preview" [style.--carga-escala]="escalaCargaPreview()">
             @if (cargador.config().activo) {
               <app-cargador-rueda [tamano]="tamanoCargaPreview()" [etiqueta]="cargador.config().mensaje" />
               <strong>{{ cargador.config().mensaje }}</strong>
@@ -536,14 +536,31 @@ import { SubidasService } from '../../compartido/subidas.service';
     .preset-carga:hover { border-color: var(--magenta-300); color: var(--magenta); }
     .preset-carga--activo { background: var(--vino); border-color: var(--vino); color: #fff; }
     .carga-preview {
-      display: grid; justify-items: center; gap: 12px; min-width: 0;
-      padding: 28px 4%; border: 1px solid var(--linea); border-radius: var(--radio-lg, 18px);
+      display: grid;
+      justify-items: center;
+      gap: clamp(8px, calc(12px * var(--carga-escala, 1)), 16px);
+      min-width: 0;
+      padding: clamp(18px, calc(28px * var(--carga-escala, 1)), 34px) 4%;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg, 18px);
       background: var(--rosa-50, #fdf3f7); text-align: center;
     }
-    .carga-preview strong { color: var(--vino); letter-spacing: .06em; text-transform: uppercase; font-size: 1.05rem; }
-    .carga-preview > span:not(.carga-preview__barra) { font-size: .94rem; }
+    .carga-preview strong {
+      color: var(--vino);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-size: clamp(.82rem, calc(1rem * var(--carga-escala, 1)), 1.08rem);
+      line-height: 1.25;
+    }
+    .carga-preview > span:not(.carga-preview__barra) {
+      font-size: clamp(.78rem, calc(.92rem * var(--carga-escala, 1)), .98rem);
+      line-height: 1.2;
+    }
     .carga-preview__barra {
-      display: block; width: min(100%, 260px); height: 5px; border-radius: 999px; overflow: hidden;
+      display: block;
+      width: min(100%, calc(200px + (90px * var(--carga-escala, 1))));
+      height: clamp(4px, calc(5px * var(--carga-escala, 1)), 7px);
+      border-radius: 999px; overflow: hidden;
       background: color-mix(in srgb, var(--vino) 14%, transparent);
     }
     .carga-preview__barra i {
@@ -699,6 +716,10 @@ export class ConfiguracionComponent {
 
   tamanoCargaPreview(): number {
     return Math.max(52, Math.min(this.cargador.config().tamanoPx, 88));
+  }
+
+  escalaCargaPreview(): number {
+    return Math.max(.78, Math.min(this.tamanoCargaPreview() / 72, 1.18));
   }
 
   cargarLogo(evento: Event): void {

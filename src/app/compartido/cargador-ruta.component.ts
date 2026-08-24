@@ -14,7 +14,11 @@ import { CargadorRuedaComponent } from './cargador-rueda.component';
   template: `
     @if (config().activo && visible()) {
       <div class="velo" [class.velo--saliendo]="saliendo()" aria-live="polite">
-        <div class="velo__caja" [style.--velo-tam.px]="tamanoReal()">
+        <div
+          class="velo__caja"
+          [style.--velo-tam.px]="tamanoReal()"
+          [style.--velo-escala]="escalaReal()"
+        >
           <app-cargador-rueda [tamano]="tamanoReal()" [porcentaje]="porcentaje()" [etiqueta]="config().mensaje" />
           <p class="velo__mensaje">{{ config().mensaje }}</p>
           @if (config().mostrarPorcentaje) {
@@ -35,21 +39,29 @@ import { CargadorRuedaComponent } from './cargador-rueda.component';
     }
     .velo--saliendo { animation: velo-salir .4s ease both; }
     .velo__caja {
-      display: grid; justify-items: center; gap: 14px;
-      width: min(88%, 340px); text-align: center;
+      display: grid;
+      justify-items: center;
+      gap: clamp(8px, calc(14px * var(--velo-escala, 1)), 18px);
+      width: min(88%, calc(250px + (120px * var(--velo-escala, 1))));
+      text-align: center;
     }
     .velo__mensaje {
       margin: 0; color: var(--vino, #7d1f45);
-      font-size: clamp(.9rem, calc(var(--velo-tam, 72px) * .017), 1rem);
+      font-size: clamp(.78rem, calc(1rem * var(--velo-escala, 1)), 1.08rem);
       letter-spacing: .06em; text-transform: uppercase;
+      line-height: 1.25;
     }
     .velo__porcentaje {
       margin: 0; color: var(--gris, #5f5560);
-      font-size: clamp(.88rem, calc(var(--velo-tam, 72px) * .016), .96rem);
+      font-size: clamp(.78rem, calc(.94rem * var(--velo-escala, 1)), 1rem);
       font-variant-numeric: tabular-nums;
+      line-height: 1.2;
     }
     .velo__barra {
-      display: block; width: min(100%, calc(var(--velo-tam, 72px) * 3.1)); max-width: 100%; height: 4px;
+      display: block;
+      width: min(100%, calc(180px + (120px * var(--velo-escala, 1))));
+      max-width: 100%;
+      height: clamp(4px, calc(5px * var(--velo-escala, 1)), 7px);
       border-radius: 999px; overflow: hidden;
       background: color-mix(in srgb, var(--vino, #7d1f45) 14%, transparent);
     }
@@ -82,6 +94,10 @@ export class CargadorRutaComponent implements OnDestroy {
   tamanoReal(): number {
     const base = this.config().tamanoPx || 72;
     return Math.max(48, Math.min(base, 96));
+  }
+
+  escalaReal(): number {
+    return Math.max(.76, Math.min(this.tamanoReal() / 72, 1.2));
   }
 
   constructor() {
