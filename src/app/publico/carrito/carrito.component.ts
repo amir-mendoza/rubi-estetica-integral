@@ -104,6 +104,12 @@ import { LOCALES, soles } from '../../data/datos';
 
             <aside class="panel">
               <h3>Resumen</h3>
+              @if (carrito.reservaRestanteSeg() > 0) {
+                <div class="aviso aviso--ok" style="margin-bottom:16px">
+                  Tus productos están reservados en el carrito por <strong>{{ tiempoReservaTexto() }}</strong>
+                  mientras completas la compra.
+                </div>
+              }
               <div class="resumen__linea"><span>Subtotal</span><strong>{{ soles(carrito.subtotal()) }}</strong></div>
               <div class="resumen__linea"><span>Recojo en local</span><strong>Sin costo</strong></div>
               <div class="resumen__total"><span>Total</span><strong>{{ soles(carrito.subtotal()) }}</strong></div>
@@ -120,6 +126,11 @@ import { LOCALES, soles } from '../../data/datos';
               <div class="campo">
                 <label>Nombre y apellido</label>
                 <input type="text" [(ngModel)]="nombre" placeholder="Ej. María López">
+              </div>
+              <div class="campo">
+                <label>Correo electrónico (opcional)</label>
+                <input type="email" [(ngModel)]="correo" placeholder="correo@ejemplo.com">
+                <span class="campo__ayuda">Izipay puede usar este correo para la confirmación del pago.</span>
               </div>
               <div class="campo">
                 <label>Celular</label>
@@ -200,6 +211,7 @@ export class CarritoComponent {
   localRecojoId = LOCALES[0].id;
   metodo = 'Pagar en línea con Izipay';
   nombre = this.sesion.nombreCompleto();
+  correo = this.sesion.usuario()?.correo ?? '';
   celular = this.sesion.usuario()?.celular ?? '';
   confirmado = signal(false);
   procesandoPago = signal(false);
@@ -217,6 +229,13 @@ export class CarritoComponent {
     this.carrito.vaciar();
   }
 
+  tiempoReservaTexto(): string {
+    const total = this.carrito.reservaRestanteSeg();
+    const minutos = Math.floor(total / 60);
+    const segundos = total % 60;
+    return `${`${minutos}`.padStart(2, '0')}:${`${segundos}`.padStart(2, '0')}`;
+  }
+
   private procesarPagoOnline(): void {
     if (this.procesandoPago()) { return; }
     this.procesandoPago.set(true);
@@ -232,6 +251,7 @@ export class CarritoComponent {
       localId: Number(this.localRecojoId),
       cliente: {
         nombre: this.nombre,
+        correo: this.correo,
         celular: this.celular
       },
       items: items.map(item => ({

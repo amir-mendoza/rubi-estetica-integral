@@ -24,6 +24,7 @@ export const ESTILOS_CARGADOR: OpcionCargador[] = [
 ];
 
 export interface ConfiguracionCargador {
+  activo: boolean;
   estilo: EstiloCargador;
   /** Duración de un giro completo en milisegundos: valores altos = animación más suave. */
   velocidadMs: number;
@@ -31,14 +32,19 @@ export interface ConfiguracionCargador {
   minimoMs: number;
   mostrarPorcentaje: boolean;
   mensaje: string;
+  tamanoPreset: 'compacto' | 'medio' | 'grande' | 'personalizado';
+  tamanoPx: number;
 }
 
 export const CARGADOR_POR_DEFECTO: ConfiguracionCargador = {
+  activo: true,
   estilo: 'anillo',
   velocidadMs: 1400,
   minimoMs: 420,
   mostrarPorcentaje: true,
-  mensaje: 'Preparando tu experiencia'
+  mensaje: 'Preparando tu experiencia',
+  tamanoPreset: 'compacto',
+  tamanoPx: 72
 };
 
 const CLAVE = 'rubi.cargador';
@@ -57,6 +63,15 @@ export class CargadorService {
     const nuevo = { ...this.config(), ...cambios };
     this.config.set(nuevo);
     this.guardar(nuevo);
+  }
+
+  usarTamanoPreset(preset: ConfiguracionCargador['tamanoPreset']): void {
+    const tamanoPx =
+      preset === 'compacto' ? 64 :
+      preset === 'medio' ? 78 :
+      preset === 'grande' ? 96 :
+      this.config().tamanoPx;
+    this.actualizar({ tamanoPreset: preset, tamanoPx });
   }
 
   restablecer(): void {

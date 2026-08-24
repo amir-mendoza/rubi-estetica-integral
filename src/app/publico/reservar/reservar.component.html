@@ -11,6 +11,22 @@
 
 <section class="seccion seccion--compacta">
   <div class="contenedor">
+    @if (mostrarExtension()) {
+      <div class="reserva-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-extension">
+        <div class="reserva-modal__caja">
+          <span class="chip chip--alerta chip--punto">Tiempo agotado</span>
+          <h3 id="titulo-extension">¿Quieres 5 minutos más para terminar tu reserva?</h3>
+          <p>
+            Tu hora sigue retenida por <strong>{{ cuentaExtensionSeg() }} s</strong>. Si no respondes a tiempo,
+            la hora se liberará automáticamente.
+          </p>
+          <div class="reserva-modal__acciones">
+            <button class="btn btn--primario btn--sm" (click)="aceptarExtensionReserva()">Sí, dame 5 minutos más</button>
+            <button class="btn btn--linea btn--sm" (click)="cancelarExtensionReserva()">No, liberar la hora</button>
+          </div>
+        </div>
+      </div>
+    }
 
     @if (confirmado()) {
       <!-- ============================================== Confirmación -->
@@ -157,6 +173,9 @@
                 Atendemos por hora de llegada. Cada bloque horario tiene un cupo para evitar esperas excesivas:
                 cuando una hora llega a su cupo, se cierra y puedes elegir la siguiente.
               </p>
+              @if (avisoReserva()) {
+                <div class="aviso" style="margin-bottom:18px">{{ avisoReserva() }}</div>
+              }
 
               <div class="dias">
                 @for (d of dias; track d.iso) {
@@ -177,7 +196,13 @@
                           [title]="b.disponible ? 'Quedan ' + b.libres + ' cupos' : (b.motivo || 'No disponible')"
                           (click)="elegirBloque(b)">
                     <span>{{ b.inicio }}</span>
-                    <small>{{ b.disponible ? b.libres + ' de ' + b.cupo + ' cupos' : b.motivo }}</small>
+                    <small>
+                      @if (b.retenidoPorMi) {
+                        Reservado para ti
+                      } @else {
+                        {{ b.disponible ? b.libres + ' de ' + b.cupo + ' cupos' : b.motivo }}
+                      }
+                    </small>
                   </button>
                 }
                 @if (!bloques().length) {
@@ -288,6 +313,13 @@
         <aside class="resumen">
           <div class="panel">
             <h4>Resumen de tu reserva</h4>
+            @if (bloque() && tiempoReservaSeg() > 0) {
+              <div class="reserva-tiempo">
+                <span class="dato__label">Hora retenida para ti</span>
+                <strong>{{ tiempoReservaTexto() }}</strong>
+                <small>Completa tu reserva antes de que el bloque se vuelva a liberar.</small>
+              </div>
+            }
 
             <div class="resumen__fila"><span>Sede</span><strong>{{ local()?.nombre || '—' }}</strong></div>
             @if (promocion()) {
@@ -327,6 +359,7 @@
                   {{ cupoSede() }} citas por hora.
                 </li>
                 <li>Las dos sedes atienden las 24 horas, todos los días.</li>
+                <li>Al elegir una hora, se retiene durante 8 minutos para evitar cruces con otras reservas.</li>
               } @else {
                 <li>Cada sede acepta un número limitado de citas por hora.</li>
               }

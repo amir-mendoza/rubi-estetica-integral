@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
@@ -53,6 +53,12 @@ export class ReservarComponent {
   mensajePago = signal('');
   codigoOperacion = signal<string | null>(null);
   codigoReserva = signal('CT-1042');
+  tiempoReservaSeg = signal(0);
+  mostrarExtension = signal(false);
+  cuentaExtensionSeg = signal(30);
+  avisoReserva = signal('');
+  private temporizadorReserva?: ReturnType<typeof setInterval>;
+  private temporizadorExtension?: ReturnType<typeof setInterval>;
 
   // Datos de la paciente: se precargan si hay una sesión iniciada.
   nombre = this.sesion.usuario()?.nombre ?? '';
@@ -152,15 +158,21 @@ export class ReservarComponent {
   }
 
   elegirLocal(l: Local): void {
+    this.disponibilidad.liberarRetencionActiva();
+    this.detenerTemporizadores();
     this.local.set(l);
     this.bloque.set(null);
+    this.avisoReserva.set('');
     this.paso.set(this.promocion() ? 3 : 2);
   }
 
   elegirTratamiento(t: Tratamiento): void {
+    this.disponibilidad.liberarRetencionActiva();
+    this.detenerTemporizadores();
     this.tratamiento.set(t);
     this.promocion.set(null);
     this.bloque.set(null);
+    this.avisoReserva.set('');
     this.paso.set(3);
   }
 
@@ -174,17 +186,37 @@ export class ReservarComponent {
   }
 
   elegirFecha(iso: string): void {
+    this.disponibilidad.liberarRetencionActiva();
+    this.detenerTemporizadores();
     this.fecha.set(iso);
     this.bloque.set(null);
+    this.avisoReserva.set('');
   }
 
   elegirBloque(b: Bloque): void {
     if (!b.disponible) { return; }
-    this.bloque.set(b);
+    const l = this.local();
+    if (!l) { return; }
+    const retencion = this.disponibilidad.retenerBloque(this.fecha(), l, b, 8);
+    if (!retencion.ok || !retencion.expiraEn) {
+      this.avisoReserva.set(retencion.motivo ?? 'La hora elegida ya no está disponible. Elige otra.');
+      this.bloque.set(null);
+      return;
+    }
+    this.avisoReserva.set('');
+    this.bloque.set({ ...b, retenidoPorMi: true, vencimientoRetencion: retencion.expiraEn });
+    this.iniciarTemporizadorReserva(retencion.expiraEn);
   }
 
   irA(n: number): void {
-    if (n < this.paso()) { this.paso.set(n); }
+    if (n < this.paso()) {
+      if (n < 3) {
+        this.disponibilidad.liberarRetencionActiva();
+        this.detenerTemporizadores();
+        this.bloque.set(null);
+      }
+      this.paso.set(n);
+    }
   }
 
   siguiente(): void {
@@ -194,19 +226,34 @@ export class ReservarComponent {
 
   anterior(): void {
     const actual = this.paso();
-    this.paso.set(this.promocion() && actual === 3 ? 1 : Math.max(actual - 1, 1));
+    const siguiente = this.promocion() && actual === 3 ? 1 : Math.max(actual - 1, 1);
+    if (siguiente < 3) {
+      this.disponibilidad.liberarRetencionActiva();
+      this.detenerTemporizadores();
+      this.bloque.set(null);
+    }
+    this.paso.set(siguiente);
   }
 
   confirmar(): void {
+    if (!this.bloque()) {
+      this.avisoReserva.set('Tu bloque de atención ya no está retenido. Elige otra hora para continuar.');
+      this.paso.set(3);
+      return;
+    }
     if (this.metodoPago === 'Izipay') {
       this.procesarPagoOnline();
       return;
     }
+    this.disponibilidad.confirmarRetencionActiva();
+    this.detenerTemporizadores();
     this.codigoOperacion.set(null);
     this.confirmado.set(true);
   }
 
   reiniciar(): void {
+    this.disponibilidad.liberarRetencionActiva();
+    this.detenerTemporizadores();
     this.confirmado.set(false);
     this.paso.set(1);
     this.local.set(null);
@@ -223,6 +270,33 @@ export class ReservarComponent {
     this.celular = u?.celular ?? '';
     this.correo = u?.correo ?? '';
     this.observaciones = '';
+  }
+
+  ngOnDestroy(): void {
+    this.detenerTemporizadores();
+  }
+
+  tiempoReservaTexto(): string {
+    const total = this.tiempoReservaSeg();
+    const minutos = Math.floor(total / 60);
+    const segundos = total % 60;
+    return `${`${minutos}`.padStart(2, '0')}:${`${segundos}`.padStart(2, '0')}`;
+  }
+
+  aceptarExtensionReserva(): void {
+    const extendida = this.disponibilidad.extenderRetencionActiva(5);
+    if (!extendida.ok || !extendida.expiraEn) {
+      this.cerrarReservaPorTiempo();
+      return;
+    }
+    this.mostrarExtension.set(false);
+    this.cuentaExtensionSeg.set(30);
+    this.avisoReserva.set('Tu hora quedó retenida 5 minutos más para que termines la reserva.');
+    this.iniciarTemporizadorReserva(extendida.expiraEn);
+  }
+
+  cancelarExtensionReserva(): void {
+    this.cerrarReservaPorTiempo();
   }
 
   whatsappReserva(): string {
@@ -269,6 +343,8 @@ export class ReservarComponent {
         this.procesandoPago.set(false);
         this.mensajePago.set(resultado.mensaje);
         if (resultado.aprobado) {
+          this.disponibilidad.confirmarRetencionActiva();
+          this.detenerTemporizadores();
           this.codigoOperacion.set(resultado.codigoOperacion ?? null);
           this.confirmado.set(true);
         }
@@ -278,5 +354,50 @@ export class ReservarComponent {
         this.mensajePago.set('No se pudo iniciar el pago online. Puedes intentar otra vez o pagar en el local.');
       }
     });
+  }
+
+  private iniciarTemporizadorReserva(expiraEn: number): void {
+    this.detenerTemporizadores();
+    this.actualizarTiempoReserva(expiraEn);
+    this.temporizadorReserva = setInterval(() => {
+      this.actualizarTiempoReserva(expiraEn);
+    }, 1000);
+  }
+
+  private actualizarTiempoReserva(expiraEn: number): void {
+    const restante = Math.max(0, Math.ceil((expiraEn - Date.now()) / 1000));
+    this.tiempoReservaSeg.set(restante);
+    if (restante > 0) {
+      return;
+    }
+    this.mostrarExtension.set(true);
+    this.cuentaExtensionSeg.set(30);
+    this.temporizadorReserva && clearInterval(this.temporizadorReserva);
+    this.temporizadorReserva = undefined;
+    this.temporizadorExtension = setInterval(() => {
+      const siguiente = this.cuentaExtensionSeg() - 1;
+      this.cuentaExtensionSeg.set(siguiente);
+      if (siguiente <= 0) {
+        this.cerrarReservaPorTiempo();
+      }
+    }, 1000);
+  }
+
+  private cerrarReservaPorTiempo(): void {
+    this.disponibilidad.liberarRetencionActiva();
+    this.detenerTemporizadores();
+    this.bloque.set(null);
+    this.paso.set(3);
+    this.avisoReserva.set('Tu tiempo para completar la reserva terminó y la hora volvió a quedar disponible.');
+  }
+
+  private detenerTemporizadores(): void {
+    clearInterval(this.temporizadorReserva);
+    clearInterval(this.temporizadorExtension);
+    this.temporizadorReserva = undefined;
+    this.temporizadorExtension = undefined;
+    this.mostrarExtension.set(false);
+    this.cuentaExtensionSeg.set(30);
+    this.tiempoReservaSeg.set(0);
   }
 }

@@ -282,6 +282,13 @@ import { SubidasService } from '../../compartido/subidas.service';
             Se muestra al cambiar de página en la web pública y al subir videos o fotos desde el panel,
             para que nadie piense que la página se trabó cuando hay mucho tráfico.
           </p>
+          <div class="interruptores" style="margin-bottom:18px">
+            <label>
+              <input type="checkbox" [ngModel]="cargador.config().activo"
+                     (ngModelChange)="cargador.actualizar({ activo: $event })">
+              Activar el indicador de carga en la web y en las subidas del panel
+            </label>
+          </div>
           <div class="estilos-carga">
             @for (o of cargador.opciones; track o.estilo) {
               <button type="button" class="estilo-carga"
@@ -293,6 +300,32 @@ import { SubidasService } from '../../compartido/subidas.service';
               </button>
             }
           </div>
+
+          <div class="campo" style="margin-top:18px">
+            <label>Tamaño del indicador</label>
+            <div class="presets-carga">
+              @for (preset of tamanosCarga; track preset.id) {
+                <button type="button"
+                        class="preset-carga"
+                        [class.preset-carga--activo]="cargador.config().tamanoPreset === preset.id"
+                        (click)="usarTamanoCarga(preset.id)">
+                  {{ preset.nombre }}
+                </button>
+              }
+            </div>
+            <span class="campo__ayuda">
+              El tamaño elegido se usa en el velo entre páginas y como base para el indicador del panel.
+            </span>
+          </div>
+
+          @if (cargador.config().tamanoPreset === 'personalizado') {
+            <div class="campo">
+              <label>Diámetro personalizado: {{ cargador.config().tamanoPx }} px</label>
+              <input type="range" min="44" max="110" step="2"
+                     [ngModel]="cargador.config().tamanoPx"
+                     (ngModelChange)="cargador.actualizar({ tamanoPx: +$event })">
+            </div>
+          }
 
           <div class="campo" style="margin-top:18px">
             <label>Velocidad del giro: {{ cargador.config().velocidadMs }} ms por vuelta</label>
@@ -326,10 +359,16 @@ import { SubidasService } from '../../compartido/subidas.service';
         <div class="panel">
           <h4>Vista previa</h4>
           <div class="carga-preview">
-            <app-cargador-rueda [tamano]="96" [etiqueta]="cargador.config().mensaje" />
-            <strong>{{ cargador.config().mensaje }}</strong>
-            @if (cargador.config().mostrarPorcentaje) { <span>68 %</span> }
-            <span class="carga-preview__barra"><i style="width:68%"></i></span>
+            @if (cargador.config().activo) {
+              <app-cargador-rueda [tamano]="tamanoCargaPreview()" [etiqueta]="cargador.config().mensaje" />
+              <strong>{{ cargador.config().mensaje }}</strong>
+              @if (cargador.config().mostrarPorcentaje) { <span>68 %</span> }
+              <span class="carga-preview__barra"><i style="width:68%"></i></span>
+            } @else {
+              <span class="chip chip--neutro">Desactivado</span>
+              <strong>El indicador no se mostrará por ahora</strong>
+              <span class="campo__ayuda">La configuración queda guardada para volver a activarla cuando el tráfico crezca.</span>
+            }
           </div>
 
           <h4 style="margin-top:26px">Subidas de archivos</h4>
@@ -489,12 +528,20 @@ import { SubidasService } from '../../compartido/subidas.service';
     .estilo-carga--activo { border-color: var(--vino); box-shadow: 0 0 0 1px var(--vino) inset; }
     .estilo-carga strong { color: var(--vino); font-size: .95rem; }
     .estilo-carga span { font-size: .84rem; }
+    .presets-carga { display: flex; flex-wrap: wrap; gap: 8px; }
+    .preset-carga {
+      background: #fff; border: 1px solid var(--linea); border-radius: 999px;
+      padding: .52rem 1rem; font-family: inherit; font-size: .86rem; color: var(--gris); cursor: pointer;
+    }
+    .preset-carga:hover { border-color: var(--magenta-300); color: var(--magenta); }
+    .preset-carga--activo { background: var(--vino); border-color: var(--vino); color: #fff; }
     .carga-preview {
       display: grid; justify-items: center; gap: 12px; min-width: 0;
-      padding: 34px 4%; border: 1px solid var(--linea); border-radius: var(--radio-lg, 18px);
+      padding: 28px 4%; border: 1px solid var(--linea); border-radius: var(--radio-lg, 18px);
       background: var(--rosa-50, #fdf3f7); text-align: center;
     }
-    .carga-preview strong { color: var(--vino); letter-spacing: .06em; text-transform: uppercase; }
+    .carga-preview strong { color: var(--vino); letter-spacing: .06em; text-transform: uppercase; font-size: 1.05rem; }
+    .carga-preview > span:not(.carga-preview__barra) { font-size: .94rem; }
     .carga-preview__barra {
       display: block; width: min(100%, 260px); height: 5px; border-radius: 999px; overflow: hidden;
       background: color-mix(in srgb, var(--vino) 14%, transparent);
@@ -619,6 +666,12 @@ export class ConfiguracionComponent {
   logoRuta = signal('');
   logoAdminRuta = signal('');
   faviconRuta = signal('');
+  tamanosCarga = [
+    { id: 'compacto' as const, nombre: 'Compacto' },
+    { id: 'medio' as const, nombre: 'Medio' },
+    { id: 'grande' as const, nombre: 'Grande' },
+    { id: 'personalizado' as const, nombre: 'Personalizado' }
+  ];
 
   usuarios = [
     { nombre: 'Rubí Salazar', usuario: 'rubi.admin', rol: 'Administradora', local: 'Ambas sedes', permisos: 'Acceso total' },
@@ -638,6 +691,14 @@ export class ConfiguracionComponent {
 
   guardarFavicon(): void {
     this.marca.cambiarFavicon(this.faviconRuta());
+  }
+
+  usarTamanoCarga(preset: 'compacto' | 'medio' | 'grande' | 'personalizado'): void {
+    this.cargador.usarTamanoPreset(preset);
+  }
+
+  tamanoCargaPreview(): number {
+    return Math.max(52, Math.min(this.cargador.config().tamanoPx, 88));
   }
 
   cargarLogo(evento: Event): void {

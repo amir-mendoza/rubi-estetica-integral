@@ -1,5 +1,6 @@
 import { Component, inject, input } from '@angular/core';
 import { CargadorRuedaComponent } from './cargador-rueda.component';
+import { CargadorService } from './cargador.service';
 import { SubidasService } from './subidas.service';
 
 /** Banner de progreso de las subidas del panel: porcentaje, barra y confirmación. */
@@ -7,12 +8,12 @@ import { SubidasService } from './subidas.service';
   selector: 'app-progreso-subidas',
   imports: [CargadorRuedaComponent],
   template: `
-    @if (subidas.subidas().length) {
+    @if (cargador.config().activo && subidas.subidas().length) {
       <div class="subidas" [class.subidas--flotante]="flotante()" aria-live="polite">
         @for (s of subidas.subidas(); track s.id) {
           <div class="subida" [class.subida--listo]="s.estado === 'listo'" [class.subida--error]="s.estado === 'error'">
             @if (s.estado === 'cargando') {
-              <app-cargador-rueda [tamano]="30" [porcentaje]="s.porcentaje" [etiqueta]="s.mensaje" />
+              <app-cargador-rueda [tamano]="tamanoIndicador()" [porcentaje]="s.porcentaje" [etiqueta]="s.mensaje" />
             } @else {
               <span class="subida__icono">{{ s.estado === 'listo' ? '✓' : '!' }}</span>
             }
@@ -75,5 +76,10 @@ import { SubidasService } from './subidas.service';
 })
 export class ProgresoSubidasComponent {
   readonly subidas = inject(SubidasService);
+  readonly cargador = inject(CargadorService);
   flotante = input(false);
+
+  tamanoIndicador(): number {
+    return Math.max(24, Math.min(this.cargador.config().tamanoPx - 28, 34));
+  }
 }

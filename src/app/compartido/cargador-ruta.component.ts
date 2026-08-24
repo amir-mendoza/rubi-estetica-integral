@@ -12,10 +12,10 @@ import { CargadorRuedaComponent } from './cargador-rueda.component';
   selector: 'app-cargador-ruta',
   imports: [CargadorRuedaComponent],
   template: `
-    @if (visible()) {
+    @if (config().activo && visible()) {
       <div class="velo" [class.velo--saliendo]="saliendo()" aria-live="polite">
-        <div class="velo__caja">
-          <app-cargador-rueda [tamano]="86" [porcentaje]="porcentaje()" [etiqueta]="config().mensaje" />
+        <div class="velo__caja" [style.--velo-tam.px]="tamanoReal()">
+          <app-cargador-rueda [tamano]="tamanoReal()" [porcentaje]="porcentaje()" [etiqueta]="config().mensaje" />
           <p class="velo__mensaje">{{ config().mensaje }}</p>
           @if (config().mostrarPorcentaje) {
             <p class="velo__porcentaje">{{ porcentaje() }}%</p>
@@ -40,14 +40,16 @@ import { CargadorRuedaComponent } from './cargador-rueda.component';
     }
     .velo__mensaje {
       margin: 0; color: var(--vino, #7d1f45);
-      font-size: 1rem; letter-spacing: .06em; text-transform: uppercase;
+      font-size: clamp(.9rem, calc(var(--velo-tam, 72px) * .017), 1rem);
+      letter-spacing: .06em; text-transform: uppercase;
     }
     .velo__porcentaje {
-      margin: 0; color: var(--gris, #5f5560); font-size: .95rem;
+      margin: 0; color: var(--gris, #5f5560);
+      font-size: clamp(.88rem, calc(var(--velo-tam, 72px) * .016), .96rem);
       font-variant-numeric: tabular-nums;
     }
     .velo__barra {
-      display: block; width: 100%; max-width: 100%; height: 4px;
+      display: block; width: min(100%, calc(var(--velo-tam, 72px) * 3.1)); max-width: 100%; height: 4px;
       border-radius: 999px; overflow: hidden;
       background: color-mix(in srgb, var(--vino, #7d1f45) 14%, transparent);
     }
@@ -55,6 +57,9 @@ import { CargadorRuedaComponent } from './cargador-rueda.component';
       display: block; height: 100%; border-radius: 999px;
       background: linear-gradient(90deg, var(--vino, #7d1f45), var(--fucsia, #c2185b));
       transition: width .25s ease;
+    }
+    @media (max-width: 640px) {
+      .velo__caja { gap: 12px; }
     }
     @keyframes velo-entrar { from { opacity: 0; } to { opacity: 1; } }
     @keyframes velo-salir { to { opacity: 0; visibility: hidden; } }
@@ -73,6 +78,11 @@ export class CargadorRutaComponent implements OnDestroy {
   private avance?: ReturnType<typeof setInterval>;
   private cierre?: ReturnType<typeof setTimeout>;
   private inicio = 0;
+
+  tamanoReal(): number {
+    const base = this.config().tamanoPx || 72;
+    return Math.max(48, Math.min(base, 96));
+  }
 
   constructor() {
     this.router.events
@@ -95,6 +105,7 @@ export class CargadorRutaComponent implements OnDestroy {
   }
 
   private abrir(): void {
+    if (!this.config().activo) { return; }
     this.limpiar();
     this.inicio = Date.now();
     this.porcentaje.set(8);
