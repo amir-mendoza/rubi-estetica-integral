@@ -8,12 +8,13 @@ import { CarritoService } from '../../compartido/carrito.service';
 import { FondoWebComponent } from '../../compartido/fondo-web.component';
 import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
 import { RedesService } from '../../compartido/redes.service';
+import { CargadorRutaComponent } from '../../compartido/cargador-ruta.component';
 import { LOCALES } from '../../data/datos';
 
 @Component({
   selector: 'app-publico-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent, FondoWebComponent, RedesEnlacesComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent, FondoWebComponent, RedesEnlacesComponent, CargadorRutaComponent],
   templateUrl: './publico-layout.component.html',
   styleUrl: './publico-layout.component.scss'
 })

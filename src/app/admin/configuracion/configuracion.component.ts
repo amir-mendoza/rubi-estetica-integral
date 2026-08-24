@@ -5,11 +5,14 @@ import { MarcaService } from '../../compartido/marca.service';
 import { FondoService } from '../../compartido/fondo.service';
 import { RedesService } from '../../compartido/redes.service';
 import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
+import { CargadorService } from '../../compartido/cargador.service';
+import { CargadorRuedaComponent } from '../../compartido/cargador-rueda.component';
+import { SubidasService } from '../../compartido/subidas.service';
 
 @Component({
   selector: 'app-configuracion',
   standalone: true,
-  imports: [FormsModule, RedesEnlacesComponent],
+  imports: [FormsModule, RedesEnlacesComponent, CargadorRuedaComponent],
   template: `
     <div class="cabecera-admin">
       <div>
@@ -271,6 +274,73 @@ import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component'
       </div>
     }
 
+    @if (pestana() === 'Carga') {
+      <div class="grid-config">
+        <div class="panel">
+          <h4>Indicador de carga</h4>
+          <p class="campo__ayuda">
+            Se muestra al cambiar de página en la web pública y al subir videos o fotos desde el panel,
+            para que nadie piense que la página se trabó cuando hay mucho tráfico.
+          </p>
+          <div class="estilos-carga">
+            @for (o of cargador.opciones; track o.estilo) {
+              <button type="button" class="estilo-carga"
+                      [class.estilo-carga--activo]="cargador.config().estilo === o.estilo"
+                      (click)="cargador.actualizar({ estilo: o.estilo })">
+                <app-cargador-rueda [estilo]="o.estilo" [tamano]="54" [etiqueta]="o.nombre" />
+                <strong>{{ o.nombre }}</strong>
+                <span>{{ o.descripcion }}</span>
+              </button>
+            }
+          </div>
+
+          <div class="campo" style="margin-top:18px">
+            <label>Velocidad del giro: {{ cargador.config().velocidadMs }} ms por vuelta</label>
+            <input type="range" min="700" max="2600" step="100"
+                   [ngModel]="cargador.config().velocidadMs" (ngModelChange)="cargador.actualizar({ velocidadMs: +$event })">
+            <span class="campo__ayuda">Más milisegundos = giro más lento y suave, ideal para equipos con poca potencia.</span>
+          </div>
+          <div class="campo">
+            <label>Tiempo mínimo en pantalla: {{ cargador.config().minimoMs }} ms</label>
+            <input type="range" min="0" max="1500" step="60"
+                   [ngModel]="cargador.config().minimoMs" (ngModelChange)="cargador.actualizar({ minimoMs: +$event })">
+            <span class="campo__ayuda">Evita que el velo aparezca y desaparezca de golpe cuando la página carga muy rápido.</span>
+          </div>
+          <div class="campo">
+            <label>Mensaje mostrado</label>
+            <input type="text" [ngModel]="cargador.config().mensaje" (ngModelChange)="cargador.actualizar({ mensaje: $event })"
+                   placeholder="Preparando tu experiencia">
+          </div>
+          <div class="interruptores">
+            <label>
+              <input type="checkbox" [ngModel]="cargador.config().mostrarPorcentaje"
+                     (ngModelChange)="cargador.actualizar({ mostrarPorcentaje: $event })">
+              Mostrar el porcentaje (0 – 100 %) junto al indicador
+            </label>
+          </div>
+          <div class="acciones-marca">
+            <button class="btn btn--linea btn--sm" (click)="cargador.restablecer()">Restablecer indicador</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h4>Vista previa</h4>
+          <div class="carga-preview">
+            <app-cargador-rueda [tamano]="96" [etiqueta]="cargador.config().mensaje" />
+            <strong>{{ cargador.config().mensaje }}</strong>
+            @if (cargador.config().mostrarPorcentaje) { <span>68 %</span> }
+            <span class="carga-preview__barra"><i style="width:68%"></i></span>
+          </div>
+
+          <h4 style="margin-top:26px">Subidas de archivos</h4>
+          <p class="campo__ayuda">
+            Cada archivo que subas (video, portada o foto) muestra su avance del 0 al 100 % en un aviso
+            flotante, con la confirmación "subido exitosamente" al terminar.
+          </p>
+        </div>
+      </div>
+    }
+
     @if (pestana() === 'Agenda') {
       <div class="grid-config">
         <div class="panel">
@@ -405,6 +475,34 @@ import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component'
     .pestanas button:hover { border-color: var(--magenta-300); color: var(--magenta); }
     .pestanas button.activa { background: var(--vino); border-color: var(--vino); color: #fff; }
     .grid-config { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+    .estilos-carga {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+      gap: 12px; min-width: 0;
+    }
+    .estilo-carga {
+      display: grid; justify-items: center; gap: 8px; min-width: 0; text-align: center;
+      padding: 16px 4%; border: 1px solid var(--linea); border-radius: var(--radio-md, 14px);
+      background: #fff; font-family: inherit; color: var(--gris); cursor: pointer;
+      transition: border-color .2s ease, transform .2s ease;
+    }
+    .estilo-carga:hover { border-color: var(--magenta-300); transform: translateY(-2px); }
+    .estilo-carga--activo { border-color: var(--vino); box-shadow: 0 0 0 1px var(--vino) inset; }
+    .estilo-carga strong { color: var(--vino); font-size: .95rem; }
+    .estilo-carga span { font-size: .84rem; }
+    .carga-preview {
+      display: grid; justify-items: center; gap: 12px; min-width: 0;
+      padding: 34px 4%; border: 1px solid var(--linea); border-radius: var(--radio-lg, 18px);
+      background: var(--rosa-50, #fdf3f7); text-align: center;
+    }
+    .carga-preview strong { color: var(--vino); letter-spacing: .06em; text-transform: uppercase; }
+    .carga-preview__barra {
+      display: block; width: min(100%, 260px); height: 5px; border-radius: 999px; overflow: hidden;
+      background: color-mix(in srgb, var(--vino) 14%, transparent);
+    }
+    .carga-preview__barra i {
+      display: block; height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, var(--vino), var(--fucsia, #c2185b));
+    }
     .red-config {
       display: grid; grid-template-columns: minmax(min(100%, 130px), 26%) minmax(0, 1fr);
       gap: 12px; align-items: center; margin-bottom: 12px;
@@ -514,7 +612,9 @@ export class ConfiguracionComponent {
   cupo = cupoDeSede;
   cabinas = (localId: number) => cabinasDeSede(localId).length;
   readonly redes = inject(RedesService);
-  pestanas = ['Negocio', 'Marca', 'Fondo', 'Agenda', 'Pagos', 'Usuarios', 'Sincronización'];
+  readonly cargador = inject(CargadorService);
+  readonly subidas = inject(SubidasService);
+  pestanas = ['Negocio', 'Marca', 'Fondo', 'Carga', 'Agenda', 'Pagos', 'Usuarios', 'Sincronización'];
   pestana = signal('Negocio');
   logoRuta = signal('');
   logoAdminRuta = signal('');
@@ -592,8 +692,7 @@ export class ConfiguracionComponent {
     const input = evento.target as HTMLInputElement;
     const archivo = input.files?.[0];
     if (!archivo) { return; }
-    const lector = new FileReader();
-    lector.onload = () => listo(String(lector.result || ''));
-    lector.readAsDataURL(archivo);
+    const etiqueta = archivo.type.startsWith('video') ? 'Video' : 'Imagen';
+    this.subidas.leer(archivo, etiqueta).then(listo).catch(() => undefined);
   }
 }

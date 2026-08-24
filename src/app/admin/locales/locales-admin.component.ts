@@ -1,8 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MapaSedeComponent } from '../../compartido/mapa-sede.component';
 import { CITAS, ESPECIALISTAS, HABITACIONES, HOY_ISO, LOCALES, soles } from '../../data/datos';
 import { Habitacion, Local } from '../../data/modelos';
+import { SubidasService } from '../../compartido/subidas.service';
 
 function localVacio(): Local {
   return {
@@ -306,6 +307,7 @@ function cabinaVacia(localId: number): Habitacion {
   `]
 })
 export class LocalesAdminComponent {
+  private subidas = inject(SubidasService);
   Number = Number;
   soles = soles;
   locales = signal(LOCALES.map(l => ({ ...l, horario: l.horario.map(h => ({ ...h })) })));
@@ -389,9 +391,7 @@ export class LocalesAdminComponent {
   cargarImagenLocal(evento: Event): void {
     const archivo = (evento.target as HTMLInputElement).files?.[0];
     if (!archivo) { return; }
-    const lector = new FileReader();
-    lector.onload = () => this.editarLocal('imagen', String(lector.result || ''));
-    lector.readAsDataURL(archivo);
+    this.subidas.leer(archivo, 'Imagen').then(fuente => this.editarLocal('imagen', fuente)).catch(() => undefined);
   }
 
   private crearCabinasIniciales(localId: number): void {

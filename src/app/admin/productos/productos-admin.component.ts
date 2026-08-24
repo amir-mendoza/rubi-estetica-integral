@@ -1,7 +1,8 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CATEGORIAS_PRODUCTO, PRODUCTOS, soles } from '../../data/datos';
 import { Producto } from '../../data/modelos';
+import { SubidasService } from '../../compartido/subidas.service';
 
 function productoVacio(): Producto {
   return {
@@ -360,6 +361,7 @@ function enriquecerProducto(p: Producto): Producto {
   `]
 })
 export class ProductosAdminComponent {
+  private subidas = inject(SubidasService);
   Math = Math;
   Number = Number;
   soles = soles;
@@ -511,11 +513,11 @@ export class ProductosAdminComponent {
   cargarImagen(evento: Event): void {
     const archivo = (evento.target as HTMLInputElement).files?.[0];
     if (!archivo) { return; }
-    const lector = new FileReader();
-    lector.onload = () => {
-      this.editar('imagen', String(lector.result || ''));
-      this.editar('nombreImagen', archivo.name);
-    };
-    lector.readAsDataURL(archivo);
+    this.subidas.leer(archivo, 'Imagen')
+      .then(fuente => {
+        this.editar('imagen', fuente);
+        this.editar('nombreImagen', archivo.name);
+      })
+      .catch(() => undefined);
   }
 }

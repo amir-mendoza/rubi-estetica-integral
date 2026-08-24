@@ -1,8 +1,9 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HOY_ISO, TRATAMIENTOS, soles } from '../../data/datos';
 import { CategoriaTratamiento, Promocion } from '../../data/modelos';
 import { PromocionesService } from '../../compartido/promociones.service';
+import { SubidasService } from '../../compartido/subidas.service';
 
 type Categoria = CategoriaTratamiento | 'General';
 
@@ -446,6 +447,7 @@ function promocionVacia(): Promocion {
   `]
 })
 export class PromocionesAdminComponent {
+  private subidas = inject(SubidasService);
   soles = soles;
   tratamientos = TRATAMIENTOS;
   categorias = signal<Categoria[]>(['Facial', 'Corporal', 'Aparatología', 'Medicina estética', 'General']);
@@ -578,15 +580,14 @@ export class PromocionesAdminComponent {
     const input = evento.target as HTMLInputElement;
     const archivo = input.files?.[0];
     if (!archivo) { return; }
-    const lector = new FileReader();
-    lector.onload = () => {
-      const imagen = String(lector.result || '');
-      this.imagenPersonalizada.set(imagen);
-      this.editar('imagen', imagen);
-      this.editar('nombreImagen', archivo.name);
-      this.aviso.set('Imagen cargada para vista previa. En producción se guardará en el servidor.');
-    };
-    lector.readAsDataURL(archivo);
+    this.subidas.leer(archivo, 'Imagen')
+      .then(imagen => {
+        this.imagenPersonalizada.set(imagen);
+        this.editar('imagen', imagen);
+        this.editar('nombreImagen', archivo.name);
+        this.aviso.set('Imagen cargada para vista previa. En producción se guardará en el servidor.');
+      })
+      .catch(() => undefined);
   }
 
   guardar(): void {

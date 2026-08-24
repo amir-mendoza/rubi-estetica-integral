@@ -1,8 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CITAS, ESPECIALISTAS, HOY_ISO, localPorId, nombrePaciente, soles, tratamientoPorId } from '../../data/datos';
 import { Especialista } from '../../data/modelos';
+import { SubidasService } from '../../compartido/subidas.service';
 
 function especialistaVacia(): Especialista {
   return {
@@ -158,6 +159,7 @@ function especialistaVacia(): Especialista {
   `]
 })
 export class EspecialistasAdminComponent {
+  private subidas = inject(SubidasService);
   soles = soles;
   nombrePaciente = nombrePaciente;
   especialistas = signal(ESPECIALISTAS.map(e => ({ ...e, locales: [...e.locales], tratamientos: [...e.tratamientos] })));
@@ -195,9 +197,7 @@ export class EspecialistasAdminComponent {
   cargarFoto(evento: Event): void {
     const archivo = (evento.target as HTMLInputElement).files?.[0];
     if (!archivo) { return; }
-    const lector = new FileReader();
-    lector.onload = () => this.editar('foto', String(lector.result || ''));
-    lector.readAsDataURL(archivo);
+    this.subidas.leer(archivo, 'Foto').then(fuente => this.editar('foto', fuente)).catch(() => undefined);
   }
 
   citasHoy(id: number): number {

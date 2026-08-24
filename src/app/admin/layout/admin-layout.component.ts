@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { LogoComponent } from '../../compartido/logo.component';
 import { SesionService } from '../../compartido/sesion.service';
+import { ProgresoSubidasComponent } from '../../compartido/progreso-subidas.component';
 
 interface Seccion {
   ruta: string;
@@ -13,7 +14,7 @@ interface Seccion {
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent, ProgresoSubidasComponent],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss'
 })

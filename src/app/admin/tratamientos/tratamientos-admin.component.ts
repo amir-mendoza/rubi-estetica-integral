@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CATEGORIAS_TRATAMIENTO, CITAS, TRATAMIENTOS, soles } from '../../data/datos';
 import { CategoriaTratamiento, Tratamiento } from '../../data/modelos';
 import { MediaTratamientosService } from '../../compartido/media-tratamientos.service';
+import { SubidasService } from '../../compartido/subidas.service';
 
 function tratamientoVacio(): Tratamiento {
   return {
@@ -201,6 +202,7 @@ function tratamientoVacio(): Tratamiento {
               <input type="file" accept="image/*" multiple (change)="cargarFotos($event)">
             </div>
 
+
             @if (borrador().video) {
               <div class="media-editor__preview">
                 <span class="dato__label">Vista previa del video</span>
@@ -383,6 +385,7 @@ export class TratamientosAdminComponent {
   nuevaCategoria = '';
 
   private mediaTratamientos = inject(MediaTratamientosService);
+  private subidas = inject(SubidasService);
 
   galeria = computed(() => this.borrador().galeria ?? []);
 
@@ -515,28 +518,21 @@ export class TratamientosAdminComponent {
   cargarVideo(evento: Event): void {
     const archivo = (evento.target as HTMLInputElement).files?.[0];
     if (!archivo) { return; }
-    const lector = new FileReader();
-    lector.onload = () => this.editar('video', String(lector.result || ''));
-    lector.readAsDataURL(archivo);
+    this.subidas.leer(archivo, 'Video').then(fuente => this.editar('video', fuente)).catch(() => undefined);
   }
 
   cargarPoster(evento: Event): void {
     const archivo = (evento.target as HTMLInputElement).files?.[0];
     if (!archivo) { return; }
-    const lector = new FileReader();
-    lector.onload = () => this.editar('videoPoster', String(lector.result || ''));
-    lector.readAsDataURL(archivo);
+    this.subidas.leer(archivo, 'Portada').then(fuente => this.editar('videoPoster', fuente)).catch(() => undefined);
   }
 
   cargarFotos(evento: Event): void {
     const archivos = Array.from((evento.target as HTMLInputElement).files ?? []);
     archivos.forEach(archivo => {
-      const lector = new FileReader();
-      lector.onload = () => {
-        const fuente = String(lector.result || '');
-        this.borrador.update(t => ({ ...t, galeria: [...(t.galeria ?? []), fuente] }));
-      };
-      lector.readAsDataURL(archivo);
+      this.subidas.leer(archivo, 'Foto')
+        .then(fuente => this.borrador.update(t => ({ ...t, galeria: [...(t.galeria ?? []), fuente] })))
+        .catch(() => undefined);
     });
   }
 
@@ -556,11 +552,11 @@ export class TratamientosAdminComponent {
   cargarImagen(evento: Event): void {
     const archivo = (evento.target as HTMLInputElement).files?.[0];
     if (!archivo) { return; }
-    const lector = new FileReader();
-    lector.onload = () => {
-      this.editar('imagen', String(lector.result || ''));
-      this.editar('nombreImagen', archivo.name);
-    };
-    lector.readAsDataURL(archivo);
+    this.subidas.leer(archivo, 'Imagen')
+      .then(fuente => {
+        this.editar('imagen', fuente);
+        this.editar('nombreImagen', archivo.name);
+      })
+      .catch(() => undefined);
   }
 }
