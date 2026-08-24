@@ -75,8 +75,8 @@ export class ReservarComponent {
   celular = this.sesion.usuario()?.celular ?? '';
   correo = this.sesion.usuario()?.correo ?? '';
   observaciones = '';
-  metodoPago: 'Izipay' | 'Local' = 'Izipay';
-  modalidadPagoOnline: 'total' | 'adelanto' = 'total';
+  metodoPago = signal<'Izipay' | 'Local'>('Izipay');
+  modalidadPagoOnline = signal<'total' | 'adelanto'>('total');
 
   pasos = [
     { n: 1, titulo: 'Sede' },
@@ -139,8 +139,8 @@ export class ReservarComponent {
 
   montoPagoOnline = computed(() => {
     const total = this.totalReserva();
-    if (this.metodoPago !== 'Izipay') { return total; }
-    if (this.modalidadPagoOnline === 'adelanto') {
+    if (this.metodoPago() !== 'Izipay') { return total; }
+    if (this.modalidadPagoOnline() === 'adelanto') {
       return Math.max(1, Math.round(total * (PORCENTAJE_ADELANTO_RESERVA / 100)));
     }
     return total;
@@ -271,7 +271,7 @@ export class ReservarComponent {
       this.paso.set(3);
       return;
     }
-    if (this.metodoPago === 'Izipay') {
+    if (this.metodoPago() === 'Izipay') {
       this.procesarPagoOnline();
       return;
     }
@@ -371,7 +371,7 @@ export class ReservarComponent {
         hora: this.bloque()?.inicio ?? null,
         promocionId: this.promocion()?.id ?? null,
         tratamientoId: this.tratamiento()?.id ?? null,
-        tipoCobro: this.modalidadPagoOnline,
+        tipoCobro: this.modalidadPagoOnline(),
         montoTotal: this.totalReserva(),
         montoPagadoOnline: this.montoPagoOnline(),
         saldoPendiente: this.saldoPendiente()
