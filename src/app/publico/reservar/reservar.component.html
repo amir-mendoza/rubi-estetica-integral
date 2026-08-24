@@ -313,11 +313,15 @@
         <aside class="resumen">
           <div class="panel">
             <h4>Resumen de tu reserva</h4>
-            @if (bloque() && tiempoReservaSeg() > 0) {
+            @if (local() && tiempoReservaSeg() > 0) {
               <div class="reserva-tiempo">
-                <span class="dato__label">Hora retenida para ti</span>
+                <span class="dato__label">{{ bloque() ? 'Hora retenida para ti' : 'Tiempo para completar tu reserva' }}</span>
                 <strong>{{ tiempoReservaTexto() }}</strong>
-                <small>Completa tu reserva antes de que el bloque se vuelva a liberar.</small>
+                <small>
+                  {{ bloque()
+                    ? 'Completa tu reserva antes de que el bloque se vuelva a liberar.'
+                    : 'Desde que eliges la sede, tienes 8 minutos para terminar todo el proceso.' }}
+                </small>
               </div>
             }
 
@@ -359,7 +363,8 @@
                   {{ cupoSede() }} citas por hora.
                 </li>
                 <li>Las dos sedes atienden las 24 horas, todos los días.</li>
-                <li>Al elegir una hora, se retiene durante 8 minutos para evitar cruces con otras reservas.</li>
+                <li>Desde que eliges la sede, tienes 8 minutos para completar la reserva.</li>
+                <li>Cuando eliges una hora, ese bloque queda retenido con ese mismo tiempo para evitar cruces con otras reservas.</li>
               } @else {
                 <li>Cada sede acepta un número limitado de citas por hora.</li>
               }

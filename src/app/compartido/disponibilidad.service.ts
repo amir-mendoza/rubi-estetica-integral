@@ -133,7 +133,13 @@ export class DisponibilidadService {
     return salida;
   }
 
-  retenerBloque(fechaISO: string, local: Local, bloque: Pick<Bloque, 'inicio' | 'fin'>, minutos = 8):
+  retenerBloque(
+    fechaISO: string,
+    local: Local,
+    bloque: Pick<Bloque, 'inicio' | 'fin'>,
+    minutos = 8,
+    expiraEnForzado?: number
+  ):
     { ok: boolean; expiraEn?: number; motivo?: string } {
     this.limpiarRetenciones();
     const bloques = this.bloques(fechaISO, local);
@@ -143,10 +149,9 @@ export class DisponibilidadService {
     }
 
     const retenciones = this.leerRetenciones()
-      .filter(r => !(r.sessionId === this.sessionId && r.estado === 'retenido'))
-      .filter(r => !(r.localId === local.id && r.fechaISO === fechaISO && r.inicio === bloque.inicio && r.estado === 'retenido'));
+      .filter(r => !(r.sessionId === this.sessionId && r.estado === 'retenido'));
 
-    const expiraEn = Date.now() + minutos * 60_000;
+    const expiraEn = expiraEnForzado ?? (Date.now() + minutos * 60_000);
     retenciones.push({
       id: `hold-${this.sessionId}-${local.id}-${fechaISO}-${bloque.inicio}`,
       sessionId: this.sessionId,
@@ -161,14 +166,14 @@ export class DisponibilidadService {
     return { ok: true, expiraEn };
   }
 
-  extenderRetencionActiva(minutosExtra = 5): { ok: boolean; expiraEn?: number } {
+  extenderRetencionActiva(minutosExtra = 5, expiraEnForzado?: number): { ok: boolean; expiraEn?: number } {
     this.limpiarRetenciones();
     const retenciones = this.leerRetenciones();
     const actual = retenciones.find(r => r.sessionId === this.sessionId && r.estado === 'retenido');
     if (!actual) {
       return { ok: false };
     }
-    actual.expiraEn = Date.now() + minutosExtra * 60_000;
+    actual.expiraEn = expiraEnForzado ?? (Date.now() + minutosExtra * 60_000);
     this.guardarRetenciones(retenciones);
     return { ok: true, expiraEn: actual.expiraEn };
   }
