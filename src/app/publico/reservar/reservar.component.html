@@ -15,14 +15,14 @@
       <div class="reserva-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-extension">
         <div class="reserva-modal__caja">
           <span class="chip chip--alerta chip--punto">Tiempo agotado</span>
-          <h3 id="titulo-extension">¿Quieres 5 minutos más para terminar tu reserva?</h3>
+          <h3 id="titulo-extension">¿Vas a continuar con la reserva?</h3>
           <p>
-            Tu hora sigue retenida por <strong>{{ cuentaExtensionSeg() }} s</strong>. Si no respondes a tiempo,
-            la hora se liberará automáticamente.
+            Tu reserva sigue retenida por <strong>{{ cuentaExtensionSeg() }} s</strong>. Si no respondes dentro de ese tiempo,
+            la reserva se cancelará automáticamente y la hora volverá a quedar disponible.
           </p>
           <div class="reserva-modal__acciones">
-            <button class="btn btn--primario btn--sm" (click)="aceptarExtensionReserva()">Sí, dame 5 minutos más</button>
-            <button class="btn btn--linea btn--sm" (click)="cancelarExtensionReserva()">No, liberar la hora</button>
+            <button class="btn btn--primario btn--sm" (click)="aceptarExtensionReserva()">Sí, continuar 5 minutos más</button>
+            <button class="btn btn--linea btn--sm" (click)="cancelarExtensionReserva()">No, cancelar reserva</button>
           </div>
         </div>
       </div>
@@ -32,9 +32,16 @@
       <!-- ============================================== Confirmación -->
       <div class="confirmacion">
         <span class="chip chip--ok chip--punto">
-          {{ metodoPago === 'Izipay' ? 'Pago confirmado por Izipay' : 'Reserva registrada' }}
+          {{ metodoPago === 'Izipay'
+            ? (modalidadPagoOnline === 'adelanto' ? 'Adelanto confirmado por Izipay' : 'Pago confirmado por Izipay')
+            : 'Reserva registrada' }}
         </span>
-        <h2>Tu cita quedó {{ metodoPago === 'Izipay' ? 'pagada y confirmada' : 'registrada' }}</h2>
+        <h2>
+          Tu cita quedó
+          {{ metodoPago === 'Izipay'
+            ? (modalidadPagoOnline === 'adelanto' ? 'confirmada con adelanto' : 'pagada y confirmada')
+            : 'registrada' }}
+        </h2>
         <p class="lead mx-auto texto-centro">
           Código de reserva <strong>{{ codigoReserva() }}</strong>. Te enviaremos la confirmación por WhatsApp al
           {{ celular || 'número registrado' }}.
@@ -55,8 +62,20 @@
           <div class="dato"><span class="dato__label">Cabina y especialista</span><span class="dato__valor">Se asignan al llegar</span></div>
           <div class="dato">
             <span class="dato__label">Estado de pago</span>
-            <span class="dato__valor">{{ metodoPago === 'Izipay' ? 'Pagado · Izipay' : 'Pago en local' }}</span>
+            <span class="dato__valor">
+              @if (metodoPago === 'Izipay') {
+                {{ modalidadPagoOnline === 'adelanto' ? 'Adelanto pagado · Izipay' : 'Pagado completo · Izipay' }}
+              } @else {
+                Pago en local
+              }
+            </span>
           </div>
+          @if (metodoPago === 'Izipay') {
+            <div class="dato"><span class="dato__label">Monto cobrado online</span><span class="dato__valor">{{ soles(montoPagoOnline()) }}</span></div>
+            @if (saldoPendiente() > 0) {
+              <div class="dato"><span class="dato__label">Saldo pendiente</span><span class="dato__valor">{{ soles(saldoPendiente()) }}</span></div>
+            }
+          }
           @if (codigoOperacion()) {
             <div class="dato"><span class="dato__label">Código operación</span><span class="dato__valor">{{ codigoOperacion() }}</span></div>
           }
@@ -265,9 +284,9 @@
               <button class="opcion opcion--fila" [class.opcion--activa]="metodoPago === 'Izipay'" (click)="metodoPago = 'Izipay'">
                 <div class="opcion__texto">
                   <strong>Pagar en línea con Izipay</strong>
-                  <span>Tarjeta de crédito o débito. La cita se marca como pagada solo cuando Izipay confirma la operación.</span>
+                  <span>Checkout preparado para tarjeta y, según tu cuenta Izipay, también Yape, Plin, QR u otros medios habilitados.</span>
                 </div>
-                <div class="opcion__precio">{{ soles(totalReserva()) }}</div>
+                <div class="opcion__precio">{{ soles(montoPagoOnline()) }}</div>
               </button>
 
               <button class="opcion opcion--fila" [class.opcion--activa]="metodoPago === 'Local'" (click)="metodoPago = 'Local'">
@@ -277,6 +296,35 @@
                 </div>
                 <div class="opcion__precio">{{ soles(totalReserva()) }}</div>
               </button>
+
+              @if (metodoPago === 'Izipay') {
+                <div class="panel" style="margin-top:18px; padding:18px">
+                  <h4 style="margin-bottom:14px">Qué vas a cobrar online</h4>
+
+                  <button class="opcion opcion--fila" [class.opcion--activa]="modalidadPagoOnline === 'total'" (click)="modalidadPagoOnline = 'total'">
+                    <div class="opcion__texto">
+                      <strong>Pagar el total completo</strong>
+                      <span>La cita quedará totalmente pagada apenas Izipay confirme la operación.</span>
+                    </div>
+                    <div class="opcion__precio">{{ soles(totalReserva()) }}</div>
+                  </button>
+
+                  <button class="opcion opcion--fila" [class.opcion--activa]="modalidadPagoOnline === 'adelanto'" (click)="modalidadPagoOnline = 'adelanto'">
+                    <div class="opcion__texto">
+                      <strong>Pagar solo el adelanto</strong>
+                      <span>Se cobra el {{ adelantoPorcentaje }} % online y el saldo restante queda pendiente para recepción.</span>
+                    </div>
+                    <div class="opcion__precio">{{ soles(montoPagoOnline()) }}</div>
+                  </button>
+
+                  @if (modalidadPagoOnline === 'adelanto') {
+                    <div class="aviso" style="margin-top:14px">
+                      Adelanto online: <strong>{{ soles(montoPagoOnline()) }}</strong>.
+                      Saldo pendiente en local: <strong>{{ soles(saldoPendiente()) }}</strong>.
+                    </div>
+                  }
+                </div>
+              }
 
               <a class="btn btn--linea btn--sm" [href]="whatsappReserva()" target="_blank" rel="noopener">
                 Coordinar esta reserva por WhatsApp
@@ -301,7 +349,9 @@
                   @if (procesandoPago()) {
                     Procesando pago...
                   } @else {
-                    {{ metodoPago === 'Izipay' ? 'Pagar y confirmar cita' : 'Confirmar reserva' }}
+                    {{ metodoPago === 'Izipay'
+                      ? (modalidadPagoOnline === 'adelanto' ? 'Pagar adelanto y confirmar cita' : 'Pagar y confirmar cita')
+                      : 'Confirmar reserva' }}
                   }
                 </button>
               </div>
@@ -350,6 +400,12 @@
               <span>Total</span>
               <strong>{{ soles(totalReserva()) }}</strong>
             </div>
+            @if (metodoPago === 'Izipay') {
+              <div class="resumen__fila"><span>Cobro online</span><strong>{{ soles(montoPagoOnline()) }}</strong></div>
+              @if (saldoPendiente() > 0) {
+                <div class="resumen__fila"><span>Saldo pendiente</span><strong>{{ soles(saldoPendiente()) }}</strong></div>
+              }
+            }
           </div>
 
           <div class="panel" style="margin-top:20px">

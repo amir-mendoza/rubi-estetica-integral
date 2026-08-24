@@ -16,6 +16,7 @@ const MINUTOS_RESERVA_PROCESO = 8;
 const MINUTOS_EXTENSION_RESERVA = 5;
 const SEGUNDOS_RESPUESTA_EXTENSION = 30;
 const CLAVE_PROCESO_RESERVA = 'rubi.reserva-en-proceso';
+const PORCENTAJE_ADELANTO_RESERVA = 30;
 
 const CATEGORIAS: (CategoriaTratamiento | 'Todos')[] = [
   'Todos', 'Facial', 'Corporal', 'Aparatología', 'Medicina estética'
@@ -38,6 +39,7 @@ export class ReservarComponent {
 
   soles = soles;
   formatoFechaLarga = formatoFechaLarga;
+  adelantoPorcentaje = PORCENTAJE_ADELANTO_RESERVA;
 
   locales = LOCALES;
   categorias = CATEGORIAS;
@@ -74,6 +76,7 @@ export class ReservarComponent {
   correo = this.sesion.usuario()?.correo ?? '';
   observaciones = '';
   metodoPago: 'Izipay' | 'Local' = 'Izipay';
+  modalidadPagoOnline: 'total' | 'adelanto' = 'total';
 
   pasos = [
     { n: 1, titulo: 'Sede' },
@@ -133,6 +136,17 @@ export class ReservarComponent {
   nombreReserva = computed(() => this.promocion()?.titulo ?? this.tratamiento()?.nombre ?? '—');
 
   sesionesPromo = computed(() => this.promocion()?.sesionesDetalle ?? []);
+
+  montoPagoOnline = computed(() => {
+    const total = this.totalReserva();
+    if (this.metodoPago !== 'Izipay') { return total; }
+    if (this.modalidadPagoOnline === 'adelanto') {
+      return Math.max(1, Math.round(total * (PORCENTAJE_ADELANTO_RESERVA / 100)));
+    }
+    return total;
+  });
+
+  saldoPendiente = computed(() => Math.max(this.totalReserva() - this.montoPagoOnline(), 0));
 
   datosCompletos(): boolean {
     return !!(this.nombre && this.apellido && this.dni && this.celular);
@@ -311,7 +325,7 @@ export class ReservarComponent {
     }
     this.mostrarExtension.set(false);
     this.cuentaExtensionSeg.set(SEGUNDOS_RESPUESTA_EXTENSION);
-    this.avisoReserva.set('Tu hora quedó retenida 5 minutos más para que termines la reserva.');
+    this.avisoReserva.set('Tu reserva sigue en proceso. Te dimos 5 minutos más para terminarla.');
     this.iniciarTemporizadorReserva(expiraEn);
   }
 
@@ -336,7 +350,7 @@ export class ReservarComponent {
       tipo: 'Cita',
       referencia: this.codigoReserva(),
       descripcion: `Reserva ${this.nombreReserva()}`,
-      monto: this.totalReserva(),
+      monto: this.montoPagoOnline(),
       moneda: 'PEN',
       localId: this.local()?.id,
       cliente: {
@@ -350,13 +364,17 @@ export class ReservarComponent {
         id: this.promocion()?.id ? `PROMO-${this.promocion()?.id}` : this.tratamiento()?.id ?? 'TRAT',
         nombre: this.nombreReserva(),
         cantidad: 1,
-        precioUnitario: this.totalReserva()
+        precioUnitario: this.montoPagoOnline()
       }],
       metadata: {
         fecha: this.fecha(),
         hora: this.bloque()?.inicio ?? null,
         promocionId: this.promocion()?.id ?? null,
-        tratamientoId: this.tratamiento()?.id ?? null
+        tratamientoId: this.tratamiento()?.id ?? null,
+        tipoCobro: this.modalidadPagoOnline,
+        montoTotal: this.totalReserva(),
+        montoPagadoOnline: this.montoPagoOnline(),
+        saldoPendiente: this.saldoPendiente()
       }
     }).subscribe({
       next: resultado => {
