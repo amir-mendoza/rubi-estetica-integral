@@ -338,5 +338,15 @@
         </aside>
       </div>
     }
+
+    @if (redes.activas().length) {
+      <div class="reservar__redes">
+        <div>
+          <span class="eyebrow">Síguenos</span>
+          <p>Mira nuestros tratamientos en video y escríbenos por el canal que prefieras.</p>
+        </div>
+        <app-redes-enlaces [conTexto]="true" />
+      </div>
+    }
   </div>
 </section>

@@ -4,11 +4,13 @@ import { RouterLink } from '@angular/router';
 import { CATEGORIAS_PRODUCTO, PRODUCTOS, soles } from '../../data/datos';
 import { CarritoService } from '../../compartido/carrito.service';
 import { Producto } from '../../data/modelos';
+import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
+import { RedesService } from '../../compartido/redes.service';
 
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, RedesEnlacesComponent],
   template: `
     <section class="cabecera-pagina">
       <div class="contenedor">
@@ -67,10 +69,30 @@ import { Producto } from '../../data/modelos';
         @if (!lista().length) {
           <p class="texto-centro" style="padding:48px 0">No encontramos productos con ese criterio.</p>
         }
+
+        @if (redes.activas().length) {
+          <div class="redes-bloque">
+            <div>
+              <span class="eyebrow">Síguenos</span>
+              <h3>Novedades y rutinas en nuestras redes</h3>
+              <p>Publicamos cómo usar cada producto y las promociones de la semana.</p>
+            </div>
+            <app-redes-enlaces [conTexto]="true" />
+          </div>
+        }
       </div>
     </section>
   `,
   styles: [`
+    .redes-bloque {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 22px; min-width: 0;
+      margin-top: 52px; padding: 28px 4%;
+      border: 1px solid var(--linea); border-radius: var(--radio-lg); background: var(--rosa-50);
+    }
+    .redes-bloque > div { min-width: 0; max-width: 100%; }
+    .redes-bloque h3 { margin: 6px 0 4px; }
+    .redes-bloque p { color: var(--gris); font-size: .96rem; }
     .barra-tienda {
       display: flex; align-items: center; justify-content: space-between; gap: 20px;
       flex-wrap: wrap; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--linea);
@@ -99,6 +121,7 @@ import { Producto } from '../../data/modelos';
 })
 export class ProductosComponent {
   carrito = inject(CarritoService);
+  readonly redes = inject(RedesService);
   soles = soles;
   categorias = CATEGORIAS_PRODUCTO;
   categoria = signal('Todos');

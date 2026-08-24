@@ -111,6 +111,10 @@ export const TRATAMIENTOS: Tratamiento[] = [
     limpiezaMin: 15,
     precio: 120,
     imagen: 'img/trat-limpieza.jpg',
+    video: 'video/trat-limpieza.mp4',
+    videoPoster: 'video/trat-limpieza-poster.jpg',
+    tiktokUrl: 'https://www.tiktok.com/@rubiesteticaintegral',
+    galeria: ['img/trat-peeling.jpg', 'img/trat-hidro.jpg'],
     destacado: true,
     activo: true
   },
@@ -138,6 +142,10 @@ export const TRATAMIENTOS: Tratamiento[] = [
     precio: 350,
     precioAntes: 550,
     imagen: 'img/trat-hifu.jpg',
+    video: 'video/trat-hifu.mp4',
+    videoPoster: 'video/trat-hifu-poster.jpg',
+    tiktokUrl: 'https://www.tiktok.com/@rubiesteticaintegral',
+    galeria: ['img/trat-radio.jpg'],
     destacado: true,
     activo: true
   },
@@ -349,6 +357,10 @@ export const TRATAMIENTOS: Tratamiento[] = [
     precio: 499,
     precioAntes: 900,
     imagen: 'img/trat-tens.jpg',
+    video: 'video/trat-tens.mp4',
+    videoPoster: 'video/trat-tens-poster.jpg',
+    tiktokUrl: 'https://www.tiktok.com/@rubiesteticaintegral',
+    galeria: ['img/trat-drenaje.jpg'],
     destacado: false,
     activo: true
   }

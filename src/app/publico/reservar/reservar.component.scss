@@ -237,3 +237,28 @@
     grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
   }
 }
+
+.reservar__redes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 22px;
+  min-width: 0;
+  margin-top: 46px;
+  padding: 26px 4%;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-lg);
+  background: var(--rosa-50);
+}
+
+.reservar__redes > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.reservar__redes p {
+  margin-top: 6px;
+  color: var(--gris);
+  font-size: .96rem;
+}

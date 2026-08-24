@@ -9,6 +9,8 @@ import { Bloque, DisponibilidadService } from '../../compartido/disponibilidad.s
 import { SesionService } from '../../compartido/sesion.service';
 import { PromocionesService } from '../../compartido/promociones.service';
 import { PagosOnlineService } from '../../compartido/pagos-online.service';
+import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
+import { RedesService } from '../../compartido/redes.service';
 
 const CATEGORIAS: (CategoriaTratamiento | 'Todos')[] = [
   'Todos', 'Facial', 'Corporal', 'Aparatología', 'Medicina estética'
@@ -17,7 +19,7 @@ const CATEGORIAS: (CategoriaTratamiento | 'Todos')[] = [
 @Component({
   selector: 'app-reservar',
   standalone: true,
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, RedesEnlacesComponent],
   templateUrl: './reservar.component.html',
   styleUrl: './reservar.component.scss'
 })
@@ -27,6 +29,7 @@ export class ReservarComponent {
   readonly sesion = inject(SesionService);
   private promociones = inject(PromocionesService);
   private pagosOnline = inject(PagosOnlineService);
+  readonly redes = inject(RedesService);
 
   soles = soles;
   formatoFechaLarga = formatoFechaLarga;

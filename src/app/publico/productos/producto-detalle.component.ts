@@ -3,11 +3,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PRODUCTOS, productoPorId, soles } from '../../data/datos';
 import { CarritoService } from '../../compartido/carrito.service';
+import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
+import { RedesService } from '../../compartido/redes.service';
 
 @Component({
   selector: 'app-producto-detalle',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, RedesEnlacesComponent],
   template: `
     @if (producto(); as p) {
       <section class="seccion seccion--compacta">
@@ -48,6 +50,13 @@ import { CarritoService } from '../../compartido/carrito.service';
                 <li>Por ahora no realizamos envíos a domicilio</li>
               </ul>
             </div>
+
+            @if (redes.activas().length) {
+              <div class="detalle-prod__redes">
+                <span>Síguenos</span>
+                <app-redes-enlaces />
+              </div>
+            }
           </div>
         </div>
       </section>
@@ -104,6 +113,13 @@ import { CarritoService } from '../../compartido/carrito.service';
     }
   `,
   styles: [`
+    .detalle-prod__redes {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 14px; min-width: 0;
+      margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--linea);
+    }
+    .detalle-prod__redes > span {
+      font-size: .82rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris-claro);
+    }
     .detalle-prod { display: grid; grid-template-columns: 1fr 1.1fr; gap: 64px; align-items: center; }
     .volver-link {
       display: inline-flex;
@@ -140,6 +156,7 @@ export class ProductoDetalleComponent {
   private ruta = inject(ActivatedRoute);
   private parametros = toSignal(this.ruta.paramMap, { initialValue: this.ruta.snapshot.paramMap });
   carrito = inject(CarritoService);
+  readonly redes = inject(RedesService);
   soles = soles;
 
   producto = computed(() => productoPorId(Number(this.parametros().get('id'))) ?? PRODUCTOS[0]);

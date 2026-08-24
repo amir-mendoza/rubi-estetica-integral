@@ -1,12 +1,16 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, computed, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CATEGORIAS_TRATAMIENTO, TRATAMIENTOS, soles } from '../../data/datos';
 import { PromocionesService } from '../../compartido/promociones.service';
+import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
+import { RedesService } from '../../compartido/redes.service';
+import { MediaTratamientosService } from '../../compartido/media-tratamientos.service';
+import { Tratamiento } from '../../data/modelos';
 
 @Component({
   selector: 'app-tratamientos',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, RedesEnlacesComponent],
   template: `
     <section class="cabecera-pagina">
       <div class="contenedor">
@@ -39,6 +43,12 @@ import { PromocionesService } from '../../compartido/promociones.service';
                 <a [routerLink]="['/tratamientos', t.id]" class="tarjeta-trat__imagen">
                   <img class="img-cobertura" [src]="t.imagen" [alt]="t.nombre">
                   <span class="tarjeta-trat__categoria">{{ t.categoria }}</span>
+                  @if (tieneVideo(t)) {
+                    <span class="tarjeta-trat__video">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                      Con video
+                    </span>
+                  }
                 </a>
                 <div class="tarjeta-trat__cuerpo">
                   <h3>{{ t.nombre }}</h3>
@@ -95,6 +105,17 @@ import { PromocionesService } from '../../compartido/promociones.service';
             </aside>
           }
         </div>
+
+        @if (redes.activas().length) {
+          <div class="redes-bloque">
+            <div>
+              <span class="eyebrow">Síguenos</span>
+              <h3>Mira cada tratamiento en video</h3>
+              <p>Publicamos protocolos, resultados y consejos en nuestras redes.</p>
+            </div>
+            <app-redes-enlaces [conTexto]="true" />
+          </div>
+        }
       </div>
     </section>
   `,
@@ -105,6 +126,22 @@ import { PromocionesService } from '../../compartido/promociones.service';
       padding-bottom: 20px; border-bottom: 1px solid var(--linea);
     }
     .filtros__grupo { display: flex; gap: 10px; flex-wrap: wrap; }
+    .tarjeta-trat__video {
+      position: absolute; bottom: 12px; left: 12px;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 11px; border-radius: 999px;
+      background: rgba(18,3,9,.62); color: #fff;
+      font-size: .76rem; letter-spacing: .12em; text-transform: uppercase;
+    }
+    .redes-bloque {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 22px; min-width: 0;
+      margin-top: 52px; padding: 28px 4%;
+      border: 1px solid var(--linea); border-radius: var(--radio-lg); background: var(--rosa-50);
+    }
+    .redes-bloque > div { min-width: 0; max-width: 100%; }
+    .redes-bloque h3 { margin: 6px 0 4px; }
+    .redes-bloque p { color: var(--gris); font-size: .96rem; }
     .tratamientos-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(min(100%, 260px), 24%); gap: 28px; align-items: start; }
     .tratamientos-lista { min-width: 0; }
     .promo-vertical {
@@ -182,6 +219,13 @@ import { PromocionesService } from '../../compartido/promociones.service';
   `]
 })
 export class TratamientosComponent implements AfterViewInit, OnDestroy {
+  readonly redes = inject(RedesService);
+  private mediaTratamientos = inject(MediaTratamientosService);
+
+  tieneVideo(t: Tratamiento): boolean {
+    return !!this.mediaTratamientos.media(t).video;
+  }
+
   soles = soles;
   categorias = CATEGORIAS_TRATAMIENTO;
   categoria = signal<string>('Todos');

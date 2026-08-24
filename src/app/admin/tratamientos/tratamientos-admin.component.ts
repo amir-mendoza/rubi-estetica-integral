@@ -1,7 +1,8 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CATEGORIAS_TRATAMIENTO, CITAS, TRATAMIENTOS, soles } from '../../data/datos';
 import { CategoriaTratamiento, Tratamiento } from '../../data/modelos';
+import { MediaTratamientosService } from '../../compartido/media-tratamientos.service';
 
 function tratamientoVacio(): Tratamiento {
   return {
@@ -18,6 +19,10 @@ function tratamientoVacio(): Tratamiento {
     precio: 0,
     imagen: 'img/trat-limpieza.jpg',
     nombreImagen: 'Imagen del tratamiento',
+    video: '',
+    videoPoster: '',
+    tiktokUrl: '',
+    galeria: [],
     destacado: false,
     activo: true
   };
@@ -152,6 +157,57 @@ function tratamientoVacio(): Tratamiento {
               </div>
             }
           </div>
+          <div class="media-editor trat-form__ancho">
+            <div class="media-editor__cabecera">
+              <div>
+                <span class="dato__label">Multimedia del tratamiento</span>
+                <strong>Video, portada y fotos adicionales</strong>
+              </div>
+              <button type="button" class="btn btn--linea btn--sm" (click)="limpiarMedia()">Quitar multimedia</button>
+            </div>
+            <p class="media-editor__aviso">
+              El video se muestra primero en el detalle del tratamiento; la paciente puede cambiar a las
+              fotos con las miniaturas. Recomendado: MP4 H.264 vertical 1080×1920, 10–30 s, menos de 15 MB.
+            </p>
+
+            <div class="media-editor__campos">
+              <div class="campo">
+                <label>Video (ruta o enlace .mp4)</label>
+                <input [ngModel]="borrador().video" (ngModelChange)="editar('video', $event)" name="video" placeholder="video/trat-limpieza.mp4">
+                <input type="file" accept="video/*" (change)="cargarVideo($event)">
+              </div>
+              <div class="campo">
+                <label>Portada del video</label>
+                <input [ngModel]="borrador().videoPoster" (ngModelChange)="editar('videoPoster', $event)" name="videoPoster" placeholder="video/trat-limpieza-poster.jpg">
+                <input type="file" accept="image/*" (change)="cargarPoster($event)">
+              </div>
+              <div class="campo">
+                <label>Enlace del video en TikTok</label>
+                <input [ngModel]="borrador().tiktokUrl" (ngModelChange)="editar('tiktokUrl', $event)" name="tiktokUrl" placeholder="https://www.tiktok.com/@rubiesteticaintegral/video/...">
+              </div>
+            </div>
+
+            <div class="lista-editor">
+              <div class="lista-editor__cabecera">
+                <div><span class="dato__label">Fotos adicionales</span><strong>Se muestran junto al video</strong></div>
+                <button type="button" class="btn btn--linea btn--sm" (click)="agregarFoto()">Agregar foto</button>
+              </div>
+              @for (g of galeria(); track $index; let i = $index) {
+                <div class="lista-editor__fila">
+                  <input [ngModel]="g" (ngModelChange)="editarFoto(i, $event)" name="galeria{{ i }}" placeholder="img/trat-peeling.jpg">
+                  <button type="button" class="boton-icono boton-icono--peligro" (click)="quitarFoto(i)">Quitar</button>
+                </div>
+              }
+              <input type="file" accept="image/*" multiple (change)="cargarFotos($event)">
+            </div>
+
+            @if (borrador().video) {
+              <div class="media-editor__preview">
+                <span class="dato__label">Vista previa del video</span>
+                <video [src]="borrador().video" [poster]="borrador().videoPoster || null" controls muted playsinline></video>
+              </div>
+            }
+          </div>
           <label class="check"><input type="checkbox" [ngModel]="borrador().activo" (ngModelChange)="editar('activo', $event)" name="activo"> Activo en la web</label>
           <button class="btn btn--vino btn--sm" type="submit" [disabled]="!borrador().nombre || !borrador().precio">Guardar tratamiento</button>
         </form>
@@ -222,6 +278,28 @@ function tratamientoVacio(): Tratamiento {
     </div>
   `,
   styles: [`
+    .media-editor {
+      min-width: 0; padding: 18px 4%; border: 1px solid var(--linea);
+      border-radius: var(--radio-lg); background: var(--rosa-50);
+      display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px;
+    }
+    .media-editor__cabecera {
+      display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    }
+    .media-editor > * { grid-column: 1; min-width: 0; }
+    .media-editor__cabecera .dato__label { display: block; }
+    .media-editor__cabecera > div { min-width: 0; }
+    .media-editor__aviso { margin: 0; color: var(--gris-claro); font-size: .9rem; }
+    .media-editor__campos {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 14px;
+    }
+    .media-editor__campos .campo { min-width: 0; }
+    .media-editor__campos input { max-width: 100%; }
+    .media-editor__preview { min-width: 0; }
+    .media-editor__preview video {
+      width: 100%; max-width: min(100%, 320px); margin-top: 8px;
+      border-radius: var(--radio); background: #120309; display: block;
+    }
     .panel-form, .categorias-panel { margin-bottom: 22px; }
     .categorias-admin { display: grid; grid-template-columns: 1fr minmax(280px, .5fr); gap: 16px; padding: 18px 22px 22px; align-items: start; }
     .categorias-admin__lista { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -304,6 +382,10 @@ export class TratamientosAdminComponent {
   porcentajeAjuste = 0;
   nuevaCategoria = '';
 
+  private mediaTratamientos = inject(MediaTratamientosService);
+
+  galeria = computed(() => this.borrador().galeria ?? []);
+
   lista = computed(() => {
     const texto = this.busqueda().trim().toLowerCase();
     return this.tratamientos().filter(t =>
@@ -350,8 +432,13 @@ export class TratamientosAdminComponent {
   }
 
   editarTratamiento(t: Tratamiento): void {
+    const media = this.mediaTratamientos.media(t);
     this.borrador.set({
       ...t,
+      video: media.video,
+      videoPoster: media.videoPoster,
+      tiktokUrl: media.tiktokUrl,
+      galeria: [...media.galeria],
       etiquetas: [...t.etiquetas],
       beneficios: t.beneficios.length ? [...t.beneficios] : [''],
       recomendaciones: t.recomendaciones.length ? [...t.recomendaciones] : ['']
@@ -385,12 +472,72 @@ export class TratamientosAdminComponent {
     const limpio = {
       ...t,
       beneficios: t.beneficios.map(v => v.trim()).filter(Boolean),
-      recomendaciones: t.recomendaciones.map(v => v.trim()).filter(Boolean)
+      recomendaciones: t.recomendaciones.map(v => v.trim()).filter(Boolean),
+      galeria: (t.galeria ?? []).map(v => v.trim()).filter(Boolean)
     };
-    this.tratamientos.update(lista => limpio.id
-      ? lista.map(item => item.id === limpio.id ? { ...limpio } : item)
-      : [{ ...limpio, id: lista.reduce((max, item) => Math.max(max, item.id), 0) + 1 }, ...lista]);
+    let idGuardado = limpio.id;
+    this.tratamientos.update(lista => {
+      if (limpio.id) {
+        return lista.map(item => item.id === limpio.id ? { ...limpio } : item);
+      }
+      idGuardado = lista.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+      return [{ ...limpio, id: idGuardado }, ...lista];
+    });
+
+    this.mediaTratamientos.guardar(idGuardado, {
+      video: limpio.video ?? '',
+      videoPoster: limpio.videoPoster ?? '',
+      tiktokUrl: limpio.tiktokUrl ?? '',
+      galeria: limpio.galeria
+    });
     this.cerrarFormulario();
+  }
+
+  limpiarMedia(): void {
+    this.borrador.update(t => ({ ...t, video: '', videoPoster: '', tiktokUrl: '', galeria: [] }));
+  }
+
+  agregarFoto(): void {
+    this.borrador.update(t => ({ ...t, galeria: [...(t.galeria ?? []), ''] }));
+  }
+
+  editarFoto(index: number, valor: string): void {
+    this.borrador.update(t => ({
+      ...t,
+      galeria: (t.galeria ?? []).map((item, i) => i === index ? valor : item)
+    }));
+  }
+
+  quitarFoto(index: number): void {
+    this.borrador.update(t => ({ ...t, galeria: (t.galeria ?? []).filter((_, i) => i !== index) }));
+  }
+
+  cargarVideo(evento: Event): void {
+    const archivo = (evento.target as HTMLInputElement).files?.[0];
+    if (!archivo) { return; }
+    const lector = new FileReader();
+    lector.onload = () => this.editar('video', String(lector.result || ''));
+    lector.readAsDataURL(archivo);
+  }
+
+  cargarPoster(evento: Event): void {
+    const archivo = (evento.target as HTMLInputElement).files?.[0];
+    if (!archivo) { return; }
+    const lector = new FileReader();
+    lector.onload = () => this.editar('videoPoster', String(lector.result || ''));
+    lector.readAsDataURL(archivo);
+  }
+
+  cargarFotos(evento: Event): void {
+    const archivos = Array.from((evento.target as HTMLInputElement).files ?? []);
+    archivos.forEach(archivo => {
+      const lector = new FileReader();
+      lector.onload = () => {
+        const fuente = String(lector.result || '');
+        this.borrador.update(t => ({ ...t, galeria: [...(t.galeria ?? []), fuente] }));
+      };
+      lector.readAsDataURL(archivo);
+    });
   }
 
   alternar(t: Tratamiento): void {

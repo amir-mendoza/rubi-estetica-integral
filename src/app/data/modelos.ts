@@ -114,6 +114,14 @@ export interface Tratamiento {
   precioAntes?: number;
   imagen: string;
   nombreImagen?: string;
+  /** Video principal del tratamiento (ruta local, data URL o enlace directo .mp4). */
+  video?: string;
+  /** Imagen de portada del video mientras carga. */
+  videoPoster?: string;
+  /** Enlace al video publicado en TikTok. */
+  tiktokUrl?: string;
+  /** Fotos adicionales que se muestran junto al video. */
+  galeria?: string[];
   destacado: boolean;
   activo: boolean;
 }

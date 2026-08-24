@@ -2,18 +2,28 @@ import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TRATAMIENTOS, soles, tratamientoPorId } from '../../data/datos';
+import { GaleriaTratamientoComponent } from '../../compartido/galeria-tratamiento.component';
+import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
+import { MediaTratamientosService } from '../../compartido/media-tratamientos.service';
+import { RedesService } from '../../compartido/redes.service';
 
 @Component({
   selector: 'app-tratamiento-detalle',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, GaleriaTratamientoComponent, RedesEnlacesComponent],
   template: `
     @if (tratamiento(); as t) {
       <section class="detalle">
         <div class="contenedor detalle__grid">
-          <figure class="detalle__imagen">
-            <img class="img-cobertura" [src]="t.imagen" [alt]="t.nombre">
-          </figure>
+          <div class="detalle__media">
+            <app-galeria-tratamiento
+              [video]="media().video"
+              [videoPoster]="media().videoPoster"
+              [imagenes]="imagenes()"
+              [tiktokUrl]="media().tiktokUrl"
+              [titulo]="t.nombre"
+            />
+          </div>
           <div>
             <a routerLink="/tratamientos" class="volver-link">← Volver a tratamientos</a>
             <div class="miga">
@@ -46,8 +56,17 @@ import { TRATAMIENTOS, soles, tratamientoPorId } from '../../data/datos';
 
             <div class="detalle__acciones">
               <a routerLink="/reservar" [queryParams]="{ tratamiento: t.id }" class="btn btn--primario">Reservar este tratamiento</a>
-              <a href="https://wa.me/51945189720" target="_blank" rel="noopener" class="btn btn--linea">Consultar por WhatsApp</a>
+              @if (redes.whatsapp()) {
+                <a [href]="redes.whatsapp()" target="_blank" rel="noopener" class="btn btn--linea">Consultar por WhatsApp</a>
+              }
             </div>
+
+            @if (redes.activas().length) {
+              <div class="detalle__redes">
+                <span>Míralo en nuestras redes</span>
+                <app-redes-enlaces />
+              </div>
+            }
           </div>
         </div>
       </section>
@@ -71,6 +90,11 @@ import { TRATAMIENTOS, soles, tratamientoPorId } from '../../data/datos';
           </div>
 
           <aside class="detalle__aside">
+            <div class="panel">
+              <h4>Síguenos</h4>
+              <p class="aviso">Publicamos cada tratamiento en nuestras redes.</p>
+              <app-redes-enlaces [conTexto]="true" />
+            </div>
             <div class="panel" style="margin-top:24px">
               <h4>Antes de tu cita</h4>
               <p class="aviso">
@@ -123,8 +147,14 @@ import { TRATAMIENTOS, soles, tratamientoPorId } from '../../data/datos';
       font-weight: 600;
     }
     .volver-link:hover { color: var(--magenta); }
-    .detalle__imagen { margin: 0; border-radius: var(--radio-lg); overflow: hidden; }
-    .detalle__imagen img { width: 100%; aspect-ratio: 4/3; object-fit: cover; }
+    .detalle__media { min-width: 0; }
+    .detalle__redes {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 14px;
+      margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--linea); min-width: 0;
+    }
+    .detalle__redes > span {
+      font-size: .82rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris-claro);
+    }
     .detalle__precio { display: flex; align-items: baseline; gap: 12px; margin: 26px 0; }
     .detalle__monto {
       font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2.6rem;
@@ -160,4 +190,10 @@ export class TratamientoDetalleComponent {
     tratamientoPorId(Number(this.parametros().get('id'))) ?? TRATAMIENTOS[0]
   );
   relacionados = computed(() => TRATAMIENTOS.filter(t => t.id !== this.tratamiento().id).slice(0, 3));
+
+  readonly redes = inject(RedesService);
+  private mediaTratamientos = inject(MediaTratamientosService);
+
+  media = computed(() => this.mediaTratamientos.media(this.tratamiento()));
+  imagenes = computed(() => [this.tratamiento().imagen, ...this.media().galeria]);
 }
