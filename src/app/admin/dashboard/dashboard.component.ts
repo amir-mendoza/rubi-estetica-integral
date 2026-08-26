@@ -1,12 +1,35 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
-  CITAS, ESPECIALISTAS, LOCALES, PAGOS, PEDIDOS, PRODUCTOS, TRATAMIENTOS,
-  aISO, formatoFechaLarga, HOY_ISO, nombreEspecialista, nombrePaciente, soles, tratamientoPorId
+  ESPECIALISTAS, LOCALES, PAGOS, PEDIDOS, PRODUCTOS, TRATAMIENTOS,
+  aISO, formatoFechaLarga, HOY_ISO, nombreEspecialista, soles, tratamientoPorId
 } from '../../data/datos';
-import { Cita } from '../../data/modelos';
+import { Cita, DetallePago, MetodoPago } from '../../data/modelos';
+import { AgendaService } from '../../compartido/agenda.service';
+import { PacientesService } from '../../compartido/pacientes.service';
+import { PlanesService } from '../../compartido/planes.service';
 
 interface Fila { etiqueta: string; monto: number; detalle: string; }
+interface MovimientoVista {
+  id: string;
+  hora: string;
+  concepto: string;
+  referencia: string;
+  metodo: string;
+  canal: string;
+  monto: number;
+  codigoOperacion: string;
+}
+interface SeguimientoVista {
+  id: number;
+  paciente: string;
+  plan: string;
+  saldo: number;
+  pagado: number;
+  total: number;
+  proximaSesion: string;
+  control: string;
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -16,76 +39,255 @@ interface Fila { etiqueta: string; monto: number; detalle: string; }
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent {
+  private agenda = inject(AgendaService);
+  private pacientes = inject(PacientesService);
+  private planes = inject(PlanesService);
+
   soles = soles;
   hoyTexto = formatoFechaLarga(HOY_ISO);
 
-  private citasHoy = CITAS.filter(c => c.fecha === HOY_ISO);
-  private citasSemana = CITAS.filter(c => this.enUltimos(c.fecha, 7));
-  private citasMes = CITAS.filter(c => c.fecha.slice(0, 7) === HOY_ISO.slice(0, 7));
+  get citasHoy(): Cita[] {
+    return this.agenda.citas().filter(c => c.fecha === HOY_ISO);
+  }
 
-  // ---- Caja real del día: solo dinero efectivamente cobrado.
-  private pagosPagadosHoy = PAGOS.filter(p => p.fecha === HOY_ISO && p.estado === 'Pagado');
-  cobradoHoy = this.suma(this.pagosPagadosHoy, p => p.monto);
-  cobradoCitasHoy = this.suma(this.pagosPagadosHoy.filter(p => p.origen === 'Cita'), p => p.monto);
-  cobradoProductosHoy = this.suma(this.pagosPagadosHoy.filter(p => p.origen === 'Producto'), p => p.monto);
-  pendienteHoy = this.suma(
-    this.citasHoy.filter(c => c.estado !== 'Cancelada' && c.estado !== 'No asistió'),
-    c => Math.max(c.montoTotal - c.montoPagado, 0)
-  );
-  canceladoHoy = this.suma(this.citasHoy.filter(c => c.estado === 'Cancelada' || c.estado === 'No asistió'), c => c.montoPagado);
+  get citasSemana(): Cita[] {
+    return this.agenda.citas().filter(c => this.enUltimos(c.fecha, 7));
+  }
 
-  pagosOnlineHoy = this.suma(this.pagosPagadosHoy.filter(p => p.canal === 'Online'), p => p.monto);
-  pagosLocalHoy = this.suma(this.pagosPagadosHoy.filter(p => p.canal === 'Recepción' || p.canal === 'WhatsApp'), p => p.monto);
-  reembolsosHoy = Math.abs(this.suma(PAGOS.filter(p => p.fecha === HOY_ISO && p.estado === 'Reembolsado'), p => p.monto));
+  get citasMes(): Cita[] {
+    return this.agenda.citas().filter(c => c.fecha.slice(0, 7) === HOY_ISO.slice(0, 7));
+  }
 
-  ingresoSemana = this.suma(PAGOS.filter(p => this.enUltimos(p.fecha, 7) && p.estado === 'Pagado'), p => p.monto);
-  ingresoMes = this.suma(PAGOS.filter(p => p.fecha.slice(0, 7) === HOY_ISO.slice(0, 7) && p.estado === 'Pagado'), p => p.monto);
+  get pagosCitas(): MovimientoVista[] {
+    return this.agenda.citas().flatMap(cita =>
+      (cita.pagosDetalle ?? []).map((pago, indice) => ({
+        id: `${cita.id}-${indice}`,
+        hora: pago.hora,
+        concepto: `${this.tratamientosCita(cita)} · ${this.nombrePaciente(cita.pacienteId)}`,
+        referencia: cita.codigo,
+        metodo: pago.metodo,
+        canal: pago.canal,
+        monto: pago.monto,
+        codigoOperacion: pago.codigoOperacion || '—'
+      }))
+    );
+  }
 
-  // ---- Conteos de citas de hoy
-  atendidas = this.citasHoy.filter(c => c.estado === 'Atendida').length;
-  enProceso = this.citasHoy.filter(c => c.estado === 'En proceso').length;
-  programadas = this.citasHoy.filter(c => c.estado === 'Programada').length;
-  canceladas = this.citasHoy.filter(c => c.estado === 'Cancelada' || c.estado === 'No asistió').length;
+  get pagosProductos(): MovimientoVista[] {
+    return PAGOS
+      .filter(p => p.origen === 'Producto')
+      .map(p => ({
+        id: `pedido-${p.id}`,
+        hora: p.hora,
+        concepto: p.concepto,
+        referencia: p.referencia,
+        metodo: p.metodo,
+        canal: p.canal,
+        monto: p.monto,
+        codigoOperacion: p.codigoOperacion
+      }));
+  }
 
-  // ---- Desgloses del mes
-  porLocal: Fila[] = LOCALES.map(l => ({
-    etiqueta: l.nombre,
-    monto: this.suma(PAGOS.filter(p => p.localId === l.id && p.fecha.slice(0, 7) === HOY_ISO.slice(0, 7) && p.estado === 'Pagado'), p => p.monto),
-    detalle: `${PAGOS.filter(p => p.localId === l.id && p.fecha.slice(0, 7) === HOY_ISO.slice(0, 7) && p.estado === 'Pagado').length} cobros`
-  })).sort((a, b) => b.monto - a.monto);
+  get pagosPlanes(): MovimientoVista[] {
+    return this.planes.planes().flatMap(plan =>
+      (plan.pagosDetalle ?? [])
+        .filter(pago => !pago.codigoOperacion || !this.codigoOperacionExisteEnCitas(pago.codigoOperacion))
+        .map((pago, indice) => ({
+          id: `plan-${plan.id}-${indice}`,
+          hora: pago.hora,
+          concepto: `${plan.nombre} · ${this.nombrePaciente(plan.pacienteId)}`,
+          referencia: plan.codigo,
+          metodo: pago.metodo,
+          canal: pago.canal,
+          monto: pago.monto,
+          codigoOperacion: pago.codigoOperacion || '—'
+        }))
+    );
+  }
 
-  porTratamiento: Fila[] = TRATAMIENTOS.map(t => ({
-    etiqueta: t.nombre,
-    monto: this.suma(this.citasMes.filter(c => c.tratamientoId === t.id), c => c.montoPagado),
-    detalle: `${this.citasMes.filter(c => c.tratamientoId === t.id).length} sesiones`
-  })).filter(f => f.monto > 0).sort((a, b) => b.monto - a.monto).slice(0, 6);
+  get pagosPagadosHoy(): MovimientoVista[] {
+    return [...this.pagosCitas, ...this.pagosPlanes, ...this.pagosProductos]
+      .filter(p => this.esMovimientoDeHoy(p) && p.monto > 0);
+  }
 
-  porEspecialista: Fila[] = ESPECIALISTAS.map(e => ({
-    etiqueta: `${e.nombre} ${e.apellido}`,
-    monto: this.suma(this.citasMes.filter(c => c.especialistaId === e.id), c => c.montoPagado),
-    detalle: `${this.citasMes.filter(c => c.especialistaId === e.id).length} atenciones`
-  })).filter(f => f.monto > 0).sort((a, b) => b.monto - a.monto);
+  get cobradoHoy(): number {
+    return this.suma(this.pagosPagadosHoy, p => p.monto);
+  }
 
-  maxLocal = Math.max(...this.porLocal.map(f => f.monto), 1);
-  maxTratamiento = Math.max(...this.porTratamiento.map(f => f.monto), 1);
-  maxEspecialista = Math.max(...this.porEspecialista.map(f => f.monto), 1);
+  get cobradoCitasHoy(): number {
+    return this.suma([...this.pagosCitas, ...this.pagosPlanes].filter(p => this.esMovimientoDeHoy(p) && p.monto > 0), p => p.monto);
+  }
 
-  agendaHoy = [...this.citasHoy].sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
-  pedidosHoy = PEDIDOS.filter(p => p.fecha === HOY_ISO);
-  pagosRecientes = [...PAGOS].sort((a, b) => `${b.fecha} ${b.hora}`.localeCompare(`${a.fecha} ${a.hora}`)).slice(0, 6);
-  stockBajo = PRODUCTOS.filter(p => p.stock <= 6).slice(0, 5);
+  get cobradoProductosHoy(): number {
+    return this.suma(this.pagosProductos.filter(p => this.esMovimientoDeHoy(p) && p.monto > 0), p => p.monto);
+  }
 
-  // ---- Serie de los últimos 7 días para el gráfico
-  serie = this.ultimos(7).map(iso => {
-    const monto = this.suma(PAGOS.filter(p => p.fecha === iso && p.estado === 'Pagado'), p => p.monto);
-    const [, , d] = iso.split('-');
-    return { iso, dia: d, monto };
-  });
-  maxSerie = Math.max(...this.serie.map(s => s.monto), 1);
+  get pendienteHoy(): number {
+    return this.suma(
+      this.citasHoy.filter(c => c.estado !== 'Cancelada' && c.estado !== 'No asistió'),
+      c => Math.max(c.montoTotal - c.montoPagado, 0)
+    );
+  }
 
-  nombrePaciente = nombrePaciente;
+  get canceladoHoy(): number {
+    return this.suma(this.citasHoy.filter(c => c.estado === 'Cancelada' || c.estado === 'No asistió'), c => c.montoPagado);
+  }
+
+  get pagosOnlineHoy(): number {
+    return this.suma(this.pagosPagadosHoy.filter(p => p.canal === 'Online'), p => p.monto);
+  }
+
+  get pagosLocalHoy(): number {
+    return this.suma(this.pagosPagadosHoy.filter(p => p.canal === 'Recepción' || p.canal === 'WhatsApp'), p => p.monto);
+  }
+
+  get reembolsosHoy(): number {
+    return Math.abs(this.suma(this.pagosCitas.filter(p => this.esMovimientoDeHoy(p) && p.monto < 0), p => p.monto));
+  }
+
+  get ingresoSemana(): number {
+    return this.suma(
+      [...this.pagosCitas, ...this.pagosPlanes, ...this.pagosProductos].filter(p => this.enUltimos(this.fechaMovimiento(p), 7) && p.monto > 0),
+      p => p.monto
+    );
+  }
+
+  get ingresoMes(): number {
+    return this.suma(
+      [...this.pagosCitas, ...this.pagosPlanes, ...this.pagosProductos].filter(p => this.fechaMovimiento(p).slice(0, 7) === HOY_ISO.slice(0, 7) && p.monto > 0),
+      p => p.monto
+    );
+  }
+
+  get atendidas(): number {
+    return this.citasHoy.filter(c => c.estado === 'Atendida').length;
+  }
+
+  get enProceso(): number {
+    return this.citasHoy.filter(c => c.estado === 'En proceso').length;
+  }
+
+  get programadas(): number {
+    return this.citasHoy.filter(c => c.estado === 'Programada').length;
+  }
+
+  get canceladas(): number {
+    return this.citasHoy.filter(c => c.estado === 'Cancelada' || c.estado === 'No asistió').length;
+  }
+
+  get porLocal(): Fila[] {
+    return LOCALES.map(l => ({
+      etiqueta: l.nombre,
+      monto: this.suma(this.citasMes.filter(c => c.localId === l.id), c => c.montoPagado),
+      detalle: `${this.citasMes.filter(c => c.localId === l.id).length} citas`
+    })).sort((a, b) => b.monto - a.monto);
+  }
+
+  get porTratamiento(): Fila[] {
+    return TRATAMIENTOS.map(t => ({
+      etiqueta: t.nombre,
+      monto: this.suma(this.citasMes.filter(c => (c.tratamientosIncluidos?.includes(t.id) || c.tratamientoId === t.id)), c => c.montoPagado),
+      detalle: `${this.citasMes.filter(c => (c.tratamientosIncluidos?.includes(t.id) || c.tratamientoId === t.id)).length} registros`
+    })).filter(f => f.monto > 0).sort((a, b) => b.monto - a.monto).slice(0, 6);
+  }
+
+  get porEspecialista(): Fila[] {
+    return ESPECIALISTAS.map(e => ({
+      etiqueta: `${e.nombre} ${e.apellido}`,
+      monto: this.suma(this.citasMes.filter(c => c.especialistaId === e.id), c => c.montoPagado),
+      detalle: `${this.citasMes.filter(c => c.especialistaId === e.id).length} atenciones`
+    })).filter(f => f.monto > 0).sort((a, b) => b.monto - a.monto);
+  }
+
+  get maxLocal(): number {
+    return Math.max(...this.porLocal.map(f => f.monto), 1);
+  }
+
+  get maxTratamiento(): number {
+    return Math.max(...this.porTratamiento.map(f => f.monto), 1);
+  }
+
+  get maxEspecialista(): number {
+    return Math.max(...this.porEspecialista.map(f => f.monto), 1);
+  }
+
+  get agendaHoy(): Cita[] {
+    return [...this.citasHoy].sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+  }
+
+  get pedidosHoy() {
+    return PEDIDOS.filter(p => p.fecha === HOY_ISO);
+  }
+
+  get pagosRecientes(): MovimientoVista[] {
+    return [...this.pagosCitas, ...this.pagosPlanes, ...this.pagosProductos]
+      .sort((a, b) => `${this.fechaMovimiento(b)} ${b.hora}`.localeCompare(`${this.fechaMovimiento(a)} ${a.hora}`))
+      .slice(0, 6);
+  }
+
+  get stockBajo() {
+    return PRODUCTOS.filter(p => p.stock <= 6).slice(0, 5);
+  }
+
+  get seguimientosActivos(): SeguimientoVista[] {
+    return this.planes.planes()
+      .filter(plan => plan.estado !== 'Finalizado')
+      .map(plan => {
+        const siguiente = plan.sesiones.find(s => s.estado === 'Programada' || s.estado === 'Pendiente' || s.estado === 'Reprogramada');
+        const proximaSesion = siguiente?.fecha
+          ? `${siguiente.numero} · ${siguiente.fecha}${siguiente.hora ? ` ${siguiente.hora}` : ''}`
+          : 'Recepción coordina siguiente fecha';
+        const control = plan.precioTotal - plan.pagado > 0
+          ? `Saldo pendiente ${soles(plan.precioTotal - plan.pagado)}`
+          : 'Plan liquidado';
+        return {
+          id: plan.id,
+          paciente: this.nombrePaciente(plan.pacienteId),
+          plan: plan.nombre,
+          saldo: Math.max(plan.precioTotal - plan.pagado, 0),
+          pagado: plan.pagado,
+          total: plan.precioTotal,
+          proximaSesion,
+          control
+        };
+      })
+      .sort((a, b) => b.saldo - a.saldo)
+      .slice(0, 6);
+  }
+
+  get serie() {
+    return this.ultimos(7).map(iso => {
+      const monto = this.suma(
+        [...this.pagosCitas, ...this.pagosPlanes, ...this.pagosProductos].filter(p => this.fechaMovimiento(p) === iso && p.monto > 0),
+        p => p.monto
+      );
+      const [, , d] = iso.split('-');
+      return { iso, dia: d, monto };
+    });
+  }
+
+  get maxSerie(): number {
+    return Math.max(...this.serie.map(s => s.monto), 1);
+  }
+
+  nombrePaciente = (id: number) => {
+    const paciente = this.pacientes.porId(id);
+    return paciente ? `${paciente.nombre} ${paciente.apellido}` : '—';
+  };
   nombreEspecialista = nombreEspecialista;
   tratamiento = (id: number) => tratamientoPorId(id)?.nombre ?? '—';
+  tratamientosCita = (c: Cita) => (c.tratamientosIncluidos?.length ? c.tratamientosIncluidos : [c.tratamientoId])
+    .map(id => tratamientoPorId(id)?.nombre ?? 'Tratamiento')
+    .join(' + ');
+
+  montoMetodo(c: Cita, metodo: MetodoPago): number {
+    if (c.pagosDetalle?.length) {
+      return c.pagosDetalle
+        .filter(pago => pago.metodo === metodo)
+        .reduce((total, pago) => total + pago.monto, 0);
+    }
+    return c.metodoPago === metodo ? c.montoPagado : 0;
+  }
 
   claseEstado(c: Cita): string {
     switch (c.estado) {
@@ -100,6 +302,32 @@ export class DashboardComponent {
     if (c.estadoPago === 'Pagado') { return 'chip chip--ok chip--punto'; }
     if (c.estadoPago === 'Reembolsado' || c.estadoPago === 'Fallido') { return 'chip chip--error chip--punto'; }
     return 'chip chip--alerta chip--punto';
+  }
+
+  private fechaMovimiento(movimiento: MovimientoVista): string {
+    const cita = this.pagosCitas.find(item => item.id === movimiento.id);
+    if (cita) {
+      return this.buscarFechaPagoCita(movimiento);
+    }
+    const pedido = PAGOS.find(item => `pedido-${item.id}` === movimiento.id);
+    return pedido?.fecha ?? HOY_ISO;
+  }
+
+  private buscarFechaPagoCita(movimiento: MovimientoVista): string {
+    const [citaId, indice] = movimiento.id.split('-').map(Number);
+    const cita = this.agenda.citas().find(item => item.id === citaId);
+    const pago = cita?.pagosDetalle?.[indice];
+    return pago?.fecha ?? HOY_ISO;
+  }
+
+  private codigoOperacionExisteEnCitas(codigo: string): boolean {
+    return this.agenda.citas().some(cita =>
+      (cita.pagosDetalle ?? []).some(pago => pago.codigoOperacion === codigo)
+    );
+  }
+
+  private esMovimientoDeHoy(movimiento: MovimientoVista): boolean {
+    return this.fechaMovimiento(movimiento) === HOY_ISO;
   }
 
   private suma<T>(lista: T[], valor: (item: T) => number): number {

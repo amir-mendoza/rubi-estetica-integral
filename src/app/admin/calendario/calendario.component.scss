@@ -34,9 +34,54 @@
 .estado-cuenta--ok { border: 1px solid rgba(44, 139, 93, .24); background: rgba(44, 139, 93, .08); }
 .estado-cuenta--alerta { border: 1px solid rgba(184, 124, 35, .28); background: #fffaf2; }
 .cita-manual__ancho { grid-column: span 2; }
+.cita-manual__selector {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 0 2px;
+}
+.aviso {
+  grid-column: 1 / -1;
+  padding: 12px 14px;
+  border: 1px solid rgba(176, 27, 114, .18);
+  border-left: 4px solid var(--magenta);
+  border-radius: var(--radio);
+  background: #fff;
+  color: var(--gris);
+  font-size: .92rem;
+  line-height: 1.55;
+}
+.aviso--ok {
+  background: rgba(224, 123, 173, .06);
+}
 .cita-manual__tratamientos { grid-column: 1 / -1; border: 1px solid var(--linea); border-radius: var(--radio); padding: 14px; background: var(--rosa-50); }
 .cita-manual__sub { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 10px; }
 .trat-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 8px; }
+.sesion-row {
+  margin-top: 10px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  background: #fff;
+  padding: 14px;
+}
+.sesion-row__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.sesion-row__cabecera strong {
+  color: var(--vino);
+  font-size: .96rem;
+}
+.sesion-row__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap: 12px 14px;
+  align-items: end;
+}
 
 /* Calendario */
 .calendario { position: sticky; top: 96px; }
@@ -182,6 +227,7 @@
   .cita-manual__form { grid-template-columns: 1fr; }
   .cita-manual__ancho { grid-column: auto; }
   .trat-row { grid-template-columns: 1fr; }
+  .sesion-row__grid { grid-template-columns: 1fr; }
   .cita { grid-template-columns: 1fr; }
   .cita__datos { grid-template-columns: repeat(2, 1fr); }
   .reprogramar__campos { grid-template-columns: 1fr; }

@@ -19,7 +19,7 @@
     <div class="tabla-panel__cabecera">
       <div>
         <h3>Registrar cita en recepción</h3>
-        <span class="dato__label">Para clientes que llegan o llaman directo al local</span>
+        <span class="dato__label">Cita simple o seguimiento multisesión, según cómo se atenderá a la paciente</span>
       </div>
     </div>
     <form class="cita-manual__form" (ngSubmit)="registrarCitaManual()">
@@ -30,6 +30,7 @@
       <div class="campo"><label>DNI</label><input required maxlength="8" [ngModel]="manualDni" (ngModelChange)="buscarPacienteManual($event)" name="manualDni" placeholder="Busca y autocompleta"></div>
       <div class="campo"><label>Celular</label><input required [(ngModel)]="manualCelular" name="manualCelular"></div>
       <div class="campo cita-manual__ancho"><label>Nombre completo</label><input required [(ngModel)]="manualNombre" name="manualNombre"></div>
+      <div class="campo cita-manual__ancho"><label>Correo (opcional)</label><input type="email" [(ngModel)]="manualCorreo" name="manualCorreo" placeholder="correo@ejemplo.com"></div>
       @if (manualPacienteEncontrado()) {
         <div class="estado-cuenta estado-cuenta--ok">
           <strong>Paciente encontrada</strong>
@@ -54,34 +55,107 @@
           <option>WhatsApp</option>
         </select>
       </div>
-      <div class="campo"><label>Fecha de llegada (obligatoria)</label><input required type="date" [(ngModel)]="manualFecha" name="manualFecha"></div>
-      <div class="campo"><label>Hora de llegada (obligatoria)</label><input required type="time" [(ngModel)]="manualHora" name="manualHora"></div>
-
-      <div class="cita-manual__tratamientos">
-        <div class="cita-manual__sub">
-          <span class="dato__label">Tratamientos de la cita</span>
-          <button type="button" class="btn btn--linea btn--sm" (click)="agregarTratamientoManual()">Agregar tratamiento</button>
-        </div>
-        @for (id of manualTratamientos(); track $index; let i = $index) {
-          <div class="trat-row">
-            <select [ngModel]="id" (ngModelChange)="cambiarTratamientoManual(i, Number($event))" [name]="'manualTrat' + i">
-              @for (t of tratamientosCatalogo; track t.id) { <option [value]="t.id">{{ t.nombre }} · {{ soles(t.precio) }}</option> }
-            </select>
-            <button type="button" class="boton-icono" (click)="quitarTratamientoManual(i)" [disabled]="manualTratamientos().length === 1">Quitar</button>
-          </div>
-        }
+      <div class="cita-manual__selector">
+        <button type="button" class="filtro" [class.filtro--activo]="!manualMultisesion" (click)="activarMultisesion(false)">Cita simple</button>
+        <button type="button" class="filtro" [class.filtro--activo]="manualMultisesion" (click)="activarMultisesion(true)">Activar multisesiones</button>
       </div>
 
+      @if (!manualMultisesion) {
+        <div class="aviso aviso--ok">
+          Usa esta opción cuando la paciente viene por una sola atención o por varios tratamientos que se harán dentro de la misma visita.
+        </div>
+        <div class="campo"><label>Fecha de llegada (obligatoria)</label><input required type="date" [(ngModel)]="manualFecha" name="manualFecha"></div>
+        <div class="campo"><label>Hora de llegada (obligatoria)</label><input required type="time" [(ngModel)]="manualHora" name="manualHora"></div>
+        <div class="campo"><label>Zona / área tratada (opcional)</label><input type="text" [(ngModel)]="manualZona" name="manualZona" placeholder="Ej. Abdomen, espalda, rostro completo"></div>
+
+        <div class="cita-manual__tratamientos">
+          <div class="cita-manual__sub">
+            <span class="dato__label">Tratamientos de esta atención</span>
+            <button type="button" class="btn btn--linea btn--sm" (click)="agregarTratamientoManual()">Agregar tratamiento</button>
+          </div>
+          @for (id of manualTratamientos(); track $index; let i = $index) {
+            <div class="trat-row">
+              <select [ngModel]="id" (ngModelChange)="cambiarTratamientoManual(i, Number($event))" [name]="'manualTrat' + i">
+                @for (t of tratamientosCatalogo; track t.id) { <option [value]="t.id">{{ t.nombre }} · {{ soles(t.precio) }}</option> }
+              </select>
+              <button type="button" class="boton-icono" (click)="quitarTratamientoManual(i)" [disabled]="manualTratamientos().length === 1">Quitar</button>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="aviso aviso--ok">
+          Usa esta opción cuando la paciente inicia un tratamiento con seguimiento. La sesión 1 sí o sí debe llevar fecha y hora. Las demás pueden quedar vacías para coordinarlas luego en recepción.
+        </div>
+        <div class="campo cita-manual__ancho">
+          <label>Nombre del plan / seguimiento</label>
+          <input [(ngModel)]="manualPlanNombre" name="manualPlanNombre" placeholder="Ej. Botox 5 sesiones, Plan facial luminosidad">
+        </div>
+
+        <div class="cita-manual__tratamientos">
+          <div class="cita-manual__sub">
+            <span class="dato__label">Sesiones del seguimiento</span>
+            <button type="button" class="btn btn--linea btn--sm" (click)="agregarSesionManual()">Agregar sesión</button>
+          </div>
+          @for (sesion of manualSesiones(); track $index; let i = $index) {
+            <div class="sesion-row">
+              <div class="sesion-row__cabecera">
+                <strong>Sesión {{ i + 1 }}</strong>
+                <button type="button" class="boton-icono" (click)="quitarSesionManual(i)" [disabled]="manualSesiones().length === 1">Quitar</button>
+              </div>
+              <div class="sesion-row__grid">
+                <div class="campo">
+                  <label>Tratamiento</label>
+                  <select [ngModel]="sesion.tratamientoId" (ngModelChange)="actualizarSesionManual(i, 'tratamientoId', Number($event))" [name]="'sesionTratamiento' + i">
+                    @for (t of tratamientosCatalogo; track t.id) { <option [value]="t.id">{{ t.nombre }} · {{ soles(t.precio) }}</option> }
+                  </select>
+                </div>
+                <div class="campo">
+                  <label>Fecha</label>
+                  <input type="date" [ngModel]="sesion.fecha" (ngModelChange)="actualizarSesionManual(i, 'fecha', $event)" [name]="'sesionFecha' + i" [required]="i === 0" [disabled]="i > 0 && saldoManual() > 0">
+                </div>
+                <div class="campo">
+                  <label>Hora</label>
+                  <input type="time" [ngModel]="sesion.hora" (ngModelChange)="actualizarSesionManual(i, 'hora', $event)" [name]="'sesionHora' + i" [required]="i === 0" [disabled]="i > 0 && saldoManual() > 0">
+                </div>
+                <div class="campo">
+                  <label>Zona (opcional)</label>
+                  <input type="text" [ngModel]="sesion.zona" (ngModelChange)="actualizarSesionManual(i, 'zona', $event)" [name]="'sesionZona' + i" placeholder="Ej. Rostro, abdomen">
+                </div>
+                <div class="campo cita-manual__ancho">
+                  <label>Observación de la sesión (opcional)</label>
+                  <input type="text" [ngModel]="sesion.observaciones" (ngModelChange)="actualizarSesionManual(i, 'observaciones', $event)" [name]="'sesionObs' + i" placeholder="Ej. Coordinar después de la primera atención">
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+        @if (saldoManual() > 0) {
+          <div class="aviso">
+            Como todavía queda saldo pendiente, solo la primera sesión puede quedar programada desde ahora. Las siguientes se activarán después de completar el pago.
+          </div>
+        }
+      }
+
       <div class="campo"><label>Total a cobrar (editable)</label><input type="number" min="0" [(ngModel)]="manualTotal" name="manualTotal"></div>
-      <div class="campo"><label>Pago inicial</label><input type="number" min="0" [(ngModel)]="manualPagado" name="manualPagado"></div>
+      <div class="campo"><label>Monto que pagará hoy</label><input type="number" min="0" [(ngModel)]="manualPagado" name="manualPagado"></div>
       <div class="campo">
         <label>Método si paga ahora</label>
         <select [(ngModel)]="manualMetodo" name="manualMetodo">
           @for (m of metodosPago; track m) { <option>{{ m }}</option> }
         </select>
       </div>
-      <button class="btn btn--vino btn--sm" type="submit" [disabled]="!manualDni || !manualCelular || !manualNombre || !manualFecha || !manualHora || !manualTratamientos().length">
-        Guardar cita
+      <div class="campo">
+        <label>Saldo restante</label>
+        <input [value]="soles(saldoManual())" readonly>
+      </div>
+      <div class="campo cita-manual__ancho">
+        <label>Notas de recepción / alertas</label>
+        <textarea rows="3" [(ngModel)]="manualNotas" name="manualNotas" placeholder="Ej. alérgica, viene con acompañante, pidió reprogramar rápido, etc."></textarea>
+      </div>
+
+      <button class="btn btn--vino btn--sm" type="submit"
+              [disabled]="!manualDni || !manualCelular || !manualNombre || (!manualMultisesion && (!manualFecha || !manualHora || !manualTratamientos().length)) || (manualMultisesion && (!manualSesiones().length || !manualSesiones()[0].fecha || !manualSesiones()[0].hora))">
+        {{ manualMultisesion ? 'Guardar seguimiento multisesión' : 'Guardar cita' }}
       </button>
     </form>
   </div>
@@ -220,6 +294,7 @@
               <div><span class="dato__label">Especialista</span><span>{{ especialista(f.cita.especialistaId) }}</span></div>
               <div><span class="dato__label">Método de pago</span><span>{{ f.cita.metodoPago || 'Por definir' }}</span></div>
               <div><span class="dato__label">Origen</span><span>{{ f.cita.origen }}</span></div>
+              <div><span class="dato__label">Zona / área</span><span>{{ f.cita.zonaTratamiento || 'No indicada' }}</span></div>
             </div>
 
             <div class="cita__acciones">

@@ -4,6 +4,7 @@ import { MapaSedeComponent } from '../../compartido/mapa-sede.component';
 import { CITAS, ESPECIALISTAS, HABITACIONES, HOY_ISO, LOCALES, soles } from '../../data/datos';
 import { Habitacion, Local } from '../../data/modelos';
 import { SubidasService } from '../../compartido/subidas.service';
+import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
 
 function localVacio(): Local {
   return {
@@ -14,7 +15,7 @@ function localVacio(): Local {
     referencia: '',
     distrito: 'San Juan de Lurigancho, Lima',
     telefono: '945 189 720',
-    horario: [{ dias: 'Todos los días', apertura: '08:00', cierre: '22:00' }],
+    horario: [{ dias: 'Todos los días', apertura: '09:00', cierre: '22:00' }],
     imagen: 'img/local-1.jpg',
     mapa: 'https://www.google.com/maps',
     latitud: -12.0042,
@@ -180,7 +181,7 @@ function cabinaVacia(localId: number): Habitacion {
             <span class="dato__label" style="margin-top:20px;display:block">Horario de atención</span>
             <table class="tabla tabla--simple">
               <tbody>
-                @for (h of l.horario; track h.dias) {
+                @for (h of horariosLocal(l.id); track h.dias) {
                   <tr>
                     <td>{{ h.dias }}</td>
                     <td class="num">{{ h.apertura }} - {{ h.cierre }}</td>
@@ -308,6 +309,7 @@ function cabinaVacia(localId: number): Habitacion {
 })
 export class LocalesAdminComponent {
   private subidas = inject(SubidasService);
+  private configPanel = inject(ConfiguracionPanelService);
   Number = Number;
   soles = soles;
   locales = signal(LOCALES.map(l => ({ ...l, horario: l.horario.map(h => ({ ...h })) })));
@@ -326,7 +328,7 @@ export class LocalesAdminComponent {
   }
 
   editarLocalExistente(local: Local): void {
-    this.localForm.set({ ...local, horario: local.horario.map(h => ({ ...h })) });
+    this.localForm.set({ ...local, horario: this.configPanel.obtenerHorariosLocal(local.id) });
     this.mostrarLocal.set(true);
   }
 
@@ -340,6 +342,13 @@ export class LocalesAdminComponent {
     if (nuevo) {
       this.crearCabinasIniciales(nuevoId);
     }
+    this.configPanel.actualizarAgenda({
+      atencion24h: this.configPanel.agenda().atencion24h && this.esHorario247(local.horario[0]),
+      horariosPorLocal: {
+        ...this.configPanel.agenda().horariosPorLocal,
+        [nuevoId]: local.horario.map(h => ({ ...h }))
+      }
+    });
     this.mostrarLocal.set(false);
   }
 
@@ -382,7 +391,7 @@ export class LocalesAdminComponent {
 
   alternar247(): void {
     if (this.es247()) {
-      this.localForm.update(local => ({ ...local, horario: [{ ...local.horario[0], apertura: '08:00', cierre: '22:00' }] }));
+      this.localForm.update(local => ({ ...local, horario: [{ ...local.horario[0], apertura: '09:00', cierre: '22:00' }] }));
       return;
     }
     this.localForm.update(local => ({ ...local, horario: [{ ...local.horario[0], apertura: '00:00', cierre: '24:00' }] }));
@@ -440,6 +449,7 @@ export class LocalesAdminComponent {
   cabinas(localId: number) { return this.habitaciones().filter(h => h.localId === localId); }
   tieneCitas(localId: number): boolean { return CITAS.some(c => c.localId === localId); }
   googleMapsLocal(local: Local): string { return `https://www.google.com/maps?q=${local.latitud},${local.longitud}`; }
+  horariosLocal(localId: number) { return this.configPanel.obtenerHorariosLocal(localId); }
   especialistas(localId: number) { return ESPECIALISTAS.filter(e => e.locales.includes(localId)).length; }
   citasHoy(localId: number) { return CITAS.filter(c => c.localId === localId && c.fecha === HOY_ISO).length; }
   citasCabina(habId: number) { return CITAS.filter(c => c.habitacionId === habId && c.fecha === HOY_ISO).length; }
@@ -460,5 +470,9 @@ export class LocalesAdminComponent {
   private minutos(hora: string): number {
     const [h, m] = hora.split(':').map(Number);
     return h * 60 + m;
+  }
+
+  private esHorario247(horario: Local['horario'][number]): boolean {
+    return horario.apertura === '00:00' && (horario.cierre === '24:00' || horario.cierre === '00:00');
   }
 }

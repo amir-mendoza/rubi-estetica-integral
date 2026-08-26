@@ -1,8 +1,10 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { CITAS, PACIENTES, soles, tratamientoPorId } from '../../data/datos';
+import { soles, tratamientoPorId } from '../../data/datos';
 import { Paciente } from '../../data/modelos';
+import { PacientesService } from '../../compartido/pacientes.service';
+import { AgendaService } from '../../compartido/agenda.service';
 
 @Component({
   selector: 'app-pacientes',
@@ -20,10 +22,10 @@ import { Paciente } from '../../data/modelos';
     </div>
 
     <div class="kpis kpis-4">
-      <div class="kpi"><span class="kpi__label">Pacientes registradas</span><span class="kpi__valor">{{ pacientes.length }}</span><span class="kpi__nota">Base histórica</span></div>
-      <div class="kpi"><span class="kpi__label">Con cita futura</span><span class="kpi__valor">{{ conCitaFutura }}</span><span class="kpi__nota">Agendadas desde hoy</span></div>
-      <div class="kpi"><span class="kpi__label">Consumo acumulado</span><span class="kpi__valor">{{ soles(consumoTotal) }}</span><span class="kpi__nota">Histórico de todas las pacientes</span></div>
-      <div class="kpi"><span class="kpi__label">Ticket promedio</span><span class="kpi__valor">{{ soles(ticketPromedio) }}</span><span class="kpi__nota">Por cita atendida</span></div>
+      <div class="kpi"><span class="kpi__label">Pacientes registradas</span><span class="kpi__valor">{{ pacientes().length }}</span><span class="kpi__nota">Base histórica</span></div>
+      <div class="kpi"><span class="kpi__label">Con cita futura</span><span class="kpi__valor">{{ conCitaFutura() }}</span><span class="kpi__nota">Agendadas desde hoy</span></div>
+      <div class="kpi"><span class="kpi__label">Consumo acumulado</span><span class="kpi__valor">{{ soles(consumoTotal()) }}</span><span class="kpi__nota">Histórico de todas las pacientes</span></div>
+      <div class="kpi"><span class="kpi__label">Ticket promedio</span><span class="kpi__valor">{{ soles(ticketPromedio()) }}</span><span class="kpi__nota">Por cita atendida</span></div>
     </div>
 
     <div class="barra-filtros">
@@ -90,7 +92,7 @@ import { Paciente } from '../../data/modelos';
                         @for (c of citasDe(p.id); track c.id) {
                           <div class="historial">
                             <span>{{ c.fecha }} · {{ c.horaInicio }}</span>
-                            <span>{{ tratamiento(c.tratamientoId) }}</span>
+                            <span>{{ tratamientosCita(c) }}</span>
                             <span>{{ c.estado }}</span>
                             <strong>{{ soles(c.montoTotal) }}</strong>
                           </div>
@@ -121,21 +123,24 @@ import { Paciente } from '../../data/modelos';
   `]
 })
 export class PacientesComponent {
+  private pacientesService = inject(PacientesService);
+  private agenda = inject(AgendaService);
   soles = soles;
-  pacientes = PACIENTES;
+  pacientes = this.pacientesService.pacientes;
   busqueda = signal('');
   orden = signal('reciente');
   abierta = signal<number | null>(null);
-  version = signal(0);
 
-  consumoTotal = PACIENTES.reduce((t, p) => t + p.totalGastado, 0);
-  conCitaFutura = new Set(CITAS.filter(c => c.fecha >= new Date().toISOString().slice(0, 10)).map(c => c.pacienteId)).size;
-  ticketPromedio = Math.round(this.consumoTotal / PACIENTES.reduce((t, p) => t + p.citasTotales, 0));
+  consumoTotal = computed(() => this.pacientes().reduce((t, p) => t + p.totalGastado, 0));
+  conCitaFutura = computed(() => new Set(this.agenda.citas().filter(c => c.fecha >= new Date().toISOString().slice(0, 10)).map(c => c.pacienteId)).size);
+  ticketPromedio = computed(() => {
+    const citas = this.pacientes().reduce((t, p) => t + p.citasTotales, 0);
+    return citas ? Math.round(this.consumoTotal() / citas) : 0;
+  });
 
   lista = computed<Paciente[]>(() => {
-    this.version();
     const texto = this.busqueda().trim().toLowerCase();
-    const filtradas = PACIENTES.filter(p =>
+    const filtradas = this.pacientes().filter(p =>
       !texto || `${p.nombre} ${p.apellido} ${p.dni} ${p.celular}`.toLowerCase().includes(texto)
     );
     const orden = this.orden();
@@ -148,10 +153,11 @@ export class PacientesComponent {
   });
 
   citasDe(id: number) {
-    return CITAS.filter(c => c.pacienteId === id).sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 5);
+    return this.agenda.citas().filter(c => c.pacienteId === id).sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 5);
   }
 
-  tratamiento(id: number): string {
-    return tratamientoPorId(id)?.nombre ?? '—';
+  tratamientosCita(cita: { tratamientoId: number; tratamientosIncluidos?: number[] }): string {
+    const ids = cita.tratamientosIncluidos?.length ? cita.tratamientosIncluidos : [cita.tratamientoId];
+    return ids.map(id => tratamientoPorId(id)?.nombre ?? '—').join(' + ');
   }
 }

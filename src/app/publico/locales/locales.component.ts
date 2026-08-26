@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MapaSedeComponent } from '../../compartido/mapa-sede.component';
 import { HABITACIONES, LOCALES } from '../../data/datos';
+import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
 
 @Component({
   selector: 'app-locales',
@@ -18,7 +19,7 @@ import { HABITACIONES, LOCALES } from '../../data/datos';
 
     <section class="seccion">
       <div class="contenedor">
-        @for (l of locales; track l.id) {
+        @for (l of locales(); track l.id) {
           <article class="sede">
             <div class="sede__visual">
               <figure class="sede__imagen"><img class="img-cobertura" [src]="l.imagen" [alt]="l.nombre"></figure>
@@ -87,7 +88,8 @@ import { HABITACIONES, LOCALES } from '../../data/datos';
   `]
 })
 export class LocalesComponent {
-  locales = LOCALES;
+  private configPanel = inject(ConfiguracionPanelService);
+  locales = computed(() => this.configPanel.combinarLocalesConHorarios(LOCALES));
   cabinas(localId: number) {
     return HABITACIONES.filter(h => h.localId === localId);
   }

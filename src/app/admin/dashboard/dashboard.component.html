@@ -118,15 +118,15 @@
 <section class="grid-dos">
   <div class="tabla-panel">
     <div class="tabla-panel__cabecera">
-      <h3>Agenda de hoy</h3>
+      <h3>Cuaderno rápido de hoy</h3>
       <a routerLink="/admin/calendario" class="enlace-flecha">Ver todo</a>
     </div>
     <div class="tabla-envoltura">
-      <table class="tabla">
-        <thead>
-          <tr><th>Hora</th><th>Paciente</th><th>Tratamiento</th><th>Estado</th><th class="num">Total</th><th class="num">Pagado</th></tr>
-        </thead>
-        <tbody>
+        <table class="tabla">
+          <thead>
+          <tr><th>Hora</th><th>Paciente</th><th>Tratamiento</th><th class="num">Precio</th><th class="num">Efectivo</th><th class="num">Yape</th><th class="num">Plin</th><th class="num">Izipay</th><th>Control</th></tr>
+          </thead>
+          <tbody>
           @for (c of agendaHoy; track c.id) {
             <tr>
               <td><strong>{{ c.horaInicio }}</strong><br><small>{{ c.horaFin }}</small></td>
@@ -136,12 +136,15 @@
                   <span>{{ nombreEspecialista(c.especialistaId) }}</span>
                 </div>
               </td>
-              <td>{{ tratamiento(c.tratamientoId) }}</td>
-              <td><span [class]="claseEstado(c)">{{ c.estado }}</span></td>
+              <td>{{ tratamientosCita(c) }}</td>
               <td class="num">{{ soles(c.montoTotal) }}</td>
-              <td class="num">
-                {{ soles(c.montoPagado) }}
-                <br><span [class]="claseEstadoPago(c)">{{ c.estadoPago }}</span>
+              <td class="num">{{ soles(montoMetodo(c, 'Efectivo')) }}</td>
+              <td class="num">{{ soles(montoMetodo(c, 'Yape')) }}</td>
+              <td class="num">{{ soles(montoMetodo(c, 'Plin')) }}</td>
+              <td class="num">{{ soles(montoMetodo(c, 'Izipay')) }}</td>
+              <td>
+                <span [class]="claseEstado(c)">{{ c.estado }}</span>
+                <br><small>{{ c.estadoPago }}</small>
               </td>
             </tr>
           }
@@ -177,6 +180,34 @@
         </tbody>
       </table>
     </div>
+  </div>
+</section>
+
+<section class="tabla-panel" style="margin-top:22px">
+  <div class="tabla-panel__cabecera">
+    <h3>Seguimientos multisesión</h3>
+    <a routerLink="/admin/sesiones" class="enlace-flecha">Ver planes</a>
+  </div>
+  <div class="tabla-envoltura">
+    <table class="tabla">
+      <thead>
+        <tr><th>Paciente</th><th>Plan</th><th>Próxima sesión</th><th class="num">Pagado</th><th class="num">Saldo</th><th>Control</th></tr>
+      </thead>
+      <tbody>
+        @for (plan of seguimientosActivos; track plan.id) {
+          <tr>
+            <td><strong>{{ plan.paciente }}</strong></td>
+            <td>{{ plan.plan }}<br><small>Total {{ soles(plan.total) }}</small></td>
+            <td>{{ plan.proximaSesion }}</td>
+            <td class="num">{{ soles(plan.pagado) }}</td>
+            <td class="num" [style.color]="plan.saldo > 0 ? 'var(--alerta)' : 'var(--ok)'">{{ soles(plan.saldo) }}</td>
+            <td>{{ plan.control }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="vacio">No hay seguimientos activos en este momento.</td></tr>
+        }
+      </tbody>
+    </table>
   </div>
 </section>
 

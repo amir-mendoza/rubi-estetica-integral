@@ -3,8 +3,7 @@
     <div class="miga"><a routerLink="/">Inicio</a> / Reservar cita</div>
     <h1>Reservar cita</h1>
     <p>
-      Elige tu tratamiento y tu hora de llegada al local. Te recomendamos llegar
-      20 minutos antes para agilizar tu atención.
+      Elige la sede, selecciona uno o más tratamientos y reserva la hora en la que llegarás al local.
     </p>
   </div>
 </section>
@@ -17,8 +16,7 @@
           <span class="chip chip--alerta chip--punto">Tiempo agotado</span>
           <h3 id="titulo-extension">¿Vas a continuar con la reserva?</h3>
           <p>
-            Tu reserva sigue retenida por <strong>{{ cuentaExtensionSeg() }} s</strong>. Si no respondes dentro de ese tiempo,
-            la reserva se cancelará automáticamente y la hora volverá a quedar disponible.
+            Tu hora elegida sigue retenida por <strong>{{ cuentaExtensionSeg() }} s</strong>. Si no respondes, la reserva se cancelará y la hora volverá a quedar disponible.
           </p>
           <div class="reserva-modal__acciones">
             <button class="btn btn--primario btn--sm" (click)="aceptarExtensionReserva()">Sí, continuar 5 minutos más</button>
@@ -29,7 +27,6 @@
     }
 
     @if (confirmado()) {
-      <!-- ============================================== Confirmación -->
       <div class="confirmacion">
         <span class="chip chip--ok chip--punto">
           {{ metodoPago() === 'Izipay'
@@ -52,27 +49,27 @@
 
         <div class="resumen-final">
           <div class="dato"><span class="dato__label">Paciente</span><span class="dato__valor">{{ nombre }} {{ apellido }}</span></div>
+          <div class="dato"><span class="dato__label">Sede</span><span class="dato__valor">{{ local()?.nombre }}</span></div>
+          <div class="dato"><span class="dato__label">Fecha</span><span class="dato__valor">{{ formatoFechaLarga(fecha()) }}</span></div>
+          <div class="dato"><span class="dato__label">Hora de llegada</span><span class="dato__valor">{{ bloque()?.inicio }}</span></div>
           @if (promocion()) {
             <div class="dato"><span class="dato__label">Promoción</span><span class="dato__valor">{{ promocion()?.titulo }}</span></div>
           }
-          <div class="dato"><span class="dato__label">Tratamiento</span><span class="dato__valor">{{ tratamiento()?.nombre }}</span></div>
-          <div class="dato"><span class="dato__label">Fecha</span><span class="dato__valor">{{ formatoFechaLarga(fecha()) }}</span></div>
-          <div class="dato"><span class="dato__label">Hora de llegada</span><span class="dato__valor">{{ bloque()?.inicio }}</span></div>
-          <div class="dato"><span class="dato__label">Sede</span><span class="dato__valor">{{ local()?.nombre }}</span></div>
+          <div class="dato"><span class="dato__label">Tratamientos</span><span class="dato__valor">{{ resumenTratamientos().join(' + ') }}</span></div>
           <div class="dato"><span class="dato__label">Cabina y especialista</span><span class="dato__valor">Se asignan al llegar</span></div>
+          <div class="dato"><span class="dato__label">Monto total</span><span class="dato__valor">{{ soles(totalReserva()) }}</span></div>
           <div class="dato">
             <span class="dato__label">Estado de pago</span>
             <span class="dato__valor">
               @if (metodoPago() === 'Izipay') {
                 {{ modalidadPagoOnline() === 'adelanto' ? 'Adelanto pagado · Izipay' : 'Pagado completo · Izipay' }}
               } @else {
-                Pago en local
+                Pago pendiente en local
               }
             </span>
           </div>
-          <div class="dato"><span class="dato__label">Monto total de la cita</span><span class="dato__valor">{{ soles(totalReserva()) }}</span></div>
           @if (metodoPago() === 'Izipay') {
-            <div class="dato"><span class="dato__label">Monto cobrado online</span><span class="dato__valor">{{ soles(montoPagoOnline()) }}</span></div>
+            <div class="dato"><span class="dato__label">Cobrado online</span><span class="dato__valor">{{ soles(montoPagoOnline()) }}</span></div>
             @if (saldoPendiente() > 0) {
               <div class="dato"><span class="dato__label">Saldo pendiente</span><span class="dato__valor">{{ soles(saldoPendiente()) }}</span></div>
             }
@@ -82,15 +79,17 @@
           }
         </div>
 
+        <div class="aviso aviso--ok" style="margin-bottom:22px; text-align:left">
+          {{ mensajeSeguimiento() }}
+        </div>
+
         <div class="confirmacion__acciones">
           <a routerLink="/" class="btn btn--linea">Volver al inicio</a>
           <button class="btn btn--primario" (click)="reiniciar()">Reservar otra cita</button>
         </div>
       </div>
-
     } @else {
       <div class="reserva">
-        <!-- ============================================= Formulario -->
         <div>
           <ol class="pasos-barra">
             @for (p of pasosVisibles(); track p.n) {
@@ -101,11 +100,10 @@
             }
           </ol>
 
-          <!-- Paso 1: sede -->
           @if (paso() === 1) {
             <div class="bloque">
               <h3>1. Elige la sede</h3>
-              <p>Selecciona el local donde deseas atenderte.</p>
+              <p>Selecciona el local donde deseas atenderte. Luego podrás elegir uno o varios tratamientos.</p>
               @if (promocion()) {
                 <div class="promo-reserva">
                   <img [src]="promocion()?.imagen" [alt]="promocion()?.titulo">
@@ -132,11 +130,10 @@
             </div>
           }
 
-          <!-- Paso 2: tratamiento con filtros rápidos -->
           @if (paso() === 2) {
             <div class="bloque">
-              <h3>2. Elige el tratamiento</h3>
-              <p>Filtra por tipo de tratamiento para encontrarlo más rápido.</p>
+              <h3>2. Elige uno o más tratamientos</h3>
+              <p>Todos los tratamientos elegidos se suman en tu comprobante. La primera atención se agenda hoy; lo siguiente se coordina en recepción si hace falta.</p>
 
               <div class="filtros">
                 @for (c of categorias; track c) {
@@ -161,37 +158,56 @@
 
               <div class="lista-opciones">
                 @for (t of tratamientosFiltrados(); track t.id) {
-                  <button class="opcion opcion--fila" [class.opcion--activa]="tratamiento()?.id === t.id" (click)="elegirTratamiento(t)">
+                  <button class="opcion opcion--fila" [class.opcion--activa]="tratamientoSeleccionado(t.id)" (click)="alternarTratamiento(t)">
                     <img class="img-cobertura" [src]="t.imagen" [alt]="t.nombre">
                     <div class="opcion__texto">
                       <strong>{{ t.nombre }}</strong>
                       <span>{{ t.resumen }}</span>
                       <span class="opcion__meta">{{ t.categoria }} · duración aproximada {{ t.duracionMin }} min</span>
                     </div>
-                    <div class="opcion__precio">{{ soles(t.precio) }}</div>
+                    <div class="opcion__precio opcion__precio--stack">
+                      <span>{{ soles(t.precio) }}</span>
+                      <small>{{ tratamientoSeleccionado(t.id) ? 'Seleccionado' : 'Agregar' }}</small>
+                    </div>
                   </button>
                 }
                 @if (!tratamientosFiltrados().length) {
                   <div class="aviso">No hay tratamientos con esos filtros. Prueba con otra categoría.</div>
                 }
               </div>
-              <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
+
+              @if (tratamientosSeleccionados().length) {
+                <div class="panel" style="margin-top:18px; padding:18px">
+                  <h4 style="margin-bottom:12px">Tratamientos elegidos</h4>
+                  <div class="resumen__sesiones" style="border-bottom:0; padding:0">
+                    @for (item of tratamientosSeleccionados(); track item.id; let i = $index) {
+                      <span><b>{{ i + 1 }}</b> {{ item.nombre }}</span>
+                    }
+                  </div>
+                  <div class="resumen__fila" style="padding-bottom:0; border-bottom:0">
+                    <span>Total acumulado</span>
+                    <strong>{{ soles(totalReserva()) }}</strong>
+                  </div>
+                </div>
+              }
+
+              <div class="acciones-paso">
+                <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
+                <button class="btn btn--primario btn--sm" [disabled]="!tratamientosSeleccionados().length" (click)="siguiente()">Continuar</button>
+              </div>
             </div>
           }
 
-          <!-- Paso 3: fecha y bloque horario -->
           @if (paso() === 3) {
             <div class="bloque">
-              <h3>3. Elige el día y la hora en la que llegarás</h3>
+              <h3>3. Elige el día y la hora de llegada</h3>
               @if (promocion()) {
                 <div class="aviso aviso--ok" style="margin-bottom:18px">
-                  Ya reservaste la promoción <strong>{{ promocion()?.titulo }}</strong>. No necesitas elegir tratamiento:
-                  recepción atenderá los tratamientos incluidos en la oferta.
+                  Ya reservaste la promoción <strong>{{ promocion()?.titulo }}</strong>. No necesitas elegir tratamiento adicional desde esta pantalla.
                 </div>
               }
               <p>
-                Atendemos por hora de llegada. Cada bloque horario tiene un cupo para evitar esperas excesivas:
-                cuando una hora llega a su cupo, se cierra y puedes elegir la siguiente.
+                El temporizador empieza recién cuando eliges una hora. Desde ese momento tu bloque queda retenido durante 8 minutos para que termines la reserva.
               </p>
               @if (avisoReserva()) {
                 <div class="aviso" style="margin-bottom:18px">{{ avisoReserva() }}</div>
@@ -232,7 +248,7 @@
 
               <div class="aviso" style="margin-top:18px">
                 Tu hora reservada es tu hora de llegada al local. Llega 20 minutos antes para agilizar tu atención.
-                Si llegas tarde, tu reserva no se pierde, pero podrías esperar más hasta que recepción pueda asignarte una cabina disponible.
+                Si llegas tarde, la reserva no se pierde, pero la atención dependerá de la disponibilidad de cabina en recepción.
               </div>
 
               <div class="acciones-paso">
@@ -242,11 +258,10 @@
             </div>
           }
 
-          <!-- Paso 4: datos -->
           @if (paso() === 4) {
             <div class="bloque">
               <h3>4. Tus datos</h3>
-              <p>Necesitamos estos datos para registrar tu historia clínica y confirmarte la cita.</p>
+              <p>Necesitamos estos datos para registrar la reserva y confirmar tu llegada al local.</p>
               @if (sesion.autenticado()) {
                 <div class="aviso aviso--ok" style="margin-bottom:20px">
                   Datos cargados desde tu cuenta ({{ sesion.usuario()?.correo }}). Puedes editarlos si algo cambió.
@@ -254,8 +269,7 @@
               } @else {
                 <div class="aviso" style="margin-bottom:20px">
                   ¿Ya tienes cuenta? <a routerLink="/ingresar" [queryParams]="{ volver: '/reservar' }">Ingresa</a>
-                  y estos campos se completarán automáticamente, o
-                  <a routerLink="/registro">crea tu cuenta</a>.
+                  o <a routerLink="/registro">crea tu cuenta</a> para completar más rápido tus futuras reservas.
                 </div>
               }
               <div class="grid grid-2" style="gap:0 20px">
@@ -267,7 +281,7 @@
               <div class="campo"><label>Correo electrónico (opcional)</label><input type="email" [(ngModel)]="correo" placeholder="correo@ejemplo.com"></div>
               <div class="campo">
                 <label>Observaciones (opcional)</label>
-                <textarea rows="3" [(ngModel)]="observaciones" placeholder="Alergias, tratamientos previos, medicación"></textarea>
+                <textarea rows="3" [(ngModel)]="observaciones" placeholder="Alergias, recomendaciones o notas para recepción"></textarea>
               </div>
               <div class="acciones-paso">
                 <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
@@ -276,11 +290,10 @@
             </div>
           }
 
-          <!-- Paso 5: pago -->
           @if (paso() === 5) {
             <div class="bloque">
               <h3>5. Método de pago</h3>
-              <p>Puedes pagar en línea con Izipay o pagar en efectivo en el local.</p>
+              <p>Puedes pagar en línea con Izipay o dejar la reserva pendiente para cancelar en el local.</p>
 
               <button class="opcion opcion--fila" [class.opcion--activa]="metodoPago() === 'Izipay'" (click)="metodoPago.set('Izipay')">
                 <div class="opcion__texto">
@@ -292,20 +305,20 @@
 
               <button class="opcion opcion--fila" [class.opcion--activa]="metodoPago() === 'Local'" (click)="metodoPago.set('Local')">
                 <div class="opcion__texto">
-                  <strong>Pagar en efectivo en el local</strong>
-                  <span>Tu cita queda registrada como pendiente de pago y recepción la marca como pagada al cobrarte.</span>
+                  <strong>Pagar en el local</strong>
+                  <span>La reserva queda registrada y recepción cobrará el importe pendiente al atenderte.</span>
                 </div>
                 <div class="opcion__precio">{{ soles(totalReserva()) }}</div>
               </button>
 
               @if (metodoPago() === 'Izipay') {
                 <div class="panel" style="margin-top:18px; padding:18px">
-                  <h4 style="margin-bottom:14px">Qué vas a cobrar online</h4>
+                  <h4 style="margin-bottom:14px">Qué se cobrará online</h4>
 
                   <button class="opcion opcion--fila" [class.opcion--activa]="modalidadPagoOnline() === 'total'" (click)="modalidadPagoOnline.set('total')">
                     <div class="opcion__texto">
                       <strong>Pagar el total completo</strong>
-                      <span>La cita quedará totalmente pagada apenas Izipay confirme la operación.</span>
+                      <span>La reserva quedará totalmente pagada apenas Izipay confirme la operación.</span>
                     </div>
                     <div class="opcion__precio">{{ soles(totalReserva()) }}</div>
                   </button>
@@ -320,13 +333,17 @@
 
                   @if (modalidadPagoOnline() === 'adelanto') {
                     <div class="aviso" style="margin-top:14px">
-                      Total de la cita: <strong>{{ soles(totalReserva()) }}</strong>.<br>
-                      Adelanto online: <strong>{{ soles(montoPagoOnline()) }}</strong>.
+                      Total de la reserva: <strong>{{ soles(totalReserva()) }}</strong>.<br>
+                      Adelanto online: <strong>{{ soles(montoPagoOnline()) }}</strong>.<br>
                       Saldo pendiente en local: <strong>{{ soles(saldoPendiente()) }}</strong>.
                     </div>
                   }
                 </div>
               }
+
+              <div class="aviso aviso--ok" style="margin:18px 0">
+                {{ mensajeSeguimiento() }}
+              </div>
 
               <a class="btn btn--linea btn--sm" [href]="whatsappReserva()" target="_blank" rel="noopener">
                 Coordinar esta reserva por WhatsApp
@@ -334,9 +351,9 @@
 
               <div class="aviso" style="margin:22px 0">
                 @if (metodoPago() === 'Izipay') {
-                  El pago online ya está preparado para Izipay. Ahora corre en modo simulación hasta conectar Spring Boot y las credenciales reales.
+                  El pago online está listo para Izipay en modo simulación hasta conectar Spring Boot y las credenciales reales.
                 } @else {
-                  La reserva quedará pendiente de cobro y recepción la marcará como pagada al cobrar en el local.
+                  La reserva quedará pendiente de pago y recepción registrará el cobro al atender a la paciente.
                 }
               </div>
               @if (mensajePago()) {
@@ -361,19 +378,14 @@
           }
         </div>
 
-        <!-- ================================================ Resumen -->
         <aside class="resumen">
           <div class="panel">
             <h4>Resumen de tu reserva</h4>
-            @if (local() && tiempoReservaSeg() > 0) {
+            @if (bloque() && tiempoReservaSeg() > 0) {
               <div class="reserva-tiempo">
-                <span class="dato__label">{{ bloque() ? 'Hora retenida para ti' : 'Tiempo para completar tu reserva' }}</span>
+                <span class="dato__label">Tiempo para terminar tu reserva</span>
                 <strong>{{ tiempoReservaTexto() }}</strong>
-                <small>
-                  {{ bloque()
-                    ? 'Completa tu reserva antes de que el bloque se vuelva a liberar.'
-                    : 'Desde que eliges la sede, tienes 8 minutos para terminar todo el proceso.' }}
-                </small>
+                <small>Este contador empezó cuando elegiste la hora. Si se acaba, la hora se liberará.</small>
               </div>
             }
 
@@ -381,11 +393,11 @@
             @if (promocion()) {
               <div class="resumen__fila"><span>Promoción</span><strong>{{ promocion()?.titulo }}</strong></div>
             }
-            <div class="resumen__fila"><span>{{ promocion() ? 'Incluye' : 'Tratamiento' }}</span><strong>{{ nombreReserva() }}</strong></div>
-            @if (sesionesPromo().length) {
+            <div class="resumen__fila"><span>{{ promocion() ? 'Incluye' : 'Tratamientos' }}</span><strong>{{ nombreReserva() }}</strong></div>
+            @if (resumenTratamientos().length) {
               <div class="resumen__sesiones">
-                @for (s of sesionesPromo(); track $index; let i = $index) {
-                  <span><b>{{ i + 1 }}</b> {{ s.titulo }}</span>
+                @for (nombre of resumenTratamientos(); track $index; let i = $index) {
+                  <span><b>{{ i + 1 }}</b> {{ nombre }}</span>
                 }
               </div>
             }
@@ -403,7 +415,6 @@
               <strong>{{ soles(totalReserva()) }}</strong>
             </div>
             @if (metodoPago() === 'Izipay') {
-              <div class="resumen__fila"><span>Total de la cita</span><strong>{{ soles(totalReserva()) }}</strong></div>
               <div class="resumen__fila"><span>Cobro online</span><strong>{{ soles(montoPagoOnline()) }}</strong></div>
               @if (saldoPendiente() > 0) {
                 <div class="resumen__fila"><span>Saldo pendiente</span><strong>{{ soles(saldoPendiente()) }}</strong></div>
@@ -412,24 +423,19 @@
           </div>
 
           <div class="panel" style="margin-top:20px">
-            <h4>Cómo funciona la agenda</h4>
+            <h4>Cómo funciona esta reserva</h4>
             <ul class="reglas">
               <li>Reservas la hora a la que llegarás, no una cabina ni una especialista.</li>
               <li>Te recomendamos llegar 20 minutos antes de tu hora reservada.</li>
               @if (local()) {
-                <li>
-                  {{ local()?.nombre }} tiene {{ cabinasSede() }} cabinas y acepta
-                  {{ cupoSede() }} citas por hora.
-                </li>
-                <li>Las dos sedes atienden las 24 horas, todos los días.</li>
-                <li>Desde que eliges la sede, tienes 8 minutos para completar la reserva.</li>
-                <li>Cuando eliges una hora, ese bloque queda retenido con ese mismo tiempo para evitar cruces con otras reservas.</li>
+                <li>{{ local()?.nombre }} tiene {{ cabinasSede() }} cabinas y acepta {{ cupoSede() }} citas por hora.</li>
+                <li>Las horas disponibles dependen del horario configurado para la sede elegida.</li>
               } @else {
                 <li>Cada sede acepta un número limitado de citas por hora.</li>
               }
-              <li>Cuando una hora llega a su cupo se cierra y se ofrece la siguiente.</li>
-              <li>Si llegas tarde, tu reserva se mantiene, pero la atención dependerá de la disponibilidad de cabina.</li>
-              <li>La especialista se asigna en el local según disponibilidad.</li>
+              <li>El temporizador empieza cuando eliges una hora y te da 8 minutos para terminar la reserva.</li>
+              <li>Si llegas tarde, tu reserva no se pierde, pero la atención dependerá de la disponibilidad de cabina en recepción.</li>
+              <li>Si elegiste más de un tratamiento o una promoción multisesión, hoy se agenda tu primera atención y recepción coordina contigo las siguientes.</li>
             </ul>
           </div>
         </aside>

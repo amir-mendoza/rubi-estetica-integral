@@ -78,11 +78,11 @@ const AGENDA_POR_DEFECTO: ConfiguracionAgenda = {
   llegadaMin: 20,
   cuposPorLocal: { 1: 10, 2: 10 },
   cerrarAlLlegarCupo: true,
-  atencion24h: true,
+  atencion24h: false,
   asignarAlLlegar: true,
   aceptarSinCita: true,
   horariosPorLocal: Object.fromEntries(
-    LOCALES.map(local => [local.id, local.horario.map(h => ({ ...h }))])
+    LOCALES.map(local => [local.id, [{ dias: 'Todos los días', apertura: '09:00', cierre: '22:00' }]])
   ) as Record<number, HorarioConfigurado[]>
 };
 
@@ -160,6 +160,24 @@ export class ConfiguracionPanelService {
     });
   }
 
+  usarHorarioComercial(localId: number, apertura = '09:00', cierre = '22:00'): void {
+    const agenda = this.agenda();
+    this.actualizarAgenda({
+      atencion24h: false,
+      horariosPorLocal: {
+        ...agenda.horariosPorLocal,
+        [localId]: [{ dias: 'Todos los días', apertura, cierre }]
+      }
+    });
+  }
+
+  usarHorarioComercialEnTodasLasSedes(apertura = '09:00', cierre = '22:00'): void {
+    const horariosPorLocal = Object.fromEntries(
+      LOCALES.map(local => [local.id, [{ dias: 'Todos los días', apertura, cierre }]])
+    ) as Record<number, HorarioConfigurado[]>;
+    this.actualizarAgenda({ atencion24h: false, horariosPorLocal });
+  }
+
   actualizarPagos(cambios: Partial<ConfiguracionPagos>): void {
     this.persistirSignal(this.pagos, CLAVE_PAGOS, cambios);
   }
@@ -204,7 +222,11 @@ export class ConfiguracionPanelService {
     if (this.agenda().atencion24h) {
       return [{ dias: 'Todos los días', apertura: '00:00', cierre: '24:00' }];
     }
-    return this.agenda().horariosPorLocal[localId]?.map(h => ({ ...h })) ?? [{ dias: 'Todos los días', apertura: '08:00', cierre: '20:00' }];
+    return this.agenda().horariosPorLocal[localId]?.map(h => ({ ...h })) ?? [{ dias: 'Todos los días', apertura: '09:00', cierre: '22:00' }];
+  }
+
+  combinarLocalesConHorarios<T extends { id: number; horario: HorarioConfigurado[] }>(locales: T[]): T[] {
+    return locales.map(local => ({ ...local, horario: this.obtenerHorariosLocal(local.id) }));
   }
 
   guardarTodo(): void {

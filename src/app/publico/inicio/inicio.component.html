@@ -99,7 +99,7 @@
       <h2>Agenda tu cita en cuatro pasos</h2>
       <div class="filete"></div>
       <p>
-        Atendemos las 24 horas en ambas sedes. El sistema controla en tiempo real los cupos de
+        Atendemos según el horario configurado de cada sede. El sistema controla en tiempo real los cupos de
         cada hora: la cabina y la especialista se asignan en recepción cuando llegas.
       </p>
       <a routerLink="/reservar" class="btn btn--primario">Comenzar reserva</a>
@@ -209,7 +209,7 @@
       <div class="filete"></div>
     </div>
     <div class="grid grid-2">
-      @for (l of locales; track l.id) {
+      @for (l of locales(); track l.id) {
         <article class="tarjeta-local">
           <img class="img-cobertura" [src]="l.imagen" [alt]="l.nombre">
           <div class="tarjeta-local__cuerpo">

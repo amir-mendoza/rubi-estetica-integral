@@ -429,6 +429,7 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
             <label><input type="checkbox" [ngModel]="configPanel.agenda().aceptarSinCita" (ngModelChange)="configPanel.actualizarAgenda({ aceptarSinCita: $event })"> Aceptar pacientes sin cita según disponibilidad del momento</label>
           </div>
           <div class="acciones-marca">
+            <button class="btn btn--linea btn--sm" (click)="aplicarHorarioComercial()">Usar horario comercial 09:00 - 22:00</button>
             <button class="btn btn--linea btn--sm" (click)="configPanel.restablecerAgenda()">Restablecer agenda</button>
           </div>
         </div>
@@ -445,6 +446,9 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
                   <input type="time" [ngModel]="h.cierre" (ngModelChange)="configPanel.actualizarAgendaHorario(l.id, i, 'cierre', $event)" [disabled]="configPanel.agenda().atencion24h">
                 </div>
               }
+              <div class="horario-config__acciones">
+                <button class="btn btn--linea btn--sm" (click)="aplicarHorarioLocal(l.id)">Aplicar 09:00 - 22:00</button>
+              </div>
             </div>
           }
         </div>
@@ -670,6 +674,7 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
     .horario-config__fila { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
     .horario-config__fila span { font-size: .9rem; color: var(--gris); }
     .horario-config__fila input { border: 1px solid var(--linea); border-radius: var(--radio); padding: .45rem .6rem; font-family: inherit; font-size: .9rem; }
+    .horario-config__acciones { display: flex; justify-content: flex-end; margin-top: 10px; }
     .marca-preview {
       display: grid;
       place-items: center;
@@ -779,6 +784,14 @@ export class ConfiguracionComponent {
 
   guardarTodo(): void {
     this.configPanel.guardarTodo();
+  }
+
+  aplicarHorarioComercial(): void {
+    this.configPanel.usarHorarioComercialEnTodasLasSedes('09:00', '22:00');
+  }
+
+  aplicarHorarioLocal(localId: number): void {
+    this.configPanel.usarHorarioComercial(localId, '09:00', '22:00');
   }
 
   cambiarBloqueMin(valor: string | number): void {

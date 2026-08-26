@@ -1,6 +1,8 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink, ActivatedRoute } from '@angular/router';
-import { CITAS, PACIENTES, PEDIDOS, PRODUCTOS, localPorId, soles, tratamientoPorId } from '../../data/datos';
+import { PEDIDOS, PRODUCTOS, localPorId, soles, tratamientoPorId } from '../../data/datos';
+import { AgendaService } from '../../compartido/agenda.service';
+import { PacientesService } from '../../compartido/pacientes.service';
 
 @Component({
   selector: 'app-paciente-historial',
@@ -30,18 +32,19 @@ import { CITAS, PACIENTES, PEDIDOS, PRODUCTOS, localPorId, soles, tratamientoPor
           <div class="tabla-panel__cabecera"><h3>Citas y tratamientos</h3><span class="dato__label">{{ citas().length }} registros</span></div>
           <div class="tabla-envoltura">
             <table class="tabla">
-              <thead><tr><th>Fecha</th><th>Tratamiento</th><th>Local</th><th>Estado</th><th class="num">Pagado</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Tratamientos</th><th>Local</th><th>Zona / notas</th><th>Estado</th><th class="num">Pagado</th></tr></thead>
               <tbody>
                 @for (c of citas(); track c.id) {
                   <tr>
                     <td>{{ c.fecha }}<br><small>{{ c.horaInicio }}</small></td>
-                    <td>{{ tratamiento(c.tratamientoId) }}</td>
+                    <td>{{ tratamientosCita(c) }}</td>
                     <td>{{ local(c.localId) }}</td>
+                    <td>{{ c.zonaTratamiento || c.notas || '—' }}</td>
                     <td>{{ c.estado }}<br><small>{{ c.estadoPago }}</small></td>
                     <td class="num">{{ soles(c.montoPagado) }}</td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="5" class="vacio">Sin citas registradas.</td></tr>
+                  <tr><td colspan="6" class="vacio">Sin citas registradas.</td></tr>
                 }
               </tbody>
             </table>
@@ -85,10 +88,12 @@ import { CITAS, PACIENTES, PEDIDOS, PRODUCTOS, localPorId, soles, tratamientoPor
 })
 export class PacienteHistorialComponent {
   private ruta = inject(ActivatedRoute);
+  private agenda = inject(AgendaService);
+  private pacientesService = inject(PacientesService);
   soles = soles;
   id = Number(this.ruta.snapshot.paramMap.get('id'));
-  paciente = computed(() => PACIENTES.find(p => p.id === this.id));
-  citas = computed(() => CITAS.filter(c => c.pacienteId === this.id).sort((a, b) => b.fecha.localeCompare(a.fecha)));
+  paciente = computed(() => this.pacientesService.porId(this.id));
+  citas = computed(() => this.agenda.citas().filter(c => c.pacienteId === this.id).sort((a, b) => b.fecha.localeCompare(a.fecha)));
   pedidos = computed(() => {
     const p = this.paciente();
     if (!p) { return []; }
@@ -98,7 +103,10 @@ export class PacienteHistorialComponent {
   });
   total = computed(() => this.citas().reduce((t, c) => t + c.montoPagado, 0) + this.pedidos().reduce((t, p) => t + p.pagado, 0));
 
-  tratamiento(id: number): string { return tratamientoPorId(id)?.nombre ?? '—'; }
+  tratamientosCita(cita: { tratamientoId: number; tratamientosIncluidos?: number[] }): string {
+    const ids = cita.tratamientosIncluidos?.length ? cita.tratamientosIncluidos : [cita.tratamientoId];
+    return ids.map(id => tratamientoPorId(id)?.nombre ?? 'Tratamiento').join(' + ');
+  }
   local(id: number): string { return localPorId(id)?.nombre ?? '—'; }
   productos(items: { productoId: number; cantidad: number }[]): string {
     return items.map(i => `${i.cantidad} x ${PRODUCTOS.find(p => p.id === i.productoId)?.nombre ?? 'Producto'}`).join(', ');

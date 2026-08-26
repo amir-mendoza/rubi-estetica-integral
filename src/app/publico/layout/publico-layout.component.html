@@ -105,7 +105,7 @@
         </ul>
       </div>
 
-      @for (local of locales; track local.id) {
+      @for (local of locales(); track local.id) {
         <div>
           <h5>{{ local.nombre }}</h5>
           <ul class="pie__lista-datos">

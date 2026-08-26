@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { CITAS, LOCALES, aISO, cabinasDeSede } from '../data/datos';
+import { LOCALES, aISO, cabinasDeSede } from '../data/datos';
 import { Cita, Local } from '../data/modelos';
 import { ConfiguracionPanelService } from './configuracion-panel.service';
+import { AgendaService } from './agenda.service';
 
 /**
  * Bloque horario de la agenda. La paciente reserva la hora a la que piensa
@@ -47,6 +48,7 @@ const CLAVE_SESION_RETENCION = 'rubi.retenciones-sesion';
 @Injectable({ providedIn: 'root' })
 export class DisponibilidadService {
   private configPanel = inject(ConfiguracionPanelService);
+  private agenda = inject(AgendaService);
   private sessionId = this.leerSessionId();
 
   /** Horario del local para la fecha indicada (respetando el horario configurable). */
@@ -63,7 +65,7 @@ export class DisponibilidadService {
   }
 
   citasDe(fechaISO: string, localId: number): Cita[] {
-    return CITAS.filter(c =>
+    return this.agenda.citas().filter(c =>
       c.fecha === fechaISO &&
       c.localId === localId &&
       c.estado !== 'Cancelada' &&

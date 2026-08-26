@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, ElementRef, HostListener, OnDestroy, inject } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, HostListener, OnDestroy, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -10,6 +10,7 @@ import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component'
 import { RedesService } from '../../compartido/redes.service';
 import { CargadorRutaComponent } from '../../compartido/cargador-ruta.component';
 import { LOCALES } from '../../data/datos';
+import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
 
 @Component({
   selector: 'app-publico-layout',
@@ -22,11 +23,12 @@ export class PublicoLayoutComponent implements AfterViewInit, OnDestroy {
   readonly sesion = inject(SesionService);
   readonly carrito = inject(CarritoService);
   readonly redes = inject(RedesService);
+  readonly configPanel = inject(ConfiguracionPanelService);
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private observadorAnimaciones?: IntersectionObserver;
-  locales = LOCALES;
+  locales = computed(() => this.configPanel.combinarLocalesConHorarios(LOCALES));
   compacto = false;
   menuAbierto = false;
   anio = new Date().getFullYear();

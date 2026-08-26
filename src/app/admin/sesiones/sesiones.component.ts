@@ -1,9 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CITAS, LOCALES, formatoFechaLarga, nombrePaciente, pacientePorId, soles, PACIENTES, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
-import { ESTADOS_SESION, EstadoSesion, PlanSesiones, SesionPlan, Paciente, MetodoPago } from '../../data/modelos';
+import { LOCALES, formatoFechaLarga, soles, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
+import { ESTADOS_SESION, EstadoSesion, PlanSesiones, SesionPlan, MetodoPago } from '../../data/modelos';
 import { PlanesService } from '../../compartido/planes.service';
 import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
+import { PacientesService } from '../../compartido/pacientes.service';
+import { AgendaService } from '../../compartido/agenda.service';
 
 interface HoraDisponible {
   hora: string;
@@ -28,8 +30,9 @@ interface DiaDisponible {
       <div>
         <h1>Planes de sesiones</h1>
         <p>
-          Seguimiento de las sesiones personalizadas de cada paciente. Busca por DNI para ver
-          en qué sesión va, qué procedimiento le toca y cuándo debe volver.
+          Aquí recepción controla los tratamientos con seguimiento. La primera sesión puede
+          salir desde la web o desde caja, y las siguientes se coordinan manualmente después
+          de cada atención para que todo quede claro y ordenado.
         </p>
       </div>
       <div class="cabecera-admin__acciones">
@@ -267,18 +270,18 @@ interface DiaDisponible {
           @if (plan.notas) { <p class="plan__notas">{{ plan.notas }}</p> }
           <div class="plan__acciones">
             <div class="accion-explicada">
-              <button class="btn btn--linea btn--sm" (click)="abrirProgramador(plan)">
+              <button class="btn btn--linea btn--sm" (click)="abrirProgramador(plan)" [disabled]="!planes.puedeProgramarSiguiente(plan)">
                 Asignar próxima sesión
               </button>
-              <small>Recepción elige fecha y hora revisando la disponibilidad de la semana.</small>
+              <small>{{ planes.resumenPendiente(plan) }}</small>
             </div>
             @if (plan.precioTotal - plan.pagado > 0) {
               <div class="cobro-plan">
                 <div class="campo"><label>Monto recibido</label><input type="number" min="1" [placeholder]="cuotaSugerida(plan)" [ngModel]="montoPlan()[plan.id]" (ngModelChange)="setMontoPlan(plan.id, Number($event))"></div>
                 <div class="campo"><label>Método</label><select [ngModel]="metodoPlan()[plan.id] || 'Efectivo'" (ngModelChange)="setMetodoPlan(plan.id, $event)">@for (m of metodosPago; track m) { <option>{{ m }}</option> }</select></div>
-                <button class="btn btn--vino btn--sm" (click)="registrarPagoPlan(plan)">Registrar pago parcial</button>
-                <button class="btn btn--linea btn--sm" (click)="cobrarSaldo(plan)">Liquidar saldo completo</button>
-                <small>Sirve para pagos por partes en recepción: efectivo, Yape, Plin, tarjeta o transferencia.</small>
+                <button class="btn btn--vino btn--sm" (click)="registrarPagoPlan(plan)">Cobrar ahora</button>
+                <button class="btn btn--linea btn--sm" (click)="cobrarSaldo(plan)">Marcar plan totalmente pagado</button>
+                <small>Registra aquí lo que la paciente entrega en caja. Si todavía falta saldo, el sistema lo mantiene visible para la siguiente visita.</small>
               </div>
             }
           </div>
@@ -290,6 +293,9 @@ interface DiaDisponible {
               <div>
                 <span class="dato__label">Próxima sesión manual</span>
                 <h4>{{ proximaProgramable(plan)?.procedimiento || 'Sin sesiones pendientes' }}</h4>
+                <p class="programador-sesion__texto">
+                  Después de atender a la paciente, recepción separa aquí la siguiente fecha y hora según lo coordinado en mostrador.
+                </p>
               </div>
               <button class="boton-icono" (click)="programandoPlanId.set(null)">Cerrar</button>
             </div>
@@ -399,6 +405,7 @@ interface DiaDisponible {
       margin-bottom: 14px;
     }
     .programador-sesion__cabecera h4 { margin: 4px 0 0; }
+    .programador-sesion__texto { margin: 8px 0 0; color: var(--gris); font-size: .9rem; line-height: 1.45; }
     .programador-sesion__controles {
       display: grid;
       grid-template-columns: repeat(2, minmax(160px, 220px)) auto;
@@ -482,11 +489,16 @@ interface DiaDisponible {
   `]
 })
 export class SesionesComponent {
+  private agenda = inject(AgendaService);
   private configPanel = inject(ConfiguracionPanelService);
+  private pacientesService = inject(PacientesService);
   Number = Number;
   soles = soles;
   fechaLarga = formatoFechaLarga;
-  paciente = nombrePaciente;
+  paciente = (id: number) => {
+    const paciente = this.pacientesService.porId(id);
+    return paciente ? `${paciente.nombre} ${paciente.apellido}` : '—';
+  };
   locales = LOCALES;
   estadosSesion = ESTADOS_SESION;
   metodosPago: MetodoPago[] = ['Efectivo', 'Yape', 'Plin', 'Tarjeta POS', 'Transferencia'];
@@ -540,7 +552,7 @@ export class SesionesComponent {
   }
 
   dni(pacienteId: number): string {
-    return pacientePorId(pacienteId)?.dni ?? '—';
+    return this.pacientesService.porId(pacienteId)?.dni ?? '—';
   }
 
   cobrar(plan: PlanSesiones): void {
@@ -555,7 +567,7 @@ export class SesionesComponent {
 
   registrarPagoPlan(plan: PlanSesiones): void {
     const monto = Number(this.montoPlan()[plan.id] || this.cuotaSugerida(plan));
-    this.planes.registrarPago(plan.id, monto);
+    this.planes.registrarPago(plan.id, monto, this.metodoPlan()[plan.id] || 'Efectivo');
     this.montoPlan.update(v => ({ ...v, [plan.id]: 0 }));
   }
 
@@ -568,7 +580,7 @@ export class SesionesComponent {
   }
 
   cobrarSaldo(plan: PlanSesiones): void {
-    this.planes.registrarPago(plan.id, plan.precioTotal - plan.pagado);
+    this.planes.registrarPago(plan.id, plan.precioTotal - plan.pagado, this.metodoPlan()[plan.id] || 'Efectivo');
   }
 
   abrirProgramador(plan: PlanSesiones): void {
@@ -629,7 +641,7 @@ export class SesionesComponent {
     const localId = plan.localId || LOCALES[0]?.id || 1;
     const cupo = this.configPanel.obtenerCupoLocal(localId);
     return this.horasAgenda.map(hora => {
-      const ocupadas = CITAS.filter(c =>
+      const ocupadas = this.agenda.citas().filter(c =>
         c.fecha === fecha &&
         c.localId === localId &&
         c.estado !== 'Cancelada' &&
@@ -662,7 +674,7 @@ export class SesionesComponent {
   buscarDni(dni: string): void {
     this.formDni.set(dni);
     if (dni.length === 8) {
-      const p = PACIENTES.find(pac => pac.dni === dni);
+      const p = this.pacientesService.porDni(dni);
       if (p) {
         this.formNombre.set(p.nombre);
         this.formApellido.set(p.apellido);
@@ -735,39 +747,25 @@ export class SesionesComponent {
       return;
     }
 
-    // 1. Validar o registrar paciente en la lista de datos en memoria
-    let pac = PACIENTES.find(p => p.dni === this.formDni());
-    let pacienteId = pac ? pac.id : 0;
-    if (!pac) {
-      pacienteId = Math.max(...PACIENTES.map(p => p.id), 0) + 1;
-      const nuevoPac: Paciente = {
-        id: pacienteId,
-        nombre: this.formNombre(),
-        apellido: this.formApellido(),
-        dni: this.formDni(),
-        celular: this.formCelular(),
-        correo: this.formCorreo(),
-        fechaRegistro: aISO(new Date()),
-        observaciones: this.formNotas(),
-        citasTotales: 0,
-        ultimaVisita: aISO(new Date()),
-        totalGastado: 0
-      };
-      PACIENTES.push(nuevoPac);
-    }
+    const paciente = this.pacientesService.registrarOActualizar({
+      dni: this.formDni(),
+      nombreCompleto: `${this.formNombre()} ${this.formApellido()}`.trim(),
+      celular: this.formCelular(),
+      correo: this.formCorreo(),
+      observaciones: this.formNotas()
+    });
 
-    // 2. Mapear sesiones con sus estados iniciales
     const sesiones: SesionPlan[] = this.formSesiones().map((s, idx) => ({
       numero: idx + 1,
       tratamientoId: s.tratamientoId,
       procedimiento: s.procedimiento,
-      estado: idx === 0 ? 'En proceso' : 'Pendiente',
-      fecha: idx === 0 ? aISO(new Date()) : undefined
+      estado: idx === 0 ? 'Programada' : 'Pendiente',
+      fecha: idx === 0 ? aISO(new Date()) : undefined,
+      registradoPor: 'Recepción'
     }));
 
-    // 3. Crear la estructura del plan
     const planData: Omit<PlanSesiones, 'id' | 'codigo'> = {
-      pacienteId,
+      pacienteId: paciente.id,
       dni: this.formDni(),
       nombre: this.formNombrePlan(),
       localId: this.formLocalId(),
@@ -780,10 +778,8 @@ export class SesionesComponent {
       notas: this.formNotas() || undefined
     };
 
-    // 4. Registrar en el servicio
     this.planes.crearPlan(planData);
 
-    // 5. Limpiar y cerrar formulario
     this.mostrarFormulario.set(false);
     this.formDni.set('');
     this.formNombre.set('');

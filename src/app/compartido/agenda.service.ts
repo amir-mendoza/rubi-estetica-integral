@@ -9,7 +9,11 @@ import { Cita, EstadoCita, MetodoPago } from '../data/modelos';
  */
 @Injectable({ providedIn: 'root' })
 export class AgendaService {
-  private lista = signal<Cita[]>(CITAS.map(c => ({ ...c })));
+  private lista = signal<Cita[]>(CITAS.map(c => ({
+    ...c,
+    tratamientosIncluidos: c.tratamientosIncluidos ? [...c.tratamientosIncluidos] : undefined,
+    pagosDetalle: c.pagosDetalle ? c.pagosDetalle.map(pago => ({ ...pago })) : undefined
+  })));
 
   readonly citas = this.lista.asReadonly();
 
@@ -39,14 +43,51 @@ export class AgendaService {
 
   crearCita(cita: Omit<Cita, 'id' | 'codigo' | 'registradaEl'>): Cita {
     const id = this.lista().reduce((max, c) => Math.max(max, c.id), 0) + 1;
+    const ahora = new Date();
+    const hora = ahora.toTimeString().slice(0, 5);
     const nueva: Cita = {
       ...cita,
       id,
       codigo: `CT-${1000 + id}`,
-      registradaEl: `${HOY_ISO} ${new Date().toTimeString().slice(0, 5)}`
+      registradaEl: `${HOY_ISO} ${hora}`,
+      tratamientosIncluidos: cita.tratamientosIncluidos ? [...cita.tratamientosIncluidos] : undefined,
+      pagosDetalle: cita.montoPagado > 0 && cita.metodoPago
+        ? [{
+            metodo: cita.metodoPago,
+            monto: cita.montoPagado,
+            fecha: HOY_ISO,
+            hora,
+            canal: cita.origen === 'Web' ? 'Online' : cita.origen,
+            registradoPor: cita.confirmadaPor || cita.registradaPor,
+            codigoOperacion: cita.codigoOperacion
+          }]
+        : cita.pagosDetalle
     };
     this.lista.update(lista => [nueva, ...lista]);
     return nueva;
+  }
+
+  upsertCitaDePlan(cita: Omit<Cita, 'id' | 'codigo' | 'registradaEl'> & { planId: number; numeroSesionPlan: number }): Cita {
+    const existente = this.lista().find(item =>
+      item.planId === cita.planId &&
+      item.numeroSesionPlan === cita.numeroSesionPlan
+    );
+
+    if (!existente) {
+      return this.crearCita(cita);
+    }
+
+    const actualizada: Cita = {
+      ...existente,
+      ...cita,
+      id: existente.id,
+      codigo: existente.codigo,
+      registradaEl: existente.registradaEl,
+      pagosDetalle: existente.pagosDetalle ?? cita.pagosDetalle
+    };
+
+    this.lista.update(lista => lista.map(item => item.id === existente.id ? actualizada : item));
+    return actualizada;
   }
 
   actualizarFechaHora(id: number, fecha: string, horaInicio: string, horaFin: string, usuario: string): void {
@@ -68,6 +109,18 @@ export class AgendaService {
       estadoPago: Math.min(c.montoPagado + (monto ?? (c.montoTotal - c.montoPagado)), c.montoTotal) >= c.montoTotal ? 'Pagado' : 'Pago en local',
       metodoPago: metodo,
       montoPagado: Math.min(c.montoPagado + (monto ?? (c.montoTotal - c.montoPagado)), c.montoTotal),
+      pagosDetalle: [
+        ...(c.pagosDetalle ?? []),
+        {
+          metodo,
+          monto: monto ?? (c.montoTotal - c.montoPagado),
+          fecha: HOY_ISO,
+          hora,
+          canal: 'Recepción',
+          registradoPor: usuario,
+          codigoOperacion: codigo || c.codigoOperacion || `${metodo.toUpperCase().replace(/\s/g, '-')}-${1000 + c.id}`
+        }
+      ],
       confirmadaPor: usuario,
       pagadaEl: `${HOY_ISO} ${hora}`,
       codigoOperacion: codigo || c.codigoOperacion || `${metodo.toUpperCase().replace(/\s/g, '-')}-${1000 + c.id}`

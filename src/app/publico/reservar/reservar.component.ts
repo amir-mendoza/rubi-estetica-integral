@@ -12,6 +12,8 @@ import { PagosOnlineService } from '../../compartido/pagos-online.service';
 import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
 import { RedesService } from '../../compartido/redes.service';
 import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
+import { AgendaService } from '../../compartido/agenda.service';
+import { PacientesService } from '../../compartido/pacientes.service';
 
 const MINUTOS_RESERVA_PROCESO = 8;
 const MINUTOS_EXTENSION_RESERVA = 5;
@@ -29,7 +31,7 @@ const CATEGORIAS: (CategoriaTratamiento | 'Todos')[] = [
   templateUrl: './reservar.component.html',
   styleUrl: './reservar.component.scss'
 })
-export class ReservarComponent {
+export class ReservarComponent implements OnDestroy {
   private disponibilidad = inject(DisponibilidadService);
   private ruta = inject(ActivatedRoute);
   readonly sesion = inject(SesionService);
@@ -37,6 +39,8 @@ export class ReservarComponent {
   private pagosOnline = inject(PagosOnlineService);
   readonly redes = inject(RedesService);
   readonly configPanel = inject(ConfiguracionPanelService);
+  private agenda = inject(AgendaService);
+  private pacientes = inject(PacientesService);
 
   soles = soles;
   formatoFechaLarga = formatoFechaLarga;
@@ -49,18 +53,18 @@ export class ReservarComponent {
 
   paso = signal(1);
   local = signal<Local | null>(null);
-  tratamiento = signal<Tratamiento | null>(null);
   promocion = signal<Promocion | null>(null);
   categoria = signal<CategoriaTratamiento | 'Todos'>('Todos');
   etiqueta = signal<string>('Todas');
   busqueda = signal('');
   fecha = signal<string>(this.dias[0].iso);
   bloque = signal<Bloque | null>(null);
+  tratamientosIds = signal<number[]>([]);
   confirmado = signal(false);
   procesandoPago = signal(false);
   mensajePago = signal('');
   codigoOperacion = signal<string | null>(null);
-  codigoReserva = signal('CT-1042');
+  codigoReserva = signal('—');
   tiempoReservaSeg = signal(0);
   reservaExpiraEn = signal<number | null>(null);
   mostrarExtension = signal(false);
@@ -69,7 +73,7 @@ export class ReservarComponent {
   private temporizadorReserva?: ReturnType<typeof setInterval>;
   private temporizadorExtension?: ReturnType<typeof setInterval>;
 
-  // Datos de la paciente: se precargan si hay una sesión iniciada.
+  // Datos del cliente.
   nombre = this.sesion.usuario()?.nombre ?? '';
   apellido = this.sesion.usuario()?.apellido ?? '';
   dni = this.sesion.usuario()?.dni ?? '';
@@ -105,6 +109,12 @@ export class ReservarComponent {
     });
   });
 
+  tratamientosSeleccionados = computed<Tratamiento[]>(() =>
+    this.tratamientosIds()
+      .map(id => TRATAMIENTOS.find(t => t.id === id))
+      .filter((t): t is Tratamiento => !!t)
+  );
+
   bloques = computed<Bloque[]>(() => {
     const l = this.local();
     return l ? this.disponibilidad.bloques(this.fecha(), l) : [];
@@ -125,16 +135,33 @@ export class ReservarComponent {
     if (promo) {
       return promo.sesionesDetalle?.reduce((total, s) => {
         const t = s.tratamientoId ? TRATAMIENTOS.find(item => item.id === s.tratamientoId) : undefined;
-        return total + (t?.duracionMin ?? 0);
-      }, 0) || this.tratamiento()?.duracionMin || 0;
+        return total + ((t?.duracionMin ?? 0) + (t?.limpiezaMin ?? 0));
+      }, 0) || 0;
     }
-    const t = this.tratamiento();
-    return t ? t.duracionMin : 0;
+    return this.tratamientosSeleccionados().reduce((total, t) => total + t.duracionMin + t.limpiezaMin, 0);
   });
 
-  totalReserva = computed(() => this.promocion()?.precio ?? this.tratamiento()?.precio ?? 0);
+  totalReserva = computed(() => {
+    if (this.promocion()) {
+      return this.promocion()?.precio ?? 0;
+    }
+    return this.tratamientosSeleccionados().reduce((total, t) => total + t.precio, 0);
+  });
 
-  nombreReserva = computed(() => this.promocion()?.titulo ?? this.tratamiento()?.nombre ?? '—');
+  nombreReserva = computed(() => {
+    if (this.promocion()) { return this.promocion()?.titulo ?? 'Promoción'; }
+    const tratamientos = this.tratamientosSeleccionados();
+    if (tratamientos.length === 0) { return '—'; }
+    if (tratamientos.length === 1) { return tratamientos[0].nombre; }
+    return `${tratamientos.length} tratamientos seleccionados`;
+  });
+
+  resumenTratamientos = computed(() => {
+    if (this.promocion()) {
+      return this.promocion()?.sesionesDetalle?.map(s => s.titulo) ?? [];
+    }
+    return this.tratamientosSeleccionados().map(t => t.nombre);
+  });
 
   sesionesPromo = computed(() => this.promocion()?.sesionesDetalle ?? []);
 
@@ -164,47 +191,37 @@ export class ReservarComponent {
       const promo = this.promociones.porId(promoId);
       if (promo) {
         this.promocion.set(promo);
-        const tratamientoId = promo.sesionesDetalle?.find(s => !!s.tratamientoId)?.tratamientoId;
-        const tratamiento = tratamientoId ? TRATAMIENTOS.find(t => t.id === tratamientoId) : undefined;
-        if (tratamiento) {
-          this.tratamiento.set(tratamiento);
-          this.categoria.set(tratamiento.categoria);
-        }
       }
     }
 
-    if (localId) { this.local.set(LOCALES.find(l => l.id === localId) ?? null); }
-    if (tratId) { this.tratamiento.set(TRATAMIENTOS.find(t => t.id === tratId) ?? null); }
-    if (this.local() && (this.tratamiento() || this.promocion())) { this.paso.set(3); }
-    else if (this.local()) { this.paso.set(this.promocion() ? 3 : 2); }
+    if (localId) {
+      this.local.set(LOCALES.find(l => l.id === localId) ?? null);
+      this.paso.set(this.promocion() ? 3 : 2);
+    }
 
-    const expiraEnGuardado = this.leerProcesoReservaGuardado();
-    if (expiraEnGuardado && this.local()) {
-      this.iniciarTemporizadorReserva(expiraEnGuardado);
-    } else if (this.local()) {
-      this.iniciarProcesoReserva();
+    if (tratId) {
+      this.tratamientosIds.set([tratId]);
+      this.paso.set(3);
     }
   }
 
   elegirLocal(l: Local): void {
-    this.disponibilidad.liberarRetencionActiva();
-    const debeReiniciarProceso = this.local()?.id !== l.id || !this.reservaExpiraEn();
     this.local.set(l);
-    this.bloque.set(null);
+    this.limpiarBloqueRetenido();
     this.avisoReserva.set('');
-    if (debeReiniciarProceso) {
-      this.iniciarProcesoReserva();
-    }
     this.paso.set(this.promocion() ? 3 : 2);
   }
 
-  elegirTratamiento(t: Tratamiento): void {
-    this.disponibilidad.liberarRetencionActiva();
-    this.tratamiento.set(t);
+  alternarTratamiento(t: Tratamiento): void {
     this.promocion.set(null);
-    this.bloque.set(null);
-    this.avisoReserva.set('');
-    this.paso.set(3);
+    this.tratamientosIds.update(ids => ids.includes(t.id)
+      ? ids.filter(id => id !== t.id)
+      : [...ids, t.id]
+    );
+  }
+
+  tratamientoSeleccionado(id: number): boolean {
+    return this.tratamientosIds().includes(id);
   }
 
   elegirCategoria(c: CategoriaTratamiento | 'Todos'): void {
@@ -217,9 +234,8 @@ export class ReservarComponent {
   }
 
   elegirFecha(iso: string): void {
-    this.disponibilidad.liberarRetencionActiva();
     this.fecha.set(iso);
-    this.bloque.set(null);
+    this.limpiarBloqueRetenido();
     this.avisoReserva.set('');
   }
 
@@ -227,9 +243,7 @@ export class ReservarComponent {
     if (!b.disponible) { return; }
     const l = this.local();
     if (!l) { return; }
-    if (!this.reservaExpiraEn()) {
-      this.iniciarProcesoReserva();
-    }
+
     const expiraEnProceso = this.reservaExpiraEn() ?? (Date.now() + MINUTOS_RESERVA_PROCESO * 60_000);
     const retencion = this.disponibilidad.retenerBloque(this.fecha(), l, b, MINUTOS_RESERVA_PROCESO, expiraEnProceso);
     if (!retencion.ok || !retencion.expiraEn) {
@@ -237,6 +251,7 @@ export class ReservarComponent {
       this.bloque.set(null);
       return;
     }
+
     this.avisoReserva.set('');
     this.bloque.set({ ...b, retenidoPorMi: true, vencimientoRetencion: retencion.expiraEn });
     this.iniciarTemporizadorReserva(retencion.expiraEn);
@@ -245,8 +260,7 @@ export class ReservarComponent {
   irA(n: number): void {
     if (n < this.paso()) {
       if (n < 3) {
-        this.disponibilidad.liberarRetencionActiva();
-        this.bloque.set(null);
+        this.limpiarBloqueRetenido();
       }
       this.paso.set(n);
     }
@@ -254,6 +268,9 @@ export class ReservarComponent {
 
   siguiente(): void {
     const actual = this.paso();
+    if (actual === 2 && !this.promocion() && !this.tratamientosSeleccionados().length) {
+      return;
+    }
     this.paso.set(this.promocion() && actual === 1 ? 3 : Math.min(actual + 1, 5));
   }
 
@@ -261,15 +278,14 @@ export class ReservarComponent {
     const actual = this.paso();
     const siguiente = this.promocion() && actual === 3 ? 1 : Math.max(actual - 1, 1);
     if (siguiente < 3) {
-      this.disponibilidad.liberarRetencionActiva();
-      this.bloque.set(null);
+      this.limpiarBloqueRetenido();
     }
     this.paso.set(siguiente);
   }
 
   confirmar(): void {
     if (!this.bloque()) {
-      this.avisoReserva.set('Tu bloque de atención ya no está retenido. Elige otra hora para continuar.');
+      this.avisoReserva.set('Tu hora ya no está retenida. Vuelve a elegir fecha y hora para continuar.');
       this.paso.set(3);
       return;
     }
@@ -277,24 +293,27 @@ export class ReservarComponent {
       this.procesarPagoOnline();
       return;
     }
+
+    const cita = this.registrarReservaConfirmada();
     this.disponibilidad.confirmarRetencionActiva();
     this.detenerTemporizadores();
     this.codigoOperacion.set(null);
+    this.codigoReserva.set(cita.codigo);
     this.confirmado.set(true);
   }
 
   reiniciar(): void {
-    this.disponibilidad.liberarRetencionActiva();
-    this.detenerTemporizadores();
+    this.limpiarBloqueRetenido();
     this.confirmado.set(false);
     this.paso.set(1);
     this.local.set(null);
-    this.tratamiento.set(null);
     this.promocion.set(null);
     this.bloque.set(null);
+    this.tratamientosIds.set([]);
     this.categoria.set('Todos');
     this.etiqueta.set('Todas');
     this.busqueda.set('');
+    this.codigoReserva.set('—');
     const u = this.sesion.usuario();
     this.nombre = u?.nombre ?? '';
     this.apellido = u?.apellido ?? '';
@@ -327,7 +346,7 @@ export class ReservarComponent {
     }
     this.mostrarExtension.set(false);
     this.cuentaExtensionSeg.set(SEGUNDOS_RESPUESTA_EXTENSION);
-    this.avisoReserva.set('Tu reserva sigue en proceso. Te dimos 5 minutos más para terminarla.');
+    this.avisoReserva.set('Tu hora sigue retenida. Te dimos 5 minutos más para terminar la reserva.');
     this.iniciarTemporizadorReserva(expiraEn);
   }
 
@@ -336,11 +355,18 @@ export class ReservarComponent {
   }
 
   whatsappReserva(): string {
-    const promo = this.promocion();
-    const t = this.tratamiento();
-    const detalle = promo ? `la promocion ${promo.titulo}` : `el tratamiento ${t?.nombre ?? ''}`;
+    const detalle = this.promocion()
+      ? `la promoción ${this.promocion()?.titulo}`
+      : this.resumenTratamientos().join(', ');
     const texto = `Hola, quiero reservar ${detalle}. Mi nombre es ${this.nombre || ''} ${this.apellido || ''}.`;
     return `https://wa.me/51945189720?text=${encodeURIComponent(texto)}`;
+  }
+
+  mensajeSeguimiento(): string {
+    if (this.promocion() || this.tratamientosSeleccionados().length > 1) {
+      return 'Hoy se agenda tu primera atención. Al terminar, recepción coordinará contigo la fecha y hora de tu siguiente sesión o del siguiente tratamiento pendiente.';
+    }
+    return 'Tu tratamiento se atenderá con normalidad en la fecha y hora elegidas.';
   }
 
   private procesarPagoOnline(): void {
@@ -350,7 +376,7 @@ export class ReservarComponent {
 
     this.pagosOnline.iniciarPago({
       tipo: 'Cita',
-      referencia: this.codigoReserva(),
+      referencia: this.codigoReservaTemporal(),
       descripcion: `Reserva ${this.nombreReserva()}`,
       monto: this.montoPagoOnline(),
       moneda: 'PEN',
@@ -362,17 +388,12 @@ export class ReservarComponent {
         celular: this.celular,
         correo: this.correo
       },
-      items: [{
-        id: this.promocion()?.id ? `PROMO-${this.promocion()?.id}` : this.tratamiento()?.id ?? 'TRAT',
-        nombre: this.nombreReserva(),
-        cantidad: 1,
-        precioUnitario: this.montoPagoOnline()
-      }],
+      items: this.itemsPagoOnline(),
       metadata: {
         fecha: this.fecha(),
         hora: this.bloque()?.inicio ?? null,
         promocionId: this.promocion()?.id ?? null,
-        tratamientoId: this.tratamiento()?.id ?? null,
+        tratamientoIds: this.tratamientosIds().join(','),
         tipoCobro: this.modalidadPagoOnline(),
         montoTotal: this.totalReserva(),
         montoPagadoOnline: this.montoPagoOnline(),
@@ -383,9 +404,11 @@ export class ReservarComponent {
         this.procesandoPago.set(false);
         this.mensajePago.set(resultado.mensaje);
         if (resultado.aprobado) {
+          this.codigoOperacion.set(resultado.codigoOperacion ?? null);
+          const cita = this.registrarReservaConfirmada();
           this.disponibilidad.confirmarRetencionActiva();
           this.detenerTemporizadores();
-          this.codigoOperacion.set(resultado.codigoOperacion ?? null);
+          this.codigoReserva.set(cita.codigo);
           this.confirmado.set(true);
         }
       },
@@ -396,8 +419,88 @@ export class ReservarComponent {
     });
   }
 
-  private iniciarProcesoReserva(): void {
-    this.iniciarTemporizadorReserva(Date.now() + MINUTOS_RESERVA_PROCESO * 60_000);
+  private registrarReservaConfirmada() {
+    const paciente = this.pacientes.registrarOActualizar({
+      dni: this.dni.trim(),
+      nombreCompleto: `${this.nombre} ${this.apellido}`.trim(),
+      celular: this.celular.trim(),
+      correo: this.correo.trim(),
+      observaciones: this.observaciones.trim()
+    });
+
+    const tratamientos = this.tratamientosSeleccionados();
+    const tratamientoPrincipal = this.promocion()
+      ? (this.promocion()?.sesionesDetalle?.find(s => !!s.tratamientoId)?.tratamientoId ?? tratamientos[0]?.id ?? 1)
+      : (tratamientos[0]?.id ?? 1);
+
+    const montoPagado = this.metodoPago() === 'Izipay' ? this.montoPagoOnline() : 0;
+    const cita = this.agenda.crearCita({
+      fecha: this.fecha(),
+      horaInicio: this.bloque()?.inicio ?? '09:00',
+      horaFin: this.bloque()?.fin ?? '10:00',
+      pacienteId: paciente.id,
+      tratamientoId: tratamientoPrincipal,
+      tratamientosIncluidos: this.promocion() ? this.promocion()!.sesionesDetalle?.map(s => s.tratamientoId).filter((id): id is number => !!id) : this.tratamientosIds(),
+      promocionId: this.promocion()?.id,
+      localId: this.local()?.id ?? LOCALES[0].id,
+      estado: 'Programada',
+      estadoPago: this.metodoPago() === 'Izipay'
+        ? (montoPagado >= this.totalReserva() ? 'Pagado' : 'Pago en local')
+        : 'Pendiente',
+      metodoPago: this.metodoPago() === 'Izipay' ? 'Izipay' : undefined,
+      montoTotal: this.totalReserva(),
+      montoPagado,
+      registradaPor: 'Web',
+      confirmadaPor: this.metodoPago() === 'Izipay' ? 'Izipay (automático)' : undefined,
+      codigoOperacion: this.codigoOperacion() ?? undefined,
+      pagadaEl: this.metodoPago() === 'Izipay' ? new Date().toISOString().slice(0, 16).replace('T', ' ') : undefined,
+      origen: 'Web',
+      notas: this.notaReserva(),
+      zonaTratamiento: undefined
+    });
+
+    this.pacientes.registrarAtencion(paciente.id, this.fecha(), montoPagado);
+    return cita;
+  }
+
+  private notaReserva(): string {
+    const base = this.observaciones.trim();
+    const seguimiento = this.promocion() || this.tratamientosSeleccionados().length > 1
+      ? 'Recepción coordina la siguiente sesión o tratamiento pendiente al finalizar la primera atención.'
+      : 'Atención simple agendada desde la web.';
+    return [seguimiento, base].filter(Boolean).join(' ');
+  }
+
+  private itemsPagoOnline() {
+    if (this.promocion()) {
+      return [{
+        id: `PROMO-${this.promocion()?.id}`,
+        nombre: this.promocion()?.titulo ?? 'Promoción',
+        cantidad: 1,
+        precioUnitario: this.montoPagoOnline()
+      }];
+    }
+
+    const tratamientos = this.tratamientosSeleccionados();
+    if (this.modalidadPagoOnline() === 'adelanto' && tratamientos.length > 1) {
+      return [{
+        id: 'ADELANTO-CITA',
+        nombre: `Adelanto de reserva · ${tratamientos.length} tratamientos`,
+        cantidad: 1,
+        precioUnitario: this.montoPagoOnline()
+      }];
+    }
+
+    return tratamientos.map(t => ({
+      id: t.id,
+      nombre: t.nombre,
+      cantidad: 1,
+      precioUnitario: this.modalidadPagoOnline() === 'total' ? t.precio : 0
+    })).filter(item => item.precioUnitario > 0);
+  }
+
+  private codigoReservaTemporal(): string {
+    return `WEB-${Date.now().toString().slice(-8)}`;
   }
 
   private iniciarTemporizadorReserva(expiraEn: number): void {
@@ -431,12 +534,15 @@ export class ReservarComponent {
   }
 
   private cerrarReservaPorTiempo(): void {
+    this.limpiarBloqueRetenido();
+    this.bloque.set(null);
+    this.paso.set(3);
+    this.avisoReserva.set('El tiempo para terminar la reserva se acabó. La hora se liberó y debes elegir otra vez fecha y hora para continuar.');
+  }
+
+  private limpiarBloqueRetenido(): void {
     this.disponibilidad.liberarRetencionActiva();
     this.detenerTemporizadores();
-    this.bloque.set(null);
-    this.local.set(null);
-    this.paso.set(1);
-    this.avisoReserva.set('Tus 8 minutos para completar la reserva terminaron. Si deseas continuar, vuelve a elegir sede, fecha y hora.');
   }
 
   private detenerTemporizadores(limpiarProceso = true): void {
@@ -450,17 +556,6 @@ export class ReservarComponent {
       this.reservaExpiraEn.set(null);
       this.tiempoReservaSeg.set(0);
       this.limpiarProcesoReservaGuardado();
-    }
-  }
-
-  private leerProcesoReservaGuardado(): number | null {
-    try {
-      const guardado = sessionStorage.getItem(CLAVE_PROCESO_RESERVA);
-      if (!guardado) { return null; }
-      const expiraEn = Number(guardado);
-      return expiraEn > Date.now() ? expiraEn : null;
-    } catch {
-      return null;
     }
   }
 

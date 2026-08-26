@@ -31,6 +31,16 @@ export type EstadoPago =
 
 export type MetodoPago = 'Izipay' | 'Efectivo' | 'Yape' | 'Plin' | 'Tarjeta POS' | 'Transferencia';
 
+export interface DetallePago {
+  metodo: MetodoPago;
+  monto: number;
+  fecha: string;
+  hora: string;
+  canal: 'Online' | 'Recepción' | 'WhatsApp';
+  registradoPor: string;
+  codigoOperacion?: string;
+}
+
 export type EstadoPedido =
   | 'Pendiente'
   | 'Pagado'
@@ -177,12 +187,16 @@ export interface Cita {
   metodoPago?: MetodoPago;
   montoTotal: number;
   montoPagado: number;
+  pagosDetalle?: DetallePago[];
   registradaPor: string;
   registradaEl: string;
   confirmadaPor?: string;
   codigoOperacion?: string;
   pagadaEl?: string;
+  planId?: number;
+  numeroSesionPlan?: number;
   origen: 'Web' | 'Recepción' | 'WhatsApp';
+  zonaTratamiento?: string;
   notas?: string;
 }
 
@@ -260,6 +274,8 @@ export interface SesionPlan {
   procedimiento: string;
   fecha?: string;
   hora?: string;
+  zona?: string;
+  registradoPor?: string;
   estado: EstadoSesion;
   observaciones?: string;
 }
@@ -282,6 +298,8 @@ export interface PlanSesiones {
   inicio: string;
   precioTotal: number;
   pagado: number;
+  pagosDetalle?: DetallePago[];
+  fechaLiquidacion?: string;
   estado: EstadoPlan;
   sesiones: SesionPlan[];
   notas?: string;

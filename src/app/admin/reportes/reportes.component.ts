@@ -1,10 +1,13 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
-  CITAS, HOY_ISO, LOCALES, MESES, PEDIDOS, PRODUCTOS, TRATAMIENTOS,
-  aISO, localPorId, pacientePorId, soles, tratamientoPorId
+  HOY_ISO, LOCALES, MESES, PEDIDOS, PRODUCTOS, TRATAMIENTOS,
+  aISO, localPorId, soles, tratamientoPorId
 } from '../../data/datos';
-import { Cita, Pedido } from '../../data/modelos';
+import { Cita, MetodoPago, Pedido } from '../../data/modelos';
+import { AgendaService } from '../../compartido/agenda.service';
+import { PacientesService } from '../../compartido/pacientes.service';
+import { PlanesService } from '../../compartido/planes.service';
 
 type GrupoCaja = 'Todos' | 'Atendidos pagados' | 'Atendidos con saldo' | 'Pendientes por atender' | 'Cancelados';
 
@@ -93,8 +96,9 @@ interface ResumenPeriodo {
         <table class="tabla tabla-caja">
           <thead>
             <tr>
-              <th>Fecha / hora</th><th>Paciente</th><th>Tratamiento</th><th>Origen</th><th>Estado</th>
-              <th class="num">Total</th><th class="num">Pagado</th><th class="num">Falta</th><th>Registro</th>
+              <th>Fecha / hora</th><th>Paciente</th><th>Tratamiento</th><th>Zona / notas</th>
+              <th class="num">Precio</th><th class="num">Efectivo</th><th class="num">Yape</th><th class="num">Plin</th>
+              <th class="num">Izipay</th><th class="num">Tarjeta</th><th class="num">Transfer.</th><th class="num">Falta</th><th>Control</th>
             </tr>
           </thead>
           <tbody>
@@ -107,21 +111,35 @@ interface ResumenPeriodo {
                     <span>DNI {{ paciente(c)?.dni }} · {{ paciente(c)?.celular }}</span>
                   </div>
                 </td>
-                <td>{{ tratamiento(c)?.nombre }}</td>
-                <td><span [class]="claseOrigen(c.origen)">{{ c.origen }}</span></td>
                 <td>
-                  <div class="estado-stack">
-                    <span [class]="claseAtencion(c)">{{ estadoCaja(c) }}</span>
-                    <small>{{ c.estado }} · {{ c.estadoPago }}</small>
+                  <div class="mini-dato">
+                    <strong>{{ tratamientosCita(c) }}</strong>
+                    <span>{{ local(c.localId) }} · {{ c.origen }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="mini-dato">
+                    <strong>{{ c.zonaTratamiento || 'Sin zona indicada' }}</strong>
+                    <span>{{ c.notas || 'Sin notas' }}</span>
                   </div>
                 </td>
                 <td class="num">{{ soles(c.montoTotal) }}</td>
-                <td class="num" style="color:var(--ok)">{{ soles(c.montoPagado) }}</td>
+                <td class="num">{{ soles(montoMetodo(c, 'Efectivo')) }}</td>
+                <td class="num">{{ soles(montoMetodo(c, 'Yape')) }}</td>
+                <td class="num">{{ soles(montoMetodo(c, 'Plin')) }}</td>
+                <td class="num">{{ soles(montoMetodo(c, 'Izipay')) }}</td>
+                <td class="num">{{ soles(montoMetodo(c, 'Tarjeta POS')) }}</td>
+                <td class="num">{{ soles(montoMetodo(c, 'Transferencia')) }}</td>
                 <td class="num" [style.color]="saldoCita(c) > 0 ? 'var(--alerta)' : 'var(--ok)'">{{ soles(saldoCita(c)) }}</td>
-                <td><small>{{ c.registradaPor }}<br>{{ local(c.localId) }}</small></td>
+                <td>
+                  <div class="estado-stack">
+                    <span [class]="claseAtencion(c)">{{ estadoCaja(c) }}</span>
+                    <small>{{ c.registradaPor }}<br>{{ c.estado }} · {{ c.estadoPago }}</small>
+                  </div>
+                </td>
               </tr>
             } @empty {
-              <tr><td colspan="9" class="vacio">No hay registros con los filtros seleccionados.</td></tr>
+              <tr><td colspan="13" class="vacio">No hay registros con los filtros seleccionados.</td></tr>
             }
           </tbody>
         </table>
@@ -213,6 +231,56 @@ interface ResumenPeriodo {
         </div>
       </div>
     </div>
+
+    <div class="tabla-panel" style="margin-top:20px">
+      <div class="tabla-panel__cabecera">
+        <div>
+          <h3>Seguimiento multisesión</h3>
+          <span class="dato__label">{{ planesSeguimiento().length }} planes registrados</span>
+        </div>
+      </div>
+      <div class="tabla-envoltura">
+        <table class="tabla tabla-caja">
+          <thead>
+            <tr>
+              <th>Paciente</th><th>Plan / local</th><th>Primera sesión</th><th>Próxima coordinación</th>
+              <th class="num">Total</th><th class="num">Pagado</th><th class="num">Falta</th><th>Control</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (plan of planesSeguimiento(); track plan.id) {
+              <tr>
+                <td>
+                  <div class="mini-dato">
+                    <strong>{{ pacientePlan(plan.pacienteId) }}</strong>
+                    <span>DNI {{ plan.dni }} · {{ celularPlan(plan.pacienteId) }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="mini-dato">
+                    <strong>{{ plan.nombre }}</strong>
+                    <span>{{ local(plan.localId) }}</span>
+                  </div>
+                </td>
+                <td>{{ resumenPrimeraSesion(plan) }}</td>
+                <td>{{ resumenProximaSesion(plan) }}</td>
+                <td class="num">{{ soles(plan.precioTotal) }}</td>
+                <td class="num">{{ soles(plan.pagado) }}</td>
+                <td class="num" [style.color]="plan.precioTotal - plan.pagado > 0 ? 'var(--alerta)' : 'var(--ok)'">{{ soles(plan.precioTotal - plan.pagado) }}</td>
+                <td>
+                  <div class="estado-stack">
+                    <span [class]="plan.precioTotal - plan.pagado > 0 ? 'chip chip--alerta chip--punto' : 'chip chip--ok chip--punto'">{{ plan.estado }}</span>
+                    <small>{{ resumenControlPlan(plan) }}</small>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="8" class="vacio">No hay planes multisesión con los filtros seleccionados.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
   `,
   styles: [`
     .resumen-rapido { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 18px; }
@@ -227,6 +295,9 @@ interface ResumenPeriodo {
   `]
 })
 export class ReportesComponent {
+  private agenda = inject(AgendaService);
+  private pacientes = inject(PacientesService);
+  private planes = inject(PlanesService);
   soles = soles;
   locales = LOCALES;
   grupos: GrupoCaja[] = ['Todos', 'Atendidos pagados', 'Atendidos con saldo', 'Pendientes por atender', 'Cancelados'];
@@ -245,7 +316,7 @@ export class ReportesComponent {
     }
   });
 
-  citasPeriodo = computed(() => this.filtrarCitas(CITAS));
+  citasPeriodo = computed(() => this.filtrarCitas(this.agenda.citas()));
   pedidosPeriodo = computed(() => this.filtrarPedidos(PEDIDOS));
 
   citasCaja = computed(() => {
@@ -254,7 +325,7 @@ export class ReportesComponent {
       .filter(c => this.coincideGrupo(c))
       .filter(c => {
         if (!texto) { return true; }
-        const p = pacientePorId(c.pacienteId);
+        const p = this.pacientes.porId(c.pacienteId);
         const t = tratamientoPorId(c.tratamientoId);
         return `${p?.nombre} ${p?.apellido} ${p?.dni} ${p?.celular} ${t?.nombre} ${c.codigo}`.toLowerCase().includes(texto);
       })
@@ -265,8 +336,20 @@ export class ReportesComponent {
   atendidosConSaldo = computed(() => this.citasPeriodo().filter(c => c.estado === 'Atendida' && this.saldoCita(c) > 0));
   citasWeb = computed(() => this.citasPeriodo().filter(c => c.origen === 'Web'));
   citasRecepcion = computed(() => this.citasPeriodo().filter(c => c.origen !== 'Web'));
+  pagosPlanesDirectos = computed(() =>
+    this.planes.planes()
+      .flatMap(plan => (plan.pagosDetalle ?? []).map((pago, indice) => ({ plan, pago, indice })))
+      .filter(({ plan, pago }) =>
+        this.enPeriodo(pago.fecha) &&
+        (this.sede() === 'Todos' || this.local(plan.localId) === this.sede()) &&
+        (!pago.codigoOperacion || !this.codigoOperacionExisteEnCitas(pago.codigoOperacion))
+      )
+  );
 
-  cobradoAtenciones = computed(() => this.citasPeriodo().reduce((t, c) => t + c.montoPagado, 0));
+  cobradoAtenciones = computed(() =>
+    this.citasPeriodo().reduce((t, c) => t + c.montoPagado, 0) +
+    this.pagosPlanesDirectos().reduce((t, item) => t + item.pago.monto, 0)
+  );
   cobradoProductos = computed(() => this.pedidosPeriodo().reduce((t, p) => t + p.pagado, 0));
   cobradoTotal = computed(() => this.cobradoAtenciones() + this.cobradoProductos());
   pendienteTotal = computed(() =>
@@ -290,9 +373,41 @@ export class ReportesComponent {
     };
   }).filter(f => f.cantidad > 0).sort((a, b) => b.pagado - a.pagado));
 
-  paciente(c: Cita) { return pacientePorId(c.pacienteId); }
+  planesSeguimiento = computed(() => {
+    const texto = this.busqueda().trim().toLowerCase();
+    return this.planes.planes()
+      .filter(plan => this.sede() === 'Todos' || this.local(plan.localId) === this.sede())
+      .filter(plan => {
+        if (!texto) { return true; }
+        const paciente = this.pacientes.porId(plan.pacienteId);
+        return `${plan.codigo} ${plan.nombre} ${plan.dni} ${paciente?.nombre} ${paciente?.apellido} ${paciente?.celular}`.toLowerCase().includes(texto);
+      })
+      .sort((a, b) => b.inicio.localeCompare(a.inicio));
+  });
+
+  paciente(c: Cita) { return this.pacientes.porId(c.pacienteId); }
   tratamiento(c: Cita) { return tratamientoPorId(c.tratamientoId); }
+  pacientePlan(id: number): string {
+    const paciente = this.pacientes.porId(id);
+    return paciente ? `${paciente.nombre} ${paciente.apellido}` : '—';
+  }
+  celularPlan(id: number): string {
+    return this.pacientes.porId(id)?.celular ?? '—';
+  }
   local(id: number): string { return localPorId(id)?.nombre ?? '—'; }
+  tratamientosCita(c: Cita): string {
+    const ids = c.tratamientosIncluidos?.length ? c.tratamientosIncluidos : [c.tratamientoId];
+    return ids.map(id => tratamientoPorId(id)?.nombre ?? 'Tratamiento').join(' + ');
+  }
+
+  montoMetodo(c: Cita, metodo: MetodoPago): number {
+    if (c.pagosDetalle?.length) {
+      return c.pagosDetalle
+        .filter(pago => pago.metodo === metodo)
+        .reduce((total, pago) => total + pago.monto, 0);
+    }
+    return c.metodoPago === metodo ? c.montoPagado : 0;
+  }
 
   saldoCita(c: Cita): number {
     if (c.estado === 'Cancelada' || c.estado === 'No asistió' || c.estadoPago === 'Reembolsado') { return 0; }
@@ -327,6 +442,28 @@ export class ReportesComponent {
     }).join(', ');
   }
 
+  resumenPrimeraSesion(plan: { sesiones: { numero: number; fecha?: string; hora?: string; procedimiento: string }[] }): string {
+    const primera = plan.sesiones.find(s => s.numero === 1) ?? plan.sesiones[0];
+    if (!primera) { return 'Sin sesiones registradas'; }
+    const fecha = primera.fecha ? `${primera.fecha}${primera.hora ? ` ${primera.hora}` : ''}` : 'Sin fecha';
+    return `${fecha} · ${primera.procedimiento}`;
+  }
+
+  resumenProximaSesion(plan: { sesiones: { numero: number; fecha?: string; hora?: string; procedimiento: string; estado: string }[] }): string {
+    const siguiente = plan.sesiones.find(s => s.estado !== 'Atendida');
+    if (!siguiente) { return 'Plan completo'; }
+    if (!siguiente.fecha) { return `Sesión ${siguiente.numero} pendiente de coordinar`; }
+    return `Sesión ${siguiente.numero} · ${siguiente.fecha}${siguiente.hora ? ` ${siguiente.hora}` : ''}`;
+  }
+
+  resumenControlPlan(plan: { precioTotal: number; pagado: number; sesiones: { estado: string }[] }): string {
+    const saldo = Math.max(plan.precioTotal - plan.pagado, 0);
+    if (saldo > 0) {
+      return `Saldo pendiente ${soles(saldo)} · ${plan.sesiones.filter(s => s.estado === 'Atendida').length} sesiones atendidas`;
+    }
+    return 'Pago completo registrado';
+  }
+
   private coincideGrupo(c: Cita): boolean {
     switch (this.grupo()) {
       case 'Atendidos pagados': return c.estado === 'Atendida' && this.saldoCita(c) === 0;
@@ -359,17 +496,29 @@ export class ReportesComponent {
   }
 
   private resumen(etiqueta: string, desde: string, hasta: string): ResumenPeriodo {
-    const citas = CITAS.filter(c => c.fecha >= desde && c.fecha <= hasta);
+    const citas = this.agenda.citas().filter(c => c.fecha >= desde && c.fecha <= hasta);
     const pedidos = PEDIDOS.filter(p => p.fecha >= desde && p.fecha <= hasta);
+    const pagosPlanes = this.planes.planes()
+      .flatMap(plan => (plan.pagosDetalle ?? []).filter(pago =>
+        pago.fecha >= desde &&
+        pago.fecha <= hasta &&
+        (!pago.codigoOperacion || !this.codigoOperacionExisteEnCitas(pago.codigoOperacion))
+      ));
     return {
       etiqueta,
       desde,
       hasta,
       atenciones: citas.length,
       productos: pedidos.length,
-      cobrado: citas.reduce((t, c) => t + c.montoPagado, 0) + pedidos.reduce((t, p) => t + p.pagado, 0),
+      cobrado: citas.reduce((t, c) => t + c.montoPagado, 0) + pedidos.reduce((t, p) => t + p.pagado, 0) + pagosPlanes.reduce((t, pago) => t + pago.monto, 0),
       pendiente: citas.reduce((t, c) => t + this.saldoCita(c), 0) + pedidos.reduce((t, p) => t + Math.max(p.total - p.pagado, 0), 0)
     };
+  }
+
+  private codigoOperacionExisteEnCitas(codigo: string): boolean {
+    return this.agenda.citas().some(cita =>
+      (cita.pagosDetalle ?? []).some(pago => pago.codigoOperacion === codigo)
+    );
   }
 
   private ultimos(dias: number): string[] {

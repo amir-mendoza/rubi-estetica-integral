@@ -1,10 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MapaSedeComponent } from '../../compartido/mapa-sede.component';
 import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component';
 import { RedesService } from '../../compartido/redes.service';
 import { LOCALES } from '../../data/datos';
+import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
 
 @Component({
   selector: 'app-contacto',
@@ -76,7 +77,7 @@ import { LOCALES } from '../../data/datos';
             <a href="tel:945189720" class="btn btn--linea btn--sm btn--bloque" style="margin-top:10px">945 189 720</a>
           </div>
 
-          @for (l of locales; track l.id) {
+          @for (l of locales(); track l.id) {
             <div class="panel" style="margin-top:22px">
               <h4>{{ l.nombre }}</h4>
               <p style="margin-bottom:14px">{{ l.direccion }}<br>{{ l.referencia }}<br>{{ l.distrito }}</p>
@@ -108,7 +109,8 @@ import { LOCALES } from '../../data/datos';
 })
 export class ContactoComponent {
   readonly redes = inject(RedesService);
-  locales = LOCALES;
+  readonly configPanel = inject(ConfiguracionPanelService);
+  locales = computed(() => this.configPanel.combinarLocalesConHorarios(LOCALES));
   nombre = '';
   celular = '';
   correo = '';
