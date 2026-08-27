@@ -4,23 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { LOCALES, formatoFechaLarga, soles, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
 import { ESTADOS_SESION, EstadoSesion, PlanSesiones, SesionPlan, MetodoPago, Paciente } from '../../data/modelos';
 import { PlanesService } from '../../compartido/planes.service';
-import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
 import { PacientesService } from '../../compartido/pacientes.service';
-import { AgendaService } from '../../compartido/agenda.service';
-
-interface HoraDisponible {
-  hora: string;
-  ocupadas: number;
-  cupo: number;
-  disponible: boolean;
-}
-
-interface DiaDisponible {
-  iso: string;
-  etiqueta: string;
-  dia: number;
-  horas: HoraDisponible[];
-}
 
 interface FormSesionPlan {
   fecha: string;
@@ -333,16 +317,25 @@ interface FormTratamientoPlan {
                   {{ s.fecha ? fechaLarga(s.fecha) + (s.hora ? ' · ' + s.hora : '') : 'Sin fecha asignada · recepción define fecha y hora con la paciente' }}
                 </p>
                 @if (s.observaciones) { <p class="sesion__obs">{{ s.observaciones }}</p> }
-                <div class="sesion__acciones">
-                  @for (e of estadosSesion; track e) {
-                    <button class="accion" [class.accion--activa]="s.estado === e"
-                            (click)="planes.cambiarEstadoSesion(plan.id, s.numero, e)">{{ e }}</button>
-                  }
-                  <button type="button" class="accion accion--configurar"
-                          [class.accion--activa]="sesionEditorAbierto(plan.id, s.numero)"
-                          (click)="alternarEditorSesion(plan.id, s.numero)">
-                    {{ sesionEditorAbierto(plan.id, s.numero) ? 'Ocultar configuración' : 'Configurar sesión' }}
-                  </button>
+                <div class="sesion__controles">
+                  <div class="sesion__acciones">
+                    @for (e of estadosSesion; track e) {
+                      <button class="accion" [class.accion--activa]="s.estado === e"
+                              (click)="planes.cambiarEstadoSesion(plan.id, s.numero, e)">{{ e }}</button>
+                    }
+                  </div>
+                  <div class="sesion__gestion">
+                    <button type="button" class="btn-gestion"
+                            [class.btn-gestion--activo]="sesionEditorAbierto(plan.id, s.numero)"
+                            (click)="alternarEditorSesion(plan.id, s.numero)">
+                      {{ sesionEditorAbierto(plan.id, s.numero) ? 'Ocultar configuración' : (s.fecha ? 'Configurar sesión' : 'Asignar fecha') }}
+                    </button>
+                    <button type="button" class="btn-gestion btn-gestion--peligro"
+                            [disabled]="plan.sesiones.length === 1"
+                            (click)="eliminarSesion(plan, s)">
+                      Eliminar sesión
+                    </button>
+                  </div>
                 </div>
                 @if (sesionEditorAbierto(plan.id, s.numero)) {
                   <div class="sesion-editor">
@@ -380,15 +373,9 @@ interface FormTratamientoPlan {
         <footer class="plan__pie">
           @if (plan.notas) { <p class="plan__notas">{{ plan.notas }}</p> }
           <div class="plan__acciones">
-            <div class="accion-explicada">
-              <button class="btn btn--linea btn--sm" (click)="abrirProgramador(plan)" [disabled]="!planes.puedeProgramarSiguiente(plan)">
-                Asignar próxima sesión
-              </button>
-              <small>{{ planes.resumenPendiente(plan) }}</small>
-            </div>
             @if (saldoPlan(plan) > 0) {
               <div class="cobro-plan">
-                <div class="campo"><label>Monto recibido</label><input type="number" min="1" [placeholder]="cuotaSugerida(plan)" [ngModel]="montoPlan()[plan.id]" (ngModelChange)="setMontoPlan(plan.id, Number($event))"></div>
+                <div class="campo"><label>Monto recibido</label><input type="number" min="1" [placeholder]="saldoPlan(plan)" [ngModel]="montoPlan()[plan.id] || saldoPlan(plan)" (ngModelChange)="setMontoPlan(plan.id, Number($event))"></div>
                 <div class="campo"><label>Método</label><select [ngModel]="metodoPlan()[plan.id] || 'Efectivo'" (ngModelChange)="setMetodoPlan(plan.id, $event)">@for (m of metodosPago; track m) { <option>{{ m }}</option> }</select></div>
                 <button class="btn btn--vino btn--sm" (click)="registrarPagoPlan(plan)">Cobrar ahora</button>
                 <button class="btn btn--linea btn--sm" (click)="cobrarSaldo(plan)">Marcar plan totalmente pagado</button>
@@ -409,58 +396,6 @@ interface FormTratamientoPlan {
             </div>
           </div>
         </footer>
-
-        @if (programandoPlanId() === plan.id) {
-          <div class="programador-sesion">
-            <div class="programador-sesion__cabecera">
-              <div>
-                <span class="dato__label">Próxima sesión manual</span>
-                <h4>{{ proximaProgramable(plan)?.procedimiento || 'Sin sesiones pendientes' }}</h4>
-                <p class="programador-sesion__texto">
-                  Después de atender a la paciente, recepción separa aquí la siguiente fecha y hora según lo coordinado en mostrador.
-                </p>
-              </div>
-              <button class="boton-icono" (click)="programandoPlanId.set(null)">Cerrar</button>
-            </div>
-
-            <div class="programador-sesion__controles">
-              <div class="campo">
-                <label>Fecha base</label>
-                <input type="date" [ngModel]="programarFecha()[plan.id]" (ngModelChange)="setProgramarFecha(plan.id, $event)" name="programarFecha{{ plan.id }}">
-              </div>
-              <div class="campo">
-                <label>Hora elegida</label>
-                <input type="time" [ngModel]="programarHora()[plan.id]" (ngModelChange)="setProgramarHora(plan.id, $event)" name="programarHora{{ plan.id }}">
-              </div>
-              <button class="btn btn--vino btn--sm" (click)="guardarProximaSesion(plan)" [disabled]="!programarFecha()[plan.id] || !programarHora()[plan.id]">
-                Guardar próxima sesión
-              </button>
-            </div>
-
-            <div class="semana-disponible">
-              @for (dia of semanaDisponible(plan); track dia.iso) {
-                <article class="dia-disponible" [class.dia-disponible--activo]="programarFecha()[plan.id] === dia.iso">
-                  <button class="dia-disponible__fecha" (click)="setProgramarFecha(plan.id, dia.iso)">
-                    <span>{{ dia.etiqueta }}</span>
-                    <strong>{{ dia.dia }}</strong>
-                  </button>
-                  <div class="dia-disponible__horas">
-                    @for (h of dia.horas; track h.hora) {
-                      <button class="hora-mini"
-                              [class.hora-mini--activa]="programarFecha()[plan.id] === dia.iso && programarHora()[plan.id] === h.hora"
-                              [class.hora-mini--llena]="!h.disponible"
-                              [disabled]="!h.disponible"
-                              (click)="seleccionarFechaHora(plan.id, dia.iso, h.hora)">
-                        {{ h.hora }}
-                        <small>{{ h.cupo - h.ocupadas }}/{{ h.cupo }}</small>
-                      </button>
-                    }
-                  </div>
-                </article>
-              }
-            </div>
-          </div>
-        }
       </section>
     } @empty {
       <div class="tabla-panel"><p class="vacio">No hay planes que coincidan con la búsqueda.</p></div>
@@ -496,8 +431,9 @@ interface FormTratamientoPlan {
     .sesion__titulo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
     .sesion__fecha { font-size: .9rem; margin: 0 0 4px; }
     .sesion__obs { font-size: .9rem; color: var(--gris); margin: 0 0 8px; font-style: italic; }
-    .sesion__acciones { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-    .accion--configurar { margin-left: 8px; border-style: dashed; }
+    .sesion__controles { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-top: 8px; }
+    .sesion__acciones { display: flex; gap: 6px; flex-wrap: wrap; min-width: 0; }
+    .sesion__gestion { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-left: auto; min-width: min(100%, 240px); }
     .sesion-editor {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
@@ -516,12 +452,29 @@ interface FormTratamientoPlan {
     }
     .accion:hover { border-color: var(--magenta-300); color: var(--magenta); }
     .accion--activa { background: var(--vino); border-color: var(--vino); color: #fff; }
+    .btn-gestion {
+      border: 1px solid var(--vino);
+      border-radius: 8px;
+      background: var(--vino);
+      color: #fff;
+      min-width: 136px;
+      padding: 8px 13px;
+      font-family: inherit;
+      font-size: .82rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(102, 10, 49, .14);
+    }
+    .btn-gestion:hover, .btn-gestion--activo { background: var(--magenta); border-color: var(--magenta); }
+    .btn-gestion--peligro { background: #fff; border-color: rgba(180, 40, 70, .32); color: #9f2745; box-shadow: none; }
+    .btn-gestion--peligro:hover { background: #fff3f5; border-color: #9f2745; color: #7c1630; }
+    .btn-gestion:disabled { opacity: .45; cursor: not-allowed; }
     .plan__pie { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px; padding: 18px 4%; border-top: 1px solid var(--linea); background: var(--rosa-50); }
     .plan__pie > * { min-width: 0; max-width: 100%; }
     .plan__notas { margin: 0; font-size: .9rem; font-style: italic; }
     .plan__acciones { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; width: 100%; min-width: 0; }
-    .accion-explicada { display: grid; gap: 5px; max-width: min(100%, 240px); min-width: 0; }
-    .accion-explicada small, .cobro-plan small { color: var(--gris); font-size: .86rem; line-height: 1.4; }
+    .cobro-plan small { color: var(--gris); font-size: .86rem; line-height: 1.4; }
     .cobro-plan {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; align-items: end; min-width: 0; max-width: 100%;
       padding: 12px; border: 1px solid var(--linea); border-radius: var(--radio); background: #fff;
@@ -544,80 +497,6 @@ interface FormTratamientoPlan {
     }
     .agregar-sesion-plan small { grid-column: 1 / -1; color: var(--gris); font-size: .86rem; line-height: 1.4; }
     .vacio { text-align: center; color: var(--gris-claro); padding: 30px 0; margin: 0; }
-    .programador-sesion {
-      margin: 0 24px 24px;
-      padding: 18px;
-      border: 1px solid rgba(176, 27, 114, .22);
-      border-radius: var(--radio-lg);
-      background: #fff;
-    }
-    .programador-sesion__cabecera {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 14px;
-    }
-    .programador-sesion__cabecera h4 { margin: 4px 0 0; }
-    .programador-sesion__texto { margin: 8px 0 0; color: var(--gris); font-size: .9rem; line-height: 1.45; }
-    .programador-sesion__controles {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(160px, 220px)) auto;
-      gap: 12px;
-      align-items: end;
-      margin-bottom: 16px;
-    }
-    .semana-disponible { display: grid; grid-template-columns: repeat(7, minmax(110px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 4px; }
-    .dia-disponible {
-      min-width: 110px;
-      border: 1px solid var(--linea);
-      border-radius: var(--radio);
-      background: var(--rosa-50);
-      overflow: hidden;
-    }
-    .dia-disponible--activo { border-color: var(--magenta); box-shadow: 0 0 0 3px rgba(224, 123, 173, .14); }
-    .dia-disponible__fecha {
-      width: 100%;
-      border: 0;
-      border-bottom: 1px solid var(--linea);
-      background: #fff;
-      padding: 10px;
-      cursor: pointer;
-      font-family: inherit;
-      color: var(--vino);
-    }
-    .dia-disponible__fecha span {
-      display: block;
-      font-size: .78rem;
-      letter-spacing: .16em;
-      text-transform: uppercase;
-      color: var(--gris-claro);
-    }
-    .dia-disponible__fecha strong {
-      display: block;
-      font-family: 'Cormorant Garamond', Georgia, serif;
-      font-size: 1.45rem;
-      line-height: 1;
-    }
-    .dia-disponible__horas { display: grid; gap: 6px; padding: 8px; }
-    .hora-mini {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      width: 100%;
-      border: 1px solid var(--linea);
-      border-radius: 999px;
-      background: #fff;
-      padding: 6px 8px;
-      font-family: inherit;
-      font-size: .86rem;
-      color: var(--tinta);
-      cursor: pointer;
-    }
-    .hora-mini small { color: var(--gris-claro); }
-    .hora-mini--activa { background: var(--vino); border-color: var(--vino); color: #fff; }
-    .hora-mini--activa small { color: rgba(255, 255, 255, .78); }
-    .hora-mini--llena { opacity: .48; cursor: not-allowed; text-decoration: line-through; }
     
     /* Estilos del formulario de registro */
     .promo-form { padding: 20px 22px 24px; overflow: hidden; }
@@ -735,8 +614,6 @@ interface FormTratamientoPlan {
       .plan__cabecera { grid-template-columns: 1fr; }
       .plan__cobro { text-align: left; }
       .cobro-plan { grid-template-columns: 1fr; }
-      .programador-sesion__controles { grid-template-columns: 1fr; }
-      .semana-disponible { grid-template-columns: repeat(7, 128px); }
       .sesion-editor, .agregar-sesion-plan { grid-template-columns: 1fr; }
     }
 
@@ -751,6 +628,9 @@ interface FormTratamientoPlan {
       .sesion-form-item { grid-template-columns: 1fr !important; align-items: stretch !important; }
       .plan__cabecera, .sesion { padding-left: 16px; padding-right: 16px; }
       .sesion { gap: 10px; }
+      .sesion__controles { flex-direction: column; align-items: stretch; }
+      .sesion__gestion { justify-content: stretch; margin-left: 0; width: 100%; }
+      .sesion__gestion .btn-gestion { flex: 1 1 100%; }
       .plan__acciones { width: 100%; }
       .plan__acciones > * { flex: 1 1 100%; }
       .cobro-plan { grid-template-columns: 1fr; }
@@ -761,8 +641,6 @@ interface FormTratamientoPlan {
   `]
 })
 export class SesionesComponent {
-  private agenda = inject(AgendaService);
-  private configPanel = inject(ConfiguracionPanelService);
   private pacientesService = inject(PacientesService);
   private ruta = inject(ActivatedRoute);
   Number = Number;
@@ -778,11 +656,6 @@ export class SesionesComponent {
   montoPlan = signal<Record<number, number>>({});
   metodoPlan = signal<Record<number, MetodoPago>>({});
   tratamientoNuevoPlan = signal<Record<number, number>>({});
-  programandoPlanId = signal<number | null>(null);
-  programarFecha = signal<Record<number, string>>({});
-  programarHora = signal<Record<number, string>>({});
-  horasAgenda = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
-  diasCortos = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
   // Catálogos base para el formulario
   promocionesLista = PROMOCIONES;
@@ -848,18 +721,8 @@ export class SesionesComponent {
     return Math.max(this.precioPlan(plan) - this.pagadoPlan(plan), 0);
   }
 
-  cobrar(plan: PlanSesiones): void {
-    const saldo = this.saldoPlan(plan);
-    const cuota = Math.min(saldo, Math.round(this.precioPlan(plan) / Math.max(plan.sesiones.length, 1)));
-    this.planes.registrarPago(plan.id, cuota);
-  }
-
-  cuotaSugerida(plan: PlanSesiones): number {
-    return Math.min(this.saldoPlan(plan), Math.round(this.precioPlan(plan) / Math.max(plan.sesiones.length, 1)));
-  }
-
   registrarPagoPlan(plan: PlanSesiones): void {
-    const monto = Math.min(Math.max(Number(this.montoPlan()[plan.id] || this.cuotaSugerida(plan)), 0), this.saldoPlan(plan));
+    const monto = Math.min(Math.max(Number(this.montoPlan()[plan.id] || this.saldoPlan(plan)), 0), this.saldoPlan(plan));
     if (monto <= 0) { return; }
     this.planes.registrarPago(plan.id, monto, this.metodoPlan()[plan.id] || 'Efectivo');
     this.montoPlan.update(v => ({ ...v, [plan.id]: 0 }));
@@ -882,6 +745,18 @@ export class SesionesComponent {
     this.editoresSesionAbiertos.update(v => ({ ...v, [clave]: !v[clave] }));
   }
 
+  eliminarSesion(plan: PlanSesiones, sesion: SesionPlan): void {
+    if (plan.sesiones.length === 1) { return; }
+    const seguro = confirm(`¿Seguro que quieres eliminar la sesión ${sesion.numero}? Se borrará del registro.`);
+    if (!seguro) { return; }
+    this.planes.eliminarSesion(plan.id, sesion.numero);
+    this.editoresSesionAbiertos.update(v => {
+      const copia = { ...v };
+      delete copia[this.claveEditorSesion(plan.id, sesion.numero)];
+      return copia;
+    });
+  }
+
   setTratamientoNuevoPlan(planId: number, tratamientoId: number): void {
     this.tratamientoNuevoPlan.update(v => ({ ...v, [planId]: tratamientoId }));
   }
@@ -892,48 +767,14 @@ export class SesionesComponent {
     this.planes.registrarPago(plan.id, saldo, this.metodoPlan()[plan.id] || 'Efectivo');
   }
 
-  abrirProgramador(plan: PlanSesiones): void {
-    const nuevaVista = this.programandoPlanId() === plan.id ? null : plan.id;
-    this.programandoPlanId.set(nuevaVista);
-    if (!nuevaVista) { return; }
-
-    const actual = this.proximaProgramable(plan);
-    const fecha = actual?.fecha || aISO(new Date());
-    this.programarFecha.update(v => ({ ...v, [plan.id]: fecha }));
-    this.programarHora.update(v => ({ ...v, [plan.id]: actual?.hora || '09:00' }));
-  }
-
-  proximaProgramable(plan: PlanSesiones): SesionPlan | undefined {
-    return plan.sesiones.find(s => s.estado === 'Pendiente' || s.estado === 'Reprogramada');
-  }
-
-  setProgramarFecha(planId: number, fecha: string): void {
-    this.programarFecha.update(v => ({ ...v, [planId]: fecha }));
-  }
-
-  setProgramarHora(planId: number, hora: string): void {
-    this.programarHora.update(v => ({ ...v, [planId]: hora }));
-  }
-
-  seleccionarFechaHora(planId: number, fecha: string, hora: string): void {
-    this.setProgramarFecha(planId, fecha);
-    this.setProgramarHora(planId, hora);
-  }
-
-  guardarProximaSesion(plan: PlanSesiones): void {
-    const fecha = this.programarFecha()[plan.id];
-    const hora = this.programarHora()[plan.id];
-    if (!fecha || !hora) { return; }
-    this.planes.programarSiguienteManual(plan.id, fecha, hora);
-    this.programandoPlanId.set(null);
-  }
-
   actualizarSesionPlan(planId: number, sesion: SesionPlan, campo: 'tratamientoId' | 'fecha' | 'hora' | 'zona' | 'observaciones', valor: string | number): void {
     this.planes.actualizarSesion(planId, sesion.numero, { [campo]: campo === 'tratamientoId' ? Number(valor) : String(valor) });
   }
 
   agregarSesionAPlan(plan: PlanSesiones): void {
     this.planes.agregarSesionATratamiento(plan.id, this.tratamientoNuevoPlan()[plan.id] || this.tratamientoSugerido(plan));
+    const siguienteNumero = plan.sesiones.reduce((max, s) => Math.max(max, s.numero), 0) + 1;
+    this.editoresSesionAbiertos.update(v => ({ ...v, [this.claveEditorSesion(plan.id, siguienteNumero)]: true }));
   }
 
   tratamientosDePlan(plan: PlanSesiones) {
@@ -945,39 +786,6 @@ export class SesionesComponent {
 
   tratamientoSugerido(plan: PlanSesiones): number {
     return plan.sesiones[0]?.tratamientoId || this.tratamientosLista[0]?.id || 1;
-  }
-
-  semanaDisponible(plan: PlanSesiones): DiaDisponible[] {
-    const fecha = this.programarFecha()[plan.id] || aISO(new Date());
-    const base = new Date(`${fecha}T12:00:00`);
-    const lunes = new Date(base);
-    lunes.setDate(base.getDate() - ((base.getDay() + 6) % 7));
-    return Array.from({ length: 7 }, (_, i) => {
-      const dia = new Date(lunes);
-      dia.setDate(lunes.getDate() + i);
-      const iso = aISO(dia);
-      return {
-        iso,
-        etiqueta: this.diasCortos[i],
-        dia: dia.getDate(),
-        horas: this.horasDisponibles(plan, iso)
-      };
-    });
-  }
-
-  horasDisponibles(plan: PlanSesiones, fecha: string): HoraDisponible[] {
-    const localId = plan.localId || LOCALES[0]?.id || 1;
-    const cupo = this.configPanel.obtenerCupoLocal(localId);
-    return this.horasAgenda.map(hora => {
-      const ocupadas = this.agenda.citas().filter(c =>
-        c.fecha === fecha &&
-        c.localId === localId &&
-        c.estado !== 'Cancelada' &&
-        c.estado !== 'No asistió' &&
-        c.horaInicio.slice(0, 2) === hora.slice(0, 2)
-      ).length;
-      return { hora, ocupadas, cupo, disponible: ocupadas < cupo };
-    });
   }
 
   claseEstadoPlan(estado: string): string {

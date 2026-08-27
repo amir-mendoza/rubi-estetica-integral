@@ -187,6 +187,17 @@ export class PlanesService {
     }));
   }
 
+  eliminarSesion(planId: number, numero: number): void {
+    this.lista.update(lista => lista.map(p => {
+      if (p.id !== planId || p.sesiones.length <= 1) { return p; }
+      const sesiones = p.sesiones
+        .filter(s => s.numero !== numero)
+        .map((s, index) => ({ ...s, numero: index + 1 }));
+      const finalizado = sesiones.length > 0 && sesiones.every(s => s.estado === 'Atendida');
+      return { ...p, sesiones, estado: finalizado ? 'Finalizado' as const : 'En curso' as const };
+    }));
+  }
+
   actualizarSesion(planId: number, numero: number, cambios: Partial<Pick<SesionPlan, 'fecha' | 'hora' | 'zona' | 'observaciones' | 'tratamientoId' | 'procedimiento'>>): void {
     let actualizado: PlanSesiones | undefined;
     this.lista.update(lista => lista.map(p => {
