@@ -5,6 +5,7 @@ import { soles, tratamientoPorId } from '../../data/datos';
 import { Paciente } from '../../data/modelos';
 import { PacientesService } from '../../compartido/pacientes.service';
 import { AgendaService } from '../../compartido/agenda.service';
+import { SesionService } from '../../compartido/sesion.service';
 
 @Component({
   selector: 'app-pacientes',
@@ -34,7 +35,7 @@ import { AgendaService } from '../../compartido/agenda.service';
         </div>
         <form class="paciente-form" (ngSubmit)="guardarPaciente()">
           <div class="aviso-cuenta">
-            Pide DNI, nombre completo, celular y correo si lo recuerda. El correo es opcional; más adelante los beneficios también podrán enviarse por SMS al celular registrado.
+            Pide DNI, nombre completo, celular y correo si lo recuerda. Luego pregunta si prefiere entrar con PIN de 6 números o con una contraseña. La paciente debe decirlo y confirmarlo en el momento.
           </div>
           <div class="paciente-form__grid">
             <div class="campo">
@@ -53,6 +54,41 @@ import { AgendaService } from '../../compartido/agenda.service';
               <label>Correo (opcional)</label>
               <input type="email" [ngModel]="nuevoCorreo()" (ngModelChange)="nuevoCorreo.set($event)" name="nuevoCorreo" placeholder="correo@ejemplo.com">
             </div>
+          </div>
+          <div class="acceso-form">
+            <div class="acceso-form__cabecera">
+              <div>
+                <span class="dato__label">Acceso de la paciente</span>
+                <strong>Elige cómo recordará su ingreso</strong>
+              </div>
+              <div class="toggle-mini">
+                <button type="button" [class.toggle-mini__activo]="tipoAcceso() === 'PIN'" (click)="cambiarTipoAcceso('PIN')">PIN</button>
+                <button type="button" [class.toggle-mini__activo]="tipoAcceso() === 'Contraseña'" (click)="cambiarTipoAcceso('Contraseña')">Contraseña</button>
+              </div>
+            </div>
+            <p>
+              @if (tipoAcceso() === 'PIN') {
+                Usa 6 números que la paciente recuerde. No uses su DNI ni secuencias como 123456.
+              } @else {
+                Usa una palabra secreta que recuerde, combinada con números o símbolo. Mínimo 6 caracteres.
+              }
+            </p>
+            <div class="paciente-form__grid paciente-form__grid--acceso">
+              <div class="campo">
+                <label>{{ tipoAcceso() === 'PIN' ? 'PIN de 6 dígitos' : 'Contraseña' }}</label>
+                <input [type]="tipoAcceso() === 'PIN' ? 'text' : 'password'" [attr.inputmode]="tipoAcceso() === 'PIN' ? 'numeric' : null" [attr.maxlength]="tipoAcceso() === 'PIN' ? 6 : null" [ngModel]="nuevaClave()" (ngModelChange)="nuevaClave.set(limpiarClave($event))" name="nuevaClave" [placeholder]="tipoAcceso() === 'PIN' ? 'Ej. 582914' : 'Mínimo 6 caracteres'">
+              </div>
+              <div class="campo">
+                <label>Confirmar {{ tipoAcceso() === 'PIN' ? 'PIN' : 'contraseña' }}</label>
+                <input [type]="tipoAcceso() === 'PIN' ? 'text' : 'password'" [attr.inputmode]="tipoAcceso() === 'PIN' ? 'numeric' : null" [attr.maxlength]="tipoAcceso() === 'PIN' ? 6 : null" [ngModel]="confirmarClave()" (ngModelChange)="confirmarClave.set(limpiarClave($event))" name="confirmarClave" placeholder="Repite el acceso">
+              </div>
+            </div>
+            @if (errorClave()) {
+              <div class="estado-cuenta estado-cuenta--alerta">
+                <strong>Revisa el acceso</strong>
+                <span>{{ errorClave() }}</span>
+              </div>
+            }
           </div>
           @if (pacienteEncontrada()) {
             <div class="estado-cuenta estado-cuenta--ok">
@@ -184,6 +220,49 @@ import { AgendaService } from '../../compartido/agenda.service';
       gap: 14px;
     }
     .paciente-form__acciones { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+    .acceso-form {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+      padding: 16px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      background: var(--rosa-50);
+    }
+    .acceso-form__cabecera {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .acceso-form__cabecera > div:first-child { display: grid; gap: 3px; }
+    .acceso-form p { margin: 0; color: var(--gris); font-size: .92rem; line-height: 1.45; }
+    .paciente-form__grid--acceso { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
+    .toggle-mini {
+      display: inline-flex;
+      min-width: min(100%, 300px);
+      padding: 4px;
+      border: 1px solid var(--linea);
+      border-radius: 999px;
+      background: #fff;
+    }
+    .toggle-mini button {
+      flex: 1;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--gris);
+      font-family: inherit;
+      font-weight: 700;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+    .toggle-mini__activo {
+      background: var(--vino) !important;
+      color: #fff !important;
+      box-shadow: 0 8px 18px rgba(102, 10, 49, .18);
+    }
     .aviso-cuenta {
       margin-bottom: 16px;
       padding: 14px 16px;
@@ -218,6 +297,8 @@ import { AgendaService } from '../../compartido/agenda.service';
       .paciente-form__grid { grid-template-columns: 1fr; }
       .paciente-form__acciones { flex-direction: column; }
       .paciente-form__acciones .btn { width: 100%; }
+      .paciente-form__grid--acceso { grid-template-columns: 1fr; }
+      .toggle-mini { width: 100%; }
       .estado-cuenta { align-items: flex-start; flex-direction: column; gap: 5px; }
       .estado-cuenta strong { white-space: normal; }
     }
@@ -226,6 +307,7 @@ import { AgendaService } from '../../compartido/agenda.service';
 export class PacientesComponent {
   private pacientesService = inject(PacientesService);
   private agenda = inject(AgendaService);
+  private sesion = inject(SesionService);
   soles = soles;
   pacientes = this.pacientesService.pacientes;
   busqueda = signal('');
@@ -236,6 +318,9 @@ export class PacientesComponent {
   nuevoNombreCompleto = signal('');
   nuevoCelular = signal('');
   nuevoCorreo = signal('');
+  tipoAcceso = signal<'PIN' | 'Contraseña'>('PIN');
+  nuevaClave = signal('');
+  confirmarClave = signal('');
   pacienteEncontrada = signal<Paciente | null>(null);
   mensajeFormulario = signal('');
 
@@ -297,7 +382,8 @@ export class PacientesComponent {
   formularioValido(): boolean {
     return this.nuevoDni().length === 8 &&
       this.nuevoNombreCompleto().trim().length >= 3 &&
-      this.nuevoCelular().trim().length >= 6;
+      this.nuevoCelular().trim().length >= 6 &&
+      !this.errorClave();
   }
 
   guardarPaciente(): void {
@@ -308,9 +394,19 @@ export class PacientesComponent {
       celular: this.nuevoCelular(),
       correo: this.nuevoCorreo()
     });
+    const [nombre, ...resto] = this.nuevoNombreCompleto().trim().split(/\s+/);
+    this.sesion.registrarDesdeRecepcion({
+      pacienteId: paciente.id,
+      dni: paciente.dni,
+      nombre: nombre || paciente.nombre,
+      apellido: resto.join(' ') || paciente.apellido,
+      celular: paciente.celular,
+      correo: paciente.correo,
+      clave: this.nuevaClave()
+    });
     this.pacienteEncontrada.set(paciente);
     this.busqueda.set(paciente.dni);
-    this.mensajeFormulario.set(`Cuenta de ${paciente.nombre} ${paciente.apellido} guardada correctamente.`);
+    this.mensajeFormulario.set(`Cuenta de ${paciente.nombre} ${paciente.apellido} guardada correctamente. Podrá ingresar con su DNI, celular o correo registrado.`);
   }
 
   limpiarFormulario(): void {
@@ -318,7 +414,40 @@ export class PacientesComponent {
     this.nuevoNombreCompleto.set('');
     this.nuevoCelular.set('');
     this.nuevoCorreo.set('');
+    this.tipoAcceso.set('PIN');
+    this.nuevaClave.set('');
+    this.confirmarClave.set('');
     this.pacienteEncontrada.set(null);
     this.mensajeFormulario.set('');
+  }
+
+  cambiarTipoAcceso(tipo: 'PIN' | 'Contraseña'): void {
+    this.tipoAcceso.set(tipo);
+    this.nuevaClave.set('');
+    this.confirmarClave.set('');
+    this.mensajeFormulario.set('');
+  }
+
+  limpiarClave(valor: string): string {
+    return this.tipoAcceso() === 'PIN'
+      ? valor.replace(/\D/g, '').slice(0, 6)
+      : valor;
+  }
+
+  errorClave(): string {
+    const clave = this.nuevaClave();
+    const confirmacion = this.confirmarClave();
+    if (!clave && !confirmacion) { return 'Define un PIN o contraseña para activar la cuenta.'; }
+    if (this.tipoAcceso() === 'PIN') {
+      if (!/^\d{6}$/.test(clave)) { return 'El PIN debe tener exactamente 6 números.'; }
+      if (clave === this.nuevoDni()) { return 'El PIN no puede ser igual al DNI.'; }
+      if (/^(\d)\1{5}$/.test(clave) || clave === '123456' || clave === '654321') {
+        return 'El PIN es demasiado fácil. Usa otra combinación.';
+      }
+    } else if (clave.trim().length < 6) {
+      return 'La contraseña debe tener al menos 6 caracteres.';
+    }
+    if (clave !== confirmacion) { return 'La confirmación no coincide.'; }
+    return '';
   }
 }

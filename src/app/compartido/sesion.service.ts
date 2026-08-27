@@ -11,6 +11,10 @@ export interface DatosRegistro {
   clave: string;
 }
 
+export interface DatosRegistroRecepcion extends DatosRegistro {
+  pacienteId: number;
+}
+
 const CLAVE_SESION = 'rubi-prototipo-sesion';
 
 /**
@@ -40,8 +44,13 @@ export class SesionService {
 
   ingresar(correo: string, clave: string): Usuario | null {
     const buscado = correo.trim().toLowerCase();
+    const buscadoNumerico = correo.replace(/\D/g, '');
     const usuario = this.usuarios().find(
-      u => u.correo.toLowerCase() === buscado && u.clave === clave
+      u => (
+        u.correo.toLowerCase() === buscado ||
+        u.dni === buscadoNumerico ||
+        u.celular.replace(/\D/g, '') === buscadoNumerico
+      ) && u.clave === clave
     );
     if (usuario) {
       this.establecer(usuario);
@@ -52,7 +61,7 @@ export class SesionService {
 
   registrar(datos: DatosRegistro): Usuario | null {
     const correo = datos.correo.trim().toLowerCase();
-    if (this.usuarios().some(u => u.correo.toLowerCase() === correo)) {
+    if (correo && this.usuarios().some(u => u.correo.toLowerCase() === correo)) {
       return null;
     }
     const nuevo: Usuario = {
@@ -67,6 +76,44 @@ export class SesionService {
     };
     this.usuarios.update(lista => [...lista, nuevo]);
     this.establecer(nuevo);
+    return nuevo;
+  }
+
+  registrarDesdeRecepcion(datos: DatosRegistroRecepcion): Usuario {
+    const correo = datos.correo.trim().toLowerCase();
+    const existente = this.usuarios().find(u =>
+      u.dni === datos.dni.trim() ||
+      (!!correo && u.correo.toLowerCase() === correo)
+    );
+
+    if (existente) {
+      const actualizado: Usuario = {
+        ...existente,
+        nombre: datos.nombre.trim() || existente.nombre,
+        apellido: datos.apellido.trim() || existente.apellido,
+        dni: datos.dni.trim() || existente.dni,
+        celular: datos.celular.trim() || existente.celular,
+        correo: datos.correo.trim() || existente.correo,
+        clave: datos.clave,
+        rol: 'Paciente',
+        pacienteId: datos.pacienteId
+      };
+      this.usuarios.update(lista => lista.map(u => u.id === existente.id ? actualizado : u));
+      return actualizado;
+    }
+
+    const nuevo: Usuario = {
+      id: Math.max(...this.usuarios().map(u => u.id), 0) + 1,
+      nombre: datos.nombre.trim(),
+      apellido: datos.apellido.trim(),
+      dni: datos.dni.trim(),
+      celular: datos.celular.trim(),
+      correo: datos.correo.trim(),
+      clave: datos.clave,
+      rol: 'Paciente',
+      pacienteId: datos.pacienteId
+    };
+    this.usuarios.update(lista => [...lista, nuevo]);
     return nuevo;
   }
 
