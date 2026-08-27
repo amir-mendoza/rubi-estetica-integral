@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { LOCALES, formatoFechaLarga, soles, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
-import { ESTADOS_SESION, EstadoSesion, PlanSesiones, SesionPlan, MetodoPago } from '../../data/modelos';
+import { ESTADOS_SESION, EstadoSesion, PlanSesiones, SesionPlan, MetodoPago, Paciente } from '../../data/modelos';
 import { PlanesService } from '../../compartido/planes.service';
 import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
 import { PacientesService } from '../../compartido/pacientes.service';
@@ -88,6 +88,10 @@ interface FormTratamientoPlan {
           <h3>Registrar nuevo plan de sesiones</h3>
         </div>
         <form class="promo-form" (ngSubmit)="guardarNuevoPlan()">
+          <div class="aviso-cuenta">
+            Pregunta si la paciente ya tiene cuenta web. Si no aparece con su DNI, puedes decirle:
+            "Señora/señor, en nuestro sistema no aparece una cuenta web con su DNI. Si desea, podemos ayudarle a crearla para guardar su historial completo de tratamientos, recibir avisos de campañas, eventos y futuros descuentos por correo."
+          </div>
           <div class="promo-form__fila">
             <div class="campo">
               <label>DNI del Paciente (8 dígitos)</label>
@@ -102,6 +106,17 @@ interface FormTratamientoPlan {
               <input type="text" [ngModel]="formApellido()" (ngModelChange)="formApellido.set($event)" name="formApellido" required placeholder="López Rivera">
             </div>
           </div>
+          @if (pacientePlanEncontrado()) {
+            <div class="estado-cuenta estado-cuenta--ok">
+              <strong>Paciente encontrada</strong>
+              <span>Se autocompletaron sus datos. Este plan quedará asociado a su historial del sistema.</span>
+            </div>
+          } @else if (formDni().length === 8) {
+            <div class="estado-cuenta estado-cuenta--alerta">
+              <strong>Paciente sin cuenta registrada</strong>
+              <span>Regístrala como atención temporal y ofrécele afiliarse con cuenta web para conservar su historial completo y recibir futuros beneficios.</span>
+            </div>
+          }
           
           <div class="promo-form__fila">
             <div class="campo">
@@ -615,6 +630,29 @@ interface FormTratamientoPlan {
     .promo-form input, .promo-form select, .promo-form textarea, .promo-form button { max-width: 100%; min-width: 0; }
     .promo-form__fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 14px; }
     .promo-form__acciones { display: flex; align-items: center; gap: 14px; }
+    .aviso-cuenta {
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-left: 4px solid var(--magenta);
+      background: var(--rosa-50);
+      color: var(--vino);
+      font-size: .94rem;
+      line-height: 1.5;
+    }
+    .estado-cuenta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: -2px 0 16px;
+      padding: 12px 14px;
+      border-radius: var(--radio);
+      font-size: .9rem;
+      line-height: 1.45;
+    }
+    .estado-cuenta strong { color: var(--vino); white-space: nowrap; }
+    .estado-cuenta span { color: var(--gris); }
+    .estado-cuenta--ok { border: 1px solid rgba(44, 139, 93, .24); background: rgba(44, 139, 93, .08); }
+    .estado-cuenta--alerta { border: 1px solid rgba(184, 124, 35, .28); background: #fffaf2; }
     .plan-builder { display: grid; gap: 14px; margin-bottom: 15px; }
     .plan-builder__cabecera {
       display: flex;
@@ -711,6 +749,8 @@ interface FormTratamientoPlan {
       .promo-form { padding: 16px 14px 18px; }
       .promo-form__acciones { flex-direction: column; align-items: stretch; }
       .promo-form__acciones .btn { width: 100%; }
+      .estado-cuenta { align-items: flex-start; flex-direction: column; gap: 5px; }
+      .estado-cuenta strong { white-space: normal; }
       .plan-builder__cabecera .btn,
       .plan-sesiones__cabecera .btn { width: 100%; justify-content: center; }
       .sesion-form-item { grid-template-columns: 1fr !important; align-items: stretch !important; }
@@ -774,6 +814,7 @@ export class SesionesComponent {
   formNotas = signal('');
   formTratamientosPlan = signal<FormTratamientoPlan[]>([]);
   editoresSesionAbiertos = signal<Record<string, boolean>>({});
+  pacientePlanEncontrado = signal<Paciente | null>(null);
 
   lista = computed<PlanSesiones[]>(() => this.planes.buscar(this.busqueda()).filter(p =>
     (this.estado() === 'Todos' || p.estado === this.estado()) &&
@@ -965,10 +1006,13 @@ export class SesionesComponent {
 
   // --- Lógica del formulario de Nuevo Plan
   buscarDni(dni: string): void {
-    this.formDni.set(dni);
-    if (dni.length === 8) {
-      const p = this.pacientesService.porDni(dni);
+    const limpio = dni.replace(/\D/g, '').slice(0, 8);
+    this.formDni.set(limpio);
+    this.pacientePlanEncontrado.set(null);
+    if (limpio.length === 8) {
+      const p = this.pacientesService.porDni(limpio);
       if (p) {
+        this.pacientePlanEncontrado.set(p);
         this.formNombre.set(p.nombre);
         this.formApellido.set(p.apellido);
         this.formCelular.set(p.celular);
@@ -1147,6 +1191,7 @@ export class SesionesComponent {
     this.formNotas.set('');
     this.formTratamientosPlan.set([]);
     this.formBaseCarga.set('Personalizado');
+    this.pacientePlanEncontrado.set(null);
   }
 
   private crearTratamientoPlanForm(tratamientoId: number, incluidoEnBase = false, origen?: string): FormTratamientoPlan {
