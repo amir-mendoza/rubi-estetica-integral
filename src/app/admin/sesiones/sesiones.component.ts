@@ -22,6 +22,21 @@ interface DiaDisponible {
   horas: HoraDisponible[];
 }
 
+interface FormSesionPlan {
+  fecha: string;
+  hora: string;
+  zona: string;
+  observaciones: string;
+}
+
+interface FormTratamientoPlan {
+  tratamientoId: number;
+  multisesion: boolean;
+  incluidoEnBase?: boolean;
+  origen?: string;
+  sesiones: FormSesionPlan[];
+}
+
 @Component({
   selector: 'app-sesiones',
   standalone: true,
@@ -154,33 +169,85 @@ interface DiaDisponible {
 
           <hr style="margin: 15px 0; border: none; border-top: 1px solid var(--linea);">
 
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h4 style="margin: 0;">Sesiones del Plan ({{ formSesiones().length }})</h4>
-            <button type="button" class="btn btn--linea btn--sm" (click)="agregarSesionForm()">+ Agregar sesión</button>
+          <div class="plan-builder__cabecera">
+            <div>
+              <h4>Tratamientos del plan ({{ formTratamientosPlan().length }})</h4>
+              <span class="dato__label">Si cargas una promoción, se separan sus tratamientos para decidir si cada uno requiere más sesiones.</span>
+            </div>
+            <button type="button" class="btn btn--linea btn--sm" (click)="agregarTratamientoPlanForm()">+ Agregar tratamiento</button>
           </div>
 
-          <div class="sesiones-form-lista" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
-            @for (s of formSesiones(); track $index; let idx = $index) {
-              <div class="sesion-form-item" style="display: grid; grid-template-columns: 80px 1.5fr 2fr 100px; gap: 14px; align-items: center;">
-                <strong>Sesión {{ idx + 1 }}</strong>
-                <select [ngModel]="s.tratamientoId" (ngModelChange)="actualizarSesionTratamiento(idx, Number($event))" name="tratamientoId_{{idx}}">
-                  @for (t of tratamientosLista; track t.id) {
-                    <option [value]="t.id">{{ t.nombre }}</option>
+          <div class="plan-builder">
+            @for (grupo of formTratamientosPlan(); track $index; let gi = $index) {
+              <article class="plan-tratamiento">
+                <div class="plan-tratamiento__cabecera">
+                  <div>
+                    <strong>Tratamiento {{ gi + 1 }}</strong>
+                    <span>
+                      {{ tratamientoNombre(grupo.tratamientoId) }} ·
+                      {{ grupo.incluidoEnBase ? 'Incluido en ' + (grupo.origen || 'combo') : soles(precioTratamiento(grupo.tratamientoId)) }}
+                    </span>
+                  </div>
+                  <button type="button" class="boton-icono" (click)="eliminarTratamientoPlanForm(gi)" [disabled]="formTratamientosPlan().length === 1">Quitar tratamiento</button>
+                </div>
+
+                <div class="plan-tratamiento__grid">
+                  <div class="campo">
+                    <label>Tratamiento</label>
+                    <select [ngModel]="grupo.tratamientoId" (ngModelChange)="actualizarTratamientoPlanForm(gi, Number($event))" name="planTratamiento_{{ gi }}">
+                      @for (t of tratamientosLista; track t.id) {
+                        <option [value]="t.id">{{ t.nombre }} · {{ soles(t.precio) }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="campo">
+                    <label>¿Requiere más sesiones?</label>
+                    <div class="toggle-mini">
+                      <button type="button" [class.toggle-mini__activo]="!grupo.multisesion" (click)="alternarMultisesionPlanForm(gi, false)">No</button>
+                      <button type="button" [class.toggle-mini__activo]="grupo.multisesion" (click)="alternarMultisesionPlanForm(gi, true)">Sí</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="plan-sesiones">
+                  <div class="plan-sesiones__cabecera">
+                    <span class="dato__label">Sesiones de este tratamiento</span>
+                    <button type="button" class="btn btn--linea btn--sm" (click)="agregarSesionPlanForm(gi)" [disabled]="!grupo.multisesion">Agregar sesión</button>
+                  </div>
+                  @for (s of grupo.sesiones; track $index; let si = $index) {
+                    <div class="sesion-form-item">
+                      <strong>Sesión {{ si + 1 }}</strong>
+                      <div class="campo">
+                        <label>Fecha {{ si === 0 ? '(obligatoria)' : '(opcional)' }}</label>
+                        <input type="date" [ngModel]="s.fecha" (ngModelChange)="actualizarSesionPlanForm(gi, si, 'fecha', $event)" name="planSesionFecha_{{ gi }}_{{ si }}" [required]="si === 0">
+                      </div>
+                      <div class="campo">
+                        <label>Hora {{ si === 0 ? '(obligatoria)' : '(opcional)' }}</label>
+                        <input type="time" [ngModel]="s.hora" (ngModelChange)="actualizarSesionPlanForm(gi, si, 'hora', $event)" name="planSesionHora_{{ gi }}_{{ si }}" [required]="si === 0">
+                      </div>
+                      <div class="campo">
+                        <label>Zona (opcional)</label>
+                        <input type="text" [ngModel]="s.zona" (ngModelChange)="actualizarSesionPlanForm(gi, si, 'zona', $event)" name="planSesionZona_{{ gi }}_{{ si }}" placeholder="Rostro, labios, abdomen">
+                      </div>
+                      <div class="campo">
+                        <label>Observación (opcional)</label>
+                        <input type="text" [ngModel]="s.observaciones" (ngModelChange)="actualizarSesionPlanForm(gi, si, 'observaciones', $event)" name="planSesionObs_{{ gi }}_{{ si }}" placeholder="Nota de recepción">
+                      </div>
+                      <button type="button" class="boton-icono" (click)="eliminarSesionPlanForm(gi, si)" [disabled]="grupo.sesiones.length === 1">Quitar</button>
+                    </div>
                   }
-                </select>
-                <input type="text" [ngModel]="s.procedimiento" (ngModelChange)="actualizarSesionProcedimiento(idx, $event)" name="procedimiento_{{idx}}" placeholder="Nombre del procedimiento" required>
-                <button type="button" class="btn btn--linea btn--sm" style="color: var(--error); border-color: var(--error);" (click)="eliminarSesionForm(idx)">Eliminar</button>
-              </div>
+                </div>
+              </article>
             }
-            @if (formSesiones().length === 0) {
-              <div class="vacio" style="padding: 10px; border: 1px dashed var(--linea); text-align: center; border-radius: var(--radio);">
-                No hay sesiones en el plan. Añade al menos una.
+            @if (formTratamientosPlan().length === 0) {
+              <div class="vacio plan-builder__vacio">
+                No hay tratamientos en el plan. Carga una promoción, un tratamiento o añade uno manualmente.
               </div>
             }
           </div>
 
           <div class="promo-form__acciones" style="margin-top: 25px;">
-            <button type="submit" class="btn btn--vino btn--sm" [disabled]="!formNombrePlan() || !formDni() || !formNombre() || !formApellido() || formSesiones().length === 0">
+            <button type="submit" class="btn btn--vino btn--sm" [disabled]="!planFormValido()">
               Registrar Plan
             </button>
             <button type="button" class="btn btn--linea btn--sm" (click)="mostrarFormulario.set(false)">Cancelar</button>
@@ -540,8 +607,87 @@ interface DiaDisponible {
     .promo-form input, .promo-form select, .promo-form textarea, .promo-form button { max-width: 100%; min-width: 0; }
     .promo-form__fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 14px; }
     .promo-form__acciones { display: flex; align-items: center; gap: 14px; }
-    .sesion-form-item { min-width: 0; max-width: 100%; }
-    .sesion-form-item select, .sesion-form-item input { padding: 6px 10px; font-size: 0.85rem; }
+    .plan-builder { display: grid; gap: 14px; margin-bottom: 15px; }
+    .plan-builder__cabecera {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .plan-builder__cabecera h4 { margin: 0 0 4px; }
+    .plan-builder__vacio { padding: 12px; border: 1px dashed var(--linea); border-radius: var(--radio); }
+    .plan-tratamiento {
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      background: var(--rosa-50);
+      min-width: 0;
+    }
+    .plan-tratamiento__cabecera,
+    .plan-sesiones__cabecera {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .plan-tratamiento__cabecera {
+      padding-bottom: 12px;
+      border-bottom: 1px dashed var(--linea);
+    }
+    .plan-tratamiento__cabecera div { display: grid; gap: 3px; min-width: 0; }
+    .plan-tratamiento__cabecera strong { color: var(--vino); }
+    .plan-tratamiento__cabecera span { color: var(--gris); font-size: .9rem; overflow-wrap: anywhere; }
+    .plan-tratamiento__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+      gap: 14px;
+      align-items: end;
+    }
+    .toggle-mini {
+      display: inline-flex;
+      width: 100%;
+      min-width: 0;
+      padding: 4px;
+      border: 1px solid var(--linea);
+      border-radius: 999px;
+      background: #fff;
+    }
+    .toggle-mini button {
+      flex: 1;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--gris);
+      font-family: inherit;
+      font-weight: 700;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+    .toggle-mini__activo {
+      background: var(--vino) !important;
+      color: #fff !important;
+      box-shadow: 0 8px 18px rgba(102, 10, 49, .18);
+    }
+    .plan-sesiones { display: grid; gap: 10px; }
+    .sesion-form-item {
+      display: grid;
+      grid-template-columns: 88px repeat(4, minmax(130px, 1fr)) auto;
+      gap: 12px;
+      align-items: end;
+      min-width: 0;
+      max-width: 100%;
+      padding: 12px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio);
+      background: #fff;
+    }
+    .sesion-form-item > strong { color: var(--vino); align-self: center; }
+    .sesion-form-item select, .sesion-form-item input { padding: 6px 10px; font-size: 0.85rem; width: 100%; }
 
     @media (max-width: 1200px) {
       .kpis-4 { grid-template-columns: repeat(2, 1fr); }
@@ -557,6 +703,8 @@ interface DiaDisponible {
       .promo-form { padding: 16px 14px 18px; }
       .promo-form__acciones { flex-direction: column; align-items: stretch; }
       .promo-form__acciones .btn { width: 100%; }
+      .plan-builder__cabecera .btn,
+      .plan-sesiones__cabecera .btn { width: 100%; justify-content: center; }
       .sesion-form-item { grid-template-columns: 1fr !important; align-items: stretch !important; }
       .plan__cabecera, .sesion { padding-left: 16px; padding-right: 16px; }
       .sesion { gap: 10px; }
@@ -613,9 +761,10 @@ export class SesionesComponent {
   formNombrePlan = signal('');
   formIntervaloDias = signal(15);
   formPrecioTotal = signal<number>(0);
+  formPrecioBase = signal<number>(0);
   formPagado = signal<number>(0);
   formNotas = signal('');
-  formSesiones = signal<{ tratamientoId: number; procedimiento: string }[]>([]);
+  formTratamientosPlan = signal<FormTratamientoPlan[]>([]);
 
   lista = computed<PlanSesiones[]>(() => this.planes.buscar(this.busqueda()).filter(p =>
     (this.estado() === 'Todos' || p.estado === this.estado()) &&
@@ -814,8 +963,9 @@ export class SesionesComponent {
     this.formBaseCarga.set(val);
     if (val === 'Personalizado') {
       this.formNombrePlan.set('');
+      this.formPrecioBase.set(0);
       this.formPrecioTotal.set(0);
-      this.formSesiones.set([]);
+      this.formTratamientosPlan.set([]);
       return;
     }
 
@@ -824,52 +974,106 @@ export class SesionesComponent {
       const promo = PROMOCIONES.find(p => p.id === id);
       if (promo) {
         this.formNombrePlan.set(promo.titulo);
-        this.formPrecioTotal.set(promo.precio || 0);
+        this.formPrecioBase.set(promo.precio || 0);
 
-        const numSesiones = promo.sesiones || 1;
         if (promo.sesionesDetalle?.length) {
-          this.formSesiones.set(promo.sesionesDetalle.map(s => ({
-            tratamientoId: s.tratamientoId ?? 1,
-            procedimiento: s.titulo.replace(/^Sesion \d+ ·\s*/, '')
-          })));
-        } else {
-          const arr = [];
-          for (let i = 1; i <= numSesiones; i++) {
-            arr.push({ tratamientoId: 1, procedimiento: `Sesión ${i} - ${promo.titulo}` });
+          const grupos = new Map<number, FormTratamientoPlan>();
+          for (const detalle of promo.sesionesDetalle) {
+            const tratamientoId = detalle.tratamientoId ?? this.tratamientosLista[0]?.id ?? 1;
+            const actual = grupos.get(tratamientoId) ?? this.crearTratamientoPlanForm(tratamientoId, true, promo.titulo);
+            const sesion = this.crearSesionPlanForm(actual.sesiones.length === 0);
+            sesion.observaciones = `${detalle.titulo}: ${detalle.descripcion}`.trim();
+            actual.sesiones = actual.sesiones.length === 1 && !actual.sesiones[0].observaciones
+              ? [sesion]
+              : [...actual.sesiones, sesion];
+            actual.multisesion = actual.sesiones.length > 1;
+            grupos.set(tratamientoId, actual);
           }
-          this.formSesiones.set(arr);
+          this.formTratamientosPlan.set(Array.from(grupos.values()));
+        } else {
+          this.formTratamientosPlan.set([this.crearTratamientoPlanForm(this.tratamientosLista[0]?.id ?? 1, true, promo.titulo)]);
         }
+        this.recalcularPrecioNuevoPlan();
       }
     } else if (val.startsWith('trat-')) {
       const id = Number(val.replace('trat-', ''));
       const trat = TRATAMIENTOS.find(t => t.id === id);
       if (trat) {
         this.formNombrePlan.set(trat.nombre);
-        this.formPrecioTotal.set(trat.precio);
-        this.formSesiones.set([{ tratamientoId: trat.id, procedimiento: trat.nombre }]);
+        this.formPrecioBase.set(0);
+        this.formTratamientosPlan.set([this.crearTratamientoPlanForm(trat.id)]);
+        this.recalcularPrecioNuevoPlan();
       }
     }
   }
 
-  agregarSesionForm(): void {
-    this.formSesiones.update(list => [...list, { tratamientoId: 1, procedimiento: 'Limpieza facial profunda' }]);
+  agregarTratamientoPlanForm(): void {
+    this.formTratamientosPlan.update(list => [...list, this.crearTratamientoPlanForm(this.tratamientosLista[0]?.id ?? 1)]);
+    this.recalcularPrecioNuevoPlan();
   }
 
-  eliminarSesionForm(index: number): void {
-    this.formSesiones.update(list => list.filter((_, i) => i !== index));
+  eliminarTratamientoPlanForm(index: number): void {
+    this.formTratamientosPlan.update(list => list.length === 1 ? list : list.filter((_, i) => i !== index));
+    this.recalcularPrecioNuevoPlan();
   }
 
-  actualizarSesionTratamiento(index: number, tratamientoId: number): void {
-    const trat = TRATAMIENTOS.find(t => t.id === tratamientoId);
-    this.formSesiones.update(list => list.map((s, i) => i === index ? { ...s, tratamientoId, procedimiento: trat?.nombre || s.procedimiento } : s));
+  actualizarTratamientoPlanForm(index: number, tratamientoId: number): void {
+    this.formTratamientosPlan.update(list => list.map((grupo, i) => i === index ? { ...grupo, tratamientoId } : grupo));
+    this.recalcularPrecioNuevoPlan();
   }
 
-  actualizarSesionProcedimiento(index: number, procedimiento: string): void {
-    this.formSesiones.update(list => list.map((s, i) => i === index ? { ...s, procedimiento } : s));
+  alternarMultisesionPlanForm(index: number, multisesion: boolean): void {
+    this.formTratamientosPlan.update(list => list.map((grupo, i) => {
+      if (i !== index) { return grupo; }
+      return {
+        ...grupo,
+        multisesion,
+        sesiones: multisesion ? grupo.sesiones : [grupo.sesiones[0] ?? this.crearSesionPlanForm(true)]
+      };
+    }));
+  }
+
+  agregarSesionPlanForm(index: number): void {
+    this.formTratamientosPlan.update(list => list.map((grupo, i) => i === index
+      ? { ...grupo, multisesion: true, sesiones: [...grupo.sesiones, this.crearSesionPlanForm(false)] }
+      : grupo
+    ));
+  }
+
+  eliminarSesionPlanForm(indexTratamiento: number, indexSesion: number): void {
+    this.formTratamientosPlan.update(list => list.map((grupo, i) => {
+      if (i !== indexTratamiento || grupo.sesiones.length === 1) { return grupo; }
+      const sesiones = grupo.sesiones.filter((_, si) => si !== indexSesion);
+      return { ...grupo, sesiones, multisesion: sesiones.length > 1 ? grupo.multisesion : false };
+    }));
+  }
+
+  actualizarSesionPlanForm(indexTratamiento: number, indexSesion: number, campo: keyof FormSesionPlan, valor: string): void {
+    this.formTratamientosPlan.update(list => list.map((grupo, i) => i === indexTratamiento ? {
+      ...grupo,
+      sesiones: grupo.sesiones.map((sesion, si) => si === indexSesion ? { ...sesion, [campo]: valor } : sesion)
+    } : grupo));
+  }
+
+  planFormValido(): boolean {
+    return !!this.formNombrePlan() &&
+      !!this.formDni() &&
+      !!this.formNombre() &&
+      !!this.formApellido() &&
+      this.formTratamientosPlan().length > 0 &&
+      this.formTratamientosPlan().every(grupo => !!grupo.tratamientoId && !!grupo.sesiones[0]?.fecha && !!grupo.sesiones[0]?.hora);
+  }
+
+  tratamientoNombre(id: number): string {
+    return TRATAMIENTOS.find(t => t.id === id)?.nombre ?? 'Tratamiento';
+  }
+
+  precioTratamiento(id: number): number {
+    return TRATAMIENTOS.find(t => t.id === id)?.precio ?? 0;
   }
 
   guardarNuevoPlan(): void {
-    if (!this.formDni() || !this.formNombre() || !this.formApellido() || !this.formNombrePlan() || this.formSesiones().length === 0) {
+    if (!this.planFormValido()) {
       return;
     }
 
@@ -881,14 +1085,20 @@ export class SesionesComponent {
       observaciones: this.formNotas()
     });
 
-    const sesiones: SesionPlan[] = this.formSesiones().map((s, idx) => ({
-      numero: idx + 1,
-      tratamientoId: s.tratamientoId,
-      procedimiento: s.procedimiento,
-      estado: idx === 0 ? 'Programada' : 'Pendiente',
-      fecha: idx === 0 ? aISO(new Date()) : undefined,
-      registradoPor: 'Recepción'
-    }));
+    const sesiones: SesionPlan[] = this.formTratamientosPlan().flatMap((grupo, grupoIndex) =>
+      grupo.sesiones.map((sesion, sesionIndex) => ({
+        numero: 0,
+        tratamientoId: grupo.tratamientoId,
+        grupoTratamiento: grupoIndex + 1,
+        procedimiento: this.tratamientoNombre(grupo.tratamientoId),
+        estado: sesion.fecha && sesion.hora ? 'Programada' as const : 'Pendiente' as const,
+        fecha: sesion.fecha || undefined,
+        hora: sesion.hora || undefined,
+        zona: sesion.zona.trim() || undefined,
+        observaciones: sesion.observaciones.trim() || undefined,
+        registradoPor: 'Recepción'
+      }))
+    ).map((sesion, index) => ({ ...sesion, numero: index + 1 }));
 
     const planData: Omit<PlanSesiones, 'id' | 'codigo'> = {
       pacienteId: paciente.id,
@@ -896,7 +1106,7 @@ export class SesionesComponent {
       nombre: this.formNombrePlan(),
       localId: this.formLocalId(),
       intervaloDias: this.formIntervaloDias(),
-      inicio: aISO(new Date()),
+      inicio: sesiones.find(s => !!s.fecha)?.fecha || aISO(new Date()),
       precioTotal: this.formPrecioTotal(),
       pagado: this.formPagado(),
       estado: 'En curso',
@@ -913,11 +1123,40 @@ export class SesionesComponent {
     this.formCelular.set('');
     this.formCorreo.set('');
     this.formNombrePlan.set('');
+    this.formPrecioBase.set(0);
     this.formPrecioTotal.set(0);
     this.formPagado.set(0);
     this.formNotas.set('');
-    this.formSesiones.set([]);
+    this.formTratamientosPlan.set([]);
     this.formBaseCarga.set('Personalizado');
+  }
+
+  private crearTratamientoPlanForm(tratamientoId: number, incluidoEnBase = false, origen?: string): FormTratamientoPlan {
+    return {
+      tratamientoId,
+      multisesion: false,
+      incluidoEnBase,
+      origen,
+      sesiones: [this.crearSesionPlanForm(true)]
+    };
+  }
+
+  private crearSesionPlanForm(esPrimera: boolean): FormSesionPlan {
+    return {
+      fecha: esPrimera ? aISO(new Date()) : '',
+      hora: esPrimera ? '09:00' : '',
+      zona: '',
+      observaciones: ''
+    };
+  }
+
+  private recalcularPrecioNuevoPlan(): void {
+    const extras = this.formTratamientosPlan()
+      .filter(grupo => !grupo.incluidoEnBase)
+      .reduce((total, grupo) => total + this.precioTratamiento(grupo.tratamientoId), 0);
+    const total = Math.max(Number(this.formPrecioBase() || 0), 0) + extras;
+    this.formPrecioTotal.set(total);
+    this.formPagado.set(Math.min(Math.max(Number(this.formPagado() || 0), 0), total));
   }
 
   private todasLasSesiones(): SesionPlan[] {
