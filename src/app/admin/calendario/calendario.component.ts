@@ -2,7 +2,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
-  DIAS_SEMANA, HOY_ISO, LOCALES, MESES, TRATAMIENTOS, aISO,
+  DIAS_SEMANA, HORAS_SELECTOR, HOY_ISO, LOCALES, MESES, TRATAMIENTOS, aISO,
+  formatoHora12,
   formatoFechaLarga, localPorId, nombreCabina, nombreEspecialista,
   soles, tratamientoPorId
 } from '../../data/datos';
@@ -64,6 +65,8 @@ export class CalendarioComponent {
   tratamientosCatalogo = TRATAMIENTOS;
   estadosCita = ESTADOS_CITA;
   metodosPago: MetodoPago[] = ['Efectivo', 'Yape', 'Plin', 'Tarjeta POS', 'Transferencia'];
+  horasSelector = HORAS_SELECTOR;
+  formatoHora = formatoHora12;
 
   private hoy = new Date();
   mes = signal(this.hoy.getMonth());

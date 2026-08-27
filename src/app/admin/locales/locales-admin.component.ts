@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MapaSedeComponent } from '../../compartido/mapa-sede.component';
-import { CITAS, ESPECIALISTAS, HABITACIONES, HOY_ISO, LOCALES, soles } from '../../data/datos';
+import { CITAS, ESPECIALISTAS, HABITACIONES, HORAS_SELECTOR, HOY_ISO, LOCALES, formatoHora12, soles } from '../../data/datos';
 import { Habitacion, Local } from '../../data/modelos';
 import { SubidasService } from '../../compartido/subidas.service';
 import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
@@ -60,8 +60,8 @@ function cabinaVacia(localId: number): Habitacion {
           @if (es247()) {
             <div class="local-form__247-label">Abierto todo el día, todos los días</div>
           } @else {
-            <div class="campo"><label>Apertura</label><input type="time" [ngModel]="localForm().horario[0].apertura" (ngModelChange)="editarHorario('apertura', $event)" name="apertura"></div>
-            <div class="campo"><label>Cierre</label><input type="time" [ngModel]="localForm().horario[0].cierre" (ngModelChange)="editarHorario('cierre', $event)" name="cierre"></div>
+            <div class="campo"><label>Apertura</label><select [ngModel]="localForm().horario[0].apertura" (ngModelChange)="editarHorario('apertura', $event)" name="apertura">@for (h of horasSelector; track h.valor) { <option [value]="h.valor">{{ h.etiqueta }}</option> }</select></div>
+            <div class="campo"><label>Cierre</label><select [ngModel]="localForm().horario[0].cierre" (ngModelChange)="editarHorario('cierre', $event)" name="cierre">@for (h of horasSelector; track h.valor) { <option [value]="h.valor">{{ h.etiqueta }}</option> }<option value="24:00">12:00 AM</option></select></div>
           }
           <div class="campo"><label>Latitud</label><input type="number" step="0.000001" [ngModel]="localForm().latitud" (ngModelChange)="editarLocal('latitud', Number($event))" name="latitud"></div>
           <div class="campo"><label>Longitud</label><input type="number" step="0.000001" [ngModel]="localForm().longitud" (ngModelChange)="editarLocal('longitud', Number($event))" name="longitud"></div>
@@ -80,7 +80,7 @@ function cabinaVacia(localId: number): Habitacion {
                 <p>{{ localForm().referencia || 'Referencia para llegar' }} · {{ localForm().distrito }}</p>
                 <div class="preview-local-card__meta">
                   <span>{{ localForm().telefono }}</span>
-                  <span>{{ localForm().horario[0].apertura }} - {{ localForm().horario[0].cierre }}</span>
+                  <span>{{ formatoHora(localForm().horario[0].apertura) }} - {{ formatoHora(localForm().horario[0].cierre) }}</span>
                 </div>
                 <a [href]="googleMapsLocal(localForm())" target="_blank" rel="noopener">Abrir en Google Maps</a>
               </div>
@@ -312,6 +312,8 @@ export class LocalesAdminComponent {
   private configPanel = inject(ConfiguracionPanelService);
   Number = Number;
   soles = soles;
+  horasSelector = HORAS_SELECTOR;
+  formatoHora = formatoHora12;
   locales = signal(LOCALES.map(l => ({ ...l, horario: l.horario.map(h => ({ ...h })) })));
   habitaciones = signal(HABITACIONES.map(h => ({ ...h })));
   mostrarLocal = signal(false);

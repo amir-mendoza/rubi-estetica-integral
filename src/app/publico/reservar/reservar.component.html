@@ -231,7 +231,7 @@
                           [disabled]="!b.disponible"
                           [title]="b.disponible ? 'Quedan ' + b.libres + ' cupos' : (b.motivo || 'No disponible')"
                           (click)="elegirBloque(b)">
-                    <span>{{ b.inicio }}</span>
+                    <span>{{ formatoHora(b.inicio) }}</span>
                     <small>
                       @if (b.retenidoPorMi) {
                         Reservado para ti
@@ -402,7 +402,7 @@
               </div>
             }
             <div class="resumen__fila"><span>Fecha</span><strong>{{ bloque() ? formatoFechaLarga(fecha()) : '—' }}</strong></div>
-            <div class="resumen__fila"><span>Hora de llegada</span><strong>{{ bloque()?.inicio || '—' }}</strong></div>
+            <div class="resumen__fila"><span>Hora de llegada</span><strong>{{ formatoHora(bloque()?.inicio) }}</strong></div>
             <div class="resumen__fila"><span>Cabina</span><strong>Se asigna al llegar</strong></div>
             <div class="resumen__fila"><span>Especialista</span><strong>La disponible al llegar</strong></div>
             <div class="resumen__fila">

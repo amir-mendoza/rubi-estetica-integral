@@ -2,7 +2,7 @@ import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
-  ETIQUETAS_TRATAMIENTO, LOCALES, TRATAMIENTOS, formatoFechaLarga, soles
+  ETIQUETAS_TRATAMIENTO, LOCALES, TRATAMIENTOS, formatoFechaLarga, formatoHora12, soles
 } from '../../data/datos';
 import { CategoriaTratamiento, Local, Promocion, Tratamiento } from '../../data/modelos';
 import { Bloque, DisponibilidadService } from '../../compartido/disponibilidad.service';
@@ -44,6 +44,7 @@ export class ReservarComponent implements OnDestroy {
 
   soles = soles;
   formatoFechaLarga = formatoFechaLarga;
+  formatoHora = formatoHora12;
   adelantoPorcentaje = computed(() => this.configPanel.adelantoReservaPorcentaje());
 
   locales = LOCALES;

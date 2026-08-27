@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LOCALES, cabinasDeSede, cupoDeSede } from '../../data/datos';
+import { HORAS_SELECTOR, LOCALES, cabinasDeSede, cupoDeSede } from '../../data/datos';
 import { MarcaService } from '../../compartido/marca.service';
 import { FondoService } from '../../compartido/fondo.service';
 import { RedesService } from '../../compartido/redes.service';
@@ -442,8 +442,13 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
               @for (h of configPanel.obtenerHorariosLocal(l.id); track h.dias; let i = $index) {
                 <div class="horario-config__fila">
                   <span>{{ h.dias }}</span>
-                  <input type="time" [ngModel]="h.apertura" (ngModelChange)="configPanel.actualizarAgendaHorario(l.id, i, 'apertura', $event)" [disabled]="configPanel.agenda().atencion24h">
-                  <input type="time" [ngModel]="h.cierre" (ngModelChange)="configPanel.actualizarAgendaHorario(l.id, i, 'cierre', $event)" [disabled]="configPanel.agenda().atencion24h">
+                  <select [ngModel]="h.apertura" (ngModelChange)="configPanel.actualizarAgendaHorario(l.id, i, 'apertura', $event)" [disabled]="configPanel.agenda().atencion24h">
+                    @for (hora of horasSelector; track hora.valor) { <option [value]="hora.valor">{{ hora.etiqueta }}</option> }
+                  </select>
+                  <select [ngModel]="h.cierre" (ngModelChange)="configPanel.actualizarAgendaHorario(l.id, i, 'cierre', $event)" [disabled]="configPanel.agenda().atencion24h">
+                    @for (hora of horasSelector; track hora.valor) { <option [value]="hora.valor">{{ hora.etiqueta }}</option> }
+                    <option value="24:00">12:00 AM</option>
+                  </select>
                 </div>
               }
               <div class="horario-config__acciones">
@@ -673,7 +678,7 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
     .horario-config strong { display: block; margin-bottom: 10px; font-weight: 500; }
     .horario-config__fila { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
     .horario-config__fila span { font-size: .9rem; color: var(--gris); }
-    .horario-config__fila input { border: 1px solid var(--linea); border-radius: var(--radio); padding: .45rem .6rem; font-family: inherit; font-size: .9rem; }
+    .horario-config__fila input, .horario-config__fila select { border: 1px solid var(--linea); border-radius: var(--radio); padding: .45rem .6rem; font-family: inherit; font-size: .9rem; background: #fff; }
     .horario-config__acciones { display: flex; justify-content: flex-end; margin-top: 10px; }
     .marca-preview {
       display: grid;
@@ -755,6 +760,7 @@ export class ConfiguracionComponent {
   }
 
   locales = LOCALES;
+  horasSelector = HORAS_SELECTOR;
   cabinas = (localId: number) => cabinasDeSede(localId).length;
   readonly configPanel = inject(ConfiguracionPanelService);
   readonly redes = inject(RedesService);

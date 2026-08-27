@@ -114,7 +114,10 @@
                     </div>
                     <div class="campo">
                       <label>Hora {{ si === 0 ? '(obligatoria)' : '(opcional)' }}</label>
-                      <input type="time" [ngModel]="sesion.hora" (ngModelChange)="actualizarSesionTratamiento(ti, si, 'hora', $event)" [name]="'sesionHora' + ti + '_' + si" [required]="si === 0">
+                      <select [ngModel]="sesion.hora" (ngModelChange)="actualizarSesionTratamiento(ti, si, 'hora', $event)" [name]="'sesionHora' + ti + '_' + si" [required]="si === 0">
+                        @if (si > 0) { <option value="">Sin hora definida</option> }
+                        @for (h of horasSelector; track h.valor) { <option [value]="h.valor">{{ h.etiqueta }}</option> }
+                      </select>
                     </div>
                     <div class="campo">
                       <label>Zona (opcional)</label>
@@ -340,7 +343,9 @@
                   </div>
                   <div class="campo">
                     <label>Hora</label>
-                    <input type="time" [ngModel]="editHora()[f.cita.id]" (ngModelChange)="setEditHora(f.cita.id, $event)" name="editHora{{ f.cita.id }}">
+                    <select [ngModel]="editHora()[f.cita.id]" (ngModelChange)="setEditHora(f.cita.id, $event)" name="editHora{{ f.cita.id }}">
+                      @for (h of horasSelector; track h.valor) { <option [value]="h.valor">{{ h.etiqueta }}</option> }
+                    </select>
                   </div>
                   <button class="btn btn--vino btn--sm" (click)="guardarFechaHora(f.cita)" [disabled]="!editFecha()[f.cita.id] || !editHora()[f.cita.id]">
                     Guardar horario

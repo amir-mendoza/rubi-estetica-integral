@@ -85,6 +85,20 @@ export function cabinasDeSede(localId: number): Habitacion[] {
   return HABITACIONES.filter(h => h.localId === localId && h.activa);
 }
 
+export function formatoHora12(hora?: string): string {
+  if (!hora) { return '—'; }
+  const [h = 0, m = 0] = hora.split(':').map(Number);
+  if (h === 24) { return `12:${String(m).padStart(2, '0')} AM`; }
+  const periodo = h >= 12 ? 'PM' : 'AM';
+  const hora12 = h % 12 || 12;
+  return `${hora12}:${String(m).padStart(2, '0')} ${periodo}`;
+}
+
+export const HORAS_SELECTOR = Array.from({ length: 24 }, (_, h) => {
+  const valor = `${String(h).padStart(2, '0')}:00`;
+  return { valor, etiqueta: formatoHora12(valor) };
+});
+
 /* ========================================================= TRATAMIENTOS === */
 
 export const TRATAMIENTOS: Tratamiento[] = [

@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { LOCALES, formatoFechaLarga, soles, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
+import { HORAS_SELECTOR, LOCALES, formatoFechaLarga, formatoHora12, soles, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
 import { ESTADOS_SESION, EstadoSesion, PlanSesiones, SesionPlan, MetodoPago, Paciente } from '../../data/modelos';
 import { PlanesService } from '../../compartido/planes.service';
 import { PacientesService } from '../../compartido/pacientes.service';
@@ -218,7 +218,10 @@ interface FormTratamientoPlan {
                       </div>
                       <div class="campo">
                         <label>Hora {{ si === 0 ? '(obligatoria)' : '(opcional)' }}</label>
-                        <input type="time" [ngModel]="s.hora" (ngModelChange)="actualizarSesionPlanForm(gi, si, 'hora', $event)" name="planSesionHora_{{ gi }}_{{ si }}" [required]="si === 0">
+                        <select [ngModel]="s.hora" (ngModelChange)="actualizarSesionPlanForm(gi, si, 'hora', $event)" name="planSesionHora_{{ gi }}_{{ si }}" [required]="si === 0">
+                          @if (si > 0) { <option value="">Sin hora definida</option> }
+                          @for (h of horasSelector; track h.valor) { <option [value]="h.valor">{{ h.etiqueta }}</option> }
+                        </select>
                       </div>
                       <div class="campo">
                         <label>Zona (opcional)</label>
@@ -314,7 +317,7 @@ interface FormTratamientoPlan {
                   <span [class]="claseEstadoSesion(s.estado)">{{ s.estado }}</span>
                 </div>
                 <p class="sesion__fecha">
-                  {{ s.fecha ? fechaLarga(s.fecha) + (s.hora ? ' · ' + s.hora : '') : 'Sin fecha asignada · recepción define fecha y hora con la paciente' }}
+                  {{ s.fecha ? fechaLarga(s.fecha) + (s.hora ? ' · ' + formatoHora(s.hora) : '') : 'Sin fecha asignada · recepción define fecha y hora con la paciente' }}
                 </p>
                 @if (s.observaciones) { <p class="sesion__obs">{{ s.observaciones }}</p> }
                 <div class="sesion__controles">
@@ -353,7 +356,10 @@ interface FormTratamientoPlan {
                     </div>
                     <div class="campo">
                       <label>Hora</label>
-                      <input type="time" [ngModel]="s.hora || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'hora', $event)" name="editarHora{{ plan.id }}{{ s.numero }}">
+                      <select [ngModel]="s.hora || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'hora', $event)" name="editarHora{{ plan.id }}{{ s.numero }}">
+                        <option value="">Sin hora definida</option>
+                        @for (h of horasSelector; track h.valor) { <option [value]="h.valor">{{ h.etiqueta }}</option> }
+                      </select>
                     </div>
                     <div class="campo">
                       <label>Zona</label>
@@ -660,6 +666,8 @@ export class SesionesComponent {
   // Catálogos base para el formulario
   promocionesLista = PROMOCIONES;
   tratamientosLista = TRATAMIENTOS;
+  horasSelector = HORAS_SELECTOR;
+  formatoHora = formatoHora12;
 
   busqueda = signal('');
   estado = signal('Todos');
