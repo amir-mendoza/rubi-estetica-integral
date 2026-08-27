@@ -110,16 +110,29 @@ export class PlanesService {
   registrarPago(planId: number, monto: number, metodo: MetodoPago = 'Efectivo', usuario = 'Recepción', canal: 'Recepción' | 'WhatsApp' = 'Recepción'): void {
     const hora = new Date().toTimeString().slice(0, 5);
     let actualizado: PlanSesiones | undefined;
-    this.lista.update(lista => lista.map(p => (p.id === planId
-      ? (actualizado = {
+    this.lista.update(lista => lista.map(p => {
+      if (p.id !== planId) { return p; }
+
+      const precioTotal = Math.max(Number(p.precioTotal || 0), 0);
+      const pagadoActual = Math.min(Math.max(Number(p.pagado || 0), 0), precioTotal);
+      const saldoActual = Math.max(precioTotal - pagadoActual, 0);
+      const montoAplicado = Math.min(Math.max(Number(monto || 0), 0), saldoActual);
+      if (montoAplicado <= 0) {
+        actualizado = { ...p, precioTotal, pagado: pagadoActual };
+        return actualizado;
+      }
+
+      const nuevoPagado = Math.min(pagadoActual + montoAplicado, precioTotal);
+      actualizado = {
           ...p,
-          pagado: Math.min(p.pagado + monto, p.precioTotal),
-          fechaLiquidacion: Math.min(p.pagado + monto, p.precioTotal) >= p.precioTotal ? HOY_ISO : p.fechaLiquidacion,
+          precioTotal,
+          pagado: nuevoPagado,
+          fechaLiquidacion: nuevoPagado >= precioTotal ? HOY_ISO : p.fechaLiquidacion,
           pagosDetalle: [
             ...(p.pagosDetalle ?? []),
             {
               metodo,
-              monto,
+              monto: montoAplicado,
               fecha: HOY_ISO,
               hora,
               canal,
@@ -127,8 +140,9 @@ export class PlanesService {
               codigoOperacion: `${metodo.toUpperCase().replace(/\s/g, '-')}-${Date.now().toString().slice(-6)}`
             } satisfies DetallePago
           ]
-        })
-      : p)));
+        };
+      return actualizado;
+    }));
     if (actualizado) {
       this.sincronizarSesionesProgramadas(actualizado);
     }
@@ -202,10 +216,15 @@ export class PlanesService {
     this.lista.update(lista => {
       const id = lista.reduce((max, p) => Math.max(max, p.id), 0) + 1;
       const codigo = `PL-${3000 + id}`;
+      const precioTotal = Math.max(Number(plan.precioTotal || 0), 0);
+      const pagado = Math.min(Math.max(Number(plan.pagado || 0), 0), precioTotal);
       creado = {
         ...plan,
         id,
         codigo,
+        precioTotal,
+        pagado,
+        fechaLiquidacion: pagado >= precioTotal && precioTotal > 0 ? (plan.fechaLiquidacion ?? HOY_ISO) : plan.fechaLiquidacion,
         pagosDetalle: plan.pagosDetalle ? plan.pagosDetalle.map(pago => ({ ...pago })) : []
       } as PlanSesiones;
       return [...lista, creado];
@@ -219,7 +238,7 @@ export class PlanesService {
   }
 
   resumenPendiente(plan: PlanSesiones): string {
-    const saldo = Math.max(plan.precioTotal - plan.pagado, 0);
+    const saldo = this.saldo(plan);
     if (!saldo) {
       return 'Plan liquidado: ya puedes seguir programando sesiones sin bloqueo de pago.';
     }
@@ -239,9 +258,10 @@ export class PlanesService {
     const tratamiento = tratamientoPorId(sesion.tratamientoId) ?? TRATAMIENTOS[0];
     const duracion = tratamiento.duracionMin + tratamiento.limpiezaMin;
     const horaFin = this.sumarMinutos(sesion.hora, duracion);
-    const saldoPendiente = Math.max(plan.precioTotal - plan.pagado, 0);
+    const saldoPendiente = this.saldo(plan);
     const esPrimeraSesion = numeroSesion === 1;
-    const montoPagado = plan.pagado;
+    const montoTotal = this.precio(plan);
+    const montoPagado = this.pagado(plan);
     const cita: Omit<Cita, 'id' | 'codigo' | 'registradaEl'> & { planId: number; numeroSesionPlan: number } = {
       fecha: sesion.fecha,
       horaInicio: sesion.hora,
@@ -253,7 +273,7 @@ export class PlanesService {
       estado: sesion.estado === 'Atendida' ? 'Atendida' : 'Programada',
       estadoPago: saldoPendiente === 0 ? 'Pagado' : (montoPagado > 0 ? 'Pago en local' : 'Pendiente'),
       metodoPago: plan.pagosDetalle?.at(-1)?.metodo,
-      montoTotal: plan.precioTotal,
+      montoTotal,
       montoPagado,
       pagosDetalle: plan.pagosDetalle ?? [],
       registradaPor: sesion.registradoPor || 'Recepción',
@@ -273,6 +293,18 @@ export class PlanesService {
     const [h, m] = hora.split(':').map(Number);
     const total = h * 60 + m + minutos;
     return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  }
+
+  private precio(plan: PlanSesiones): number {
+    return Math.max(Number(plan.precioTotal || 0), 0);
+  }
+
+  private pagado(plan: PlanSesiones): number {
+    return Math.min(Math.max(Number(plan.pagado || 0), 0), this.precio(plan));
+  }
+
+  private saldo(plan: PlanSesiones): number {
+    return Math.max(this.precio(plan) - this.pagado(plan), 0);
   }
 }
 

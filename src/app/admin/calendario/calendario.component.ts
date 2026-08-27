@@ -106,7 +106,9 @@ export class CalendarioComponent {
   estadosPago = ['Todos', 'Pagado', 'Pago en local', 'Pendiente', 'Reembolsado'];
 
   titulo = computed(() => `${this.meses[this.mes()]} ${this.anio()}`);
-  saldoManual = computed(() => Math.max(this.manualTotal - this.manualPagado, 0));
+  saldoManual(): number {
+    return Math.max(this.totalManualSeguro() - this.pagadoManualSeguro(), 0);
+  }
 
   celdas = computed<Celda[]>(() => {
     const primero = new Date(this.anio(), this.mes(), 1);
@@ -295,12 +297,12 @@ export class CalendarioComponent {
 
   recalcularManual(): void {
     this.manualTotal = this.manualTratamientos().reduce((total, id) => total + (tratamientoPorId(id)?.precio ?? 0), 0);
-    this.manualPagado = Math.min(Number(this.manualPagado || 0), this.manualTotal);
+    this.manualPagado = this.pagadoManualSeguro();
   }
 
   recalcularManualDesdeSeguimientos(): void {
     this.manualTotal = this.manualSeguimientos().reduce((total, item) => total + (tratamientoPorId(item.tratamientoId)?.precio ?? 0), 0);
-    this.manualPagado = Math.min(Number(this.manualPagado || 0), this.manualTotal);
+    this.manualPagado = this.pagadoManualSeguro();
   }
 
   marcarPagoCompletoManual(): void {
@@ -375,6 +377,8 @@ export class CalendarioComponent {
     if (!this.manualFecha || !this.manualHora) {
       return;
     }
+    const total = this.totalManualSeguro();
+    const pagado = this.pagadoManualSeguro();
     const paciente = this.pacientes.registrarOActualizar({
       dni: this.manualDni,
       nombreCompleto: this.manualNombre,
@@ -395,20 +399,20 @@ export class CalendarioComponent {
       tratamientosIncluidos: [...this.manualTratamientos()],
       localId: Number(this.manualLocalId),
       estado: 'Programada',
-      estadoPago: this.manualPagado >= this.manualTotal ? 'Pagado' : this.manualPagado > 0 ? 'Pago en local' : 'Pendiente',
-      metodoPago: this.manualPagado > 0 ? this.manualMetodo : undefined,
-      montoTotal: Number(this.manualTotal),
-      montoPagado: Number(this.manualPagado),
+      estadoPago: pagado >= total && total > 0 ? 'Pagado' : pagado > 0 ? 'Pago en local' : 'Pendiente',
+      metodoPago: pagado > 0 ? this.manualMetodo : undefined,
+      montoTotal: total,
+      montoPagado: pagado,
       registradaPor: this.manualOrigen === 'WhatsApp' ? `WhatsApp · ${this.responsable()}` : this.responsable(),
-      confirmadaPor: this.manualPagado > 0 ? this.responsable() : undefined,
-      codigoOperacion: this.manualPagado > 0 ? `${this.manualMetodo.toUpperCase().replace(/\s/g, '-')}-${Date.now().toString().slice(-5)}` : undefined,
-      pagadaEl: this.manualPagado > 0 ? `${HOY_ISO} ${new Date().toTimeString().slice(0, 5)}` : undefined,
+      confirmadaPor: pagado > 0 ? this.responsable() : undefined,
+      codigoOperacion: pagado > 0 ? `${this.manualMetodo.toUpperCase().replace(/\s/g, '-')}-${Date.now().toString().slice(-5)}` : undefined,
+      pagadaEl: pagado > 0 ? `${HOY_ISO} ${new Date().toTimeString().slice(0, 5)}` : undefined,
       origen: this.manualOrigen,
       zonaTratamiento: this.manualZona.trim() || undefined,
       notas: this.notaCitaSimple()
     });
 
-    this.pacientes.registrarAtencion(paciente.id, this.manualFecha, Number(this.manualPagado));
+    this.pacientes.registrarAtencion(paciente.id, this.manualFecha, pagado);
     this.cerrarFormularioManual(this.manualFecha);
   }
 
@@ -430,9 +434,11 @@ export class CalendarioComponent {
       observaciones: this.manualNotas.trim()
     });
 
-    const pagoRegistrado = this.manualPagado > 0 ? [{
+    const total = this.totalManualSeguro();
+    const pagado = this.pagadoManualSeguro();
+    const pagoRegistrado = pagado > 0 ? [{
       metodo: this.manualMetodo,
-      monto: this.manualPagado,
+      monto: pagado,
       fecha: HOY_ISO,
       hora: new Date().toTimeString().slice(0, 5),
       canal: this.manualOrigen,
@@ -447,10 +453,10 @@ export class CalendarioComponent {
       localId: Number(this.manualLocalId),
       intervaloDias: 7,
       inicio: sesionesValidas[0].fecha,
-      precioTotal: Number(this.manualTotal),
-      pagado: Number(this.manualPagado),
+      precioTotal: total,
+      pagado,
       pagosDetalle: pagoRegistrado,
-      fechaLiquidacion: this.manualPagado >= this.manualTotal ? HOY_ISO : undefined,
+      fechaLiquidacion: pagado >= total && total > 0 ? HOY_ISO : undefined,
       estado: 'En curso',
       notas: this.notaPlanMultisesion(),
       sesiones: sesionesValidas.map((sesion, indice) => ({
@@ -467,7 +473,7 @@ export class CalendarioComponent {
       }))
     });
 
-    this.pacientes.registrarAtencion(paciente.id, sesionesValidas[0].fecha, Number(this.manualPagado));
+    this.pacientes.registrarAtencion(paciente.id, sesionesValidas[0].fecha, pagado);
     this.cerrarFormularioManual(sesionesValidas[0].fecha);
     this.busqueda.set('');
   }
@@ -502,7 +508,7 @@ export class CalendarioComponent {
   }
 
   private notaPlanMultisesion(): string {
-    const saldo = Math.max(this.manualTotal - this.manualPagado, 0);
+    const saldo = this.saldoManual();
     const pago = saldo > 0
       ? `Se atendió con adelanto inicial. Antes de la segunda sesión debe cancelar el saldo restante de ${soles(saldo)}.`
       : 'Plan pagado completo desde el registro inicial.';
@@ -517,6 +523,14 @@ export class CalendarioComponent {
       zona: '',
       observaciones: ''
     };
+  }
+
+  private totalManualSeguro(): number {
+    return Math.max(Number(this.manualTotal || 0), 0);
+  }
+
+  private pagadoManualSeguro(): number {
+    return Math.min(Math.max(Number(this.manualPagado || 0), 0), this.totalManualSeguro());
   }
 
   private crearSeguimientoManualVacio(esPrimero: boolean): ManualTratamientoSeguimiento {

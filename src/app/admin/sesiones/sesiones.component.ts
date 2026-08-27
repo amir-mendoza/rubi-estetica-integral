@@ -232,12 +232,12 @@ interface DiaDisponible {
             </div>
           </div>
           <div class="plan__cobro">
-            <div><span class="dato__label">Plan</span><strong>{{ soles(plan.precioTotal) }}</strong></div>
-            <div><span class="dato__label">Pagado</span><strong>{{ soles(plan.pagado) }}</strong></div>
+            <div><span class="dato__label">Precio total</span><strong>{{ soles(precioPlan(plan)) }}</strong></div>
+            <div><span class="dato__label">Adelanto pagado</span><strong>{{ soles(pagadoPlan(plan)) }}</strong></div>
             <div>
-              <span class="dato__label">Saldo</span>
-              <strong [style.color]="plan.precioTotal - plan.pagado > 0 ? 'var(--alerta)' : 'var(--ok)'">
-                {{ soles(plan.precioTotal - plan.pagado) }}
+              <span class="dato__label">Saldo restante</span>
+              <strong [style.color]="saldoPlan(plan) > 0 ? 'var(--alerta)' : 'var(--ok)'">
+                {{ soles(saldoPlan(plan)) }}
               </strong>
             </div>
           </div>
@@ -302,7 +302,7 @@ interface DiaDisponible {
               </button>
               <small>{{ planes.resumenPendiente(plan) }}</small>
             </div>
-            @if (plan.precioTotal - plan.pagado > 0) {
+            @if (saldoPlan(plan) > 0) {
               <div class="cobro-plan">
                 <div class="campo"><label>Monto recibido</label><input type="number" min="1" [placeholder]="cuotaSugerida(plan)" [ngModel]="montoPlan()[plan.id]" (ngModelChange)="setMontoPlan(plan.id, Number($event))"></div>
                 <div class="campo"><label>Método</label><select [ngModel]="metodoPlan()[plan.id] || 'Efectivo'" (ngModelChange)="setMetodoPlan(plan.id, $event)">@for (m of metodosPago; track m) { <option>{{ m }}</option> }</select></div>
@@ -384,9 +384,10 @@ interface DiaDisponible {
   `,
   styles: [`
     .kpis-4 { grid-template-columns: repeat(4, 1fr); margin-bottom: 22px; }
-    .plan { background: #fff; border: 1px solid var(--linea); border-radius: var(--radio-lg); box-shadow: var(--sombra); margin-bottom: 20px; }
+    .plan { background: #fff; border: 1px solid var(--linea); border-radius: var(--radio-lg); box-shadow: var(--sombra); margin-bottom: 20px; overflow: hidden; }
+    .plan, .plan * { box-sizing: border-box; }
     .plan__cabecera {
-      display: grid; grid-template-columns: 1.4fr .8fr .8fr; gap: 22px;
+      display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(210px, .8fr) minmax(220px, .8fr); gap: 22px;
       padding: 22px 24px; border-bottom: 1px solid var(--linea);
     }
     .plan__cabecera h3 { margin: 4px 0 6px; }
@@ -394,8 +395,9 @@ interface DiaDisponible {
     .plan__estado { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
     .plan__avance { width: 100%; }
     .plan__avance small { color: var(--gris); font-size: .86rem; }
-    .plan__cobro { display: flex; flex-direction: column; gap: 6px; text-align: right; }
-    .plan__cobro div { display: flex; justify-content: space-between; gap: 14px; }
+    .plan__cobro { display: flex; flex-direction: column; gap: 6px; text-align: right; min-width: 0; }
+    .plan__cobro div { display: flex; justify-content: space-between; gap: 14px; min-width: 0; }
+    .plan__cobro strong, .plan__meta, .sesion__titulo strong { overflow-wrap: anywhere; }
     .sesiones { list-style: none; margin: 0; padding: 8px 0; }
     .sesion { display: flex; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--linea); }
     .sesion:last-child { border-bottom: none; }
@@ -406,14 +408,14 @@ interface DiaDisponible {
       background: var(--vino); color: #fff;
       font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.1rem;
     }
-    .sesion__cuerpo { flex: 1; }
+    .sesion__cuerpo { flex: 1; min-width: 0; }
     .sesion__titulo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
     .sesion__fecha { font-size: .9rem; margin: 0 0 4px; }
     .sesion__obs { font-size: .9rem; color: var(--gris); margin: 0 0 8px; font-style: italic; }
     .sesion__acciones { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .sesion-editor {
       display: grid;
-      grid-template-columns: minmax(180px, 1.2fr) repeat(3, minmax(130px, .8fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
       gap: 10px;
       margin-top: 12px;
       padding: 12px;
@@ -425,27 +427,31 @@ interface DiaDisponible {
     .accion {
       border: 1px solid var(--linea); border-radius: 999px; background: #fff;
       min-width: 94px; padding: 6px 14px; font-family: inherit; font-size: .86rem; color: var(--gris); cursor: pointer;
+      max-width: 100%;
     }
     .accion:hover { border-color: var(--magenta-300); color: var(--magenta); }
     .accion--activa { background: var(--vino); border-color: var(--vino); color: #fff; }
     .plan__pie { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px; padding: 18px 4%; border-top: 1px solid var(--linea); background: var(--rosa-50); }
     .plan__pie > * { min-width: 0; max-width: 100%; }
     .plan__notas { margin: 0; font-size: .9rem; font-style: italic; }
-    .plan__acciones { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
-    .accion-explicada { display: grid; gap: 5px; max-width: min(100%, 240px); }
+    .plan__acciones { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; width: 100%; min-width: 0; }
+    .accion-explicada { display: grid; gap: 5px; max-width: min(100%, 240px); min-width: 0; }
     .accion-explicada small, .cobro-plan small { color: var(--gris); font-size: .86rem; line-height: 1.4; }
     .cobro-plan {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: 10px; align-items: end; min-width: 0;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; align-items: end; min-width: 0; max-width: 100%;
       padding: 12px; border: 1px solid var(--linea); border-radius: var(--radio); background: #fff;
     }
+    .cobro-plan .campo { min-width: 0; }
+    .cobro-plan input, .cobro-plan select, .sesion-editor input, .sesion-editor select { width: 100%; min-width: 0; max-width: 100%; }
     .cobro-plan .btn { min-width: 0; white-space: normal; line-height: 1.25; }
     .cobro-plan small { grid-column: 1 / -1; }
     .agregar-sesion-plan {
       display: grid;
-      grid-template-columns: minmax(190px, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: 10px;
       align-items: end;
       min-width: min(100%, 360px);
+      max-width: 100%;
       padding: 12px;
       border: 1px solid var(--linea);
       border-radius: var(--radio);
@@ -529,9 +535,12 @@ interface DiaDisponible {
     .hora-mini--llena { opacity: .48; cursor: not-allowed; text-decoration: line-through; }
     
     /* Estilos del formulario de registro */
-    .promo-form { padding: 20px 22px 24px; }
-    .promo-form__fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+    .promo-form { padding: 20px 22px 24px; overflow: hidden; }
+    .promo-form, .promo-form * { box-sizing: border-box; }
+    .promo-form input, .promo-form select, .promo-form textarea, .promo-form button { max-width: 100%; min-width: 0; }
+    .promo-form__fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 14px; }
     .promo-form__acciones { display: flex; align-items: center; gap: 14px; }
+    .sesion-form-item { min-width: 0; max-width: 100%; }
     .sesion-form-item select, .sesion-form-item input { padding: 6px 10px; font-size: 0.85rem; }
 
     @media (max-width: 1200px) {
@@ -545,10 +554,18 @@ interface DiaDisponible {
     }
 
     @media (max-width: 720px) {
+      .promo-form { padding: 16px 14px 18px; }
+      .promo-form__acciones { flex-direction: column; align-items: stretch; }
+      .promo-form__acciones .btn { width: 100%; }
+      .sesion-form-item { grid-template-columns: 1fr !important; align-items: stretch !important; }
+      .plan__cabecera, .sesion { padding-left: 16px; padding-right: 16px; }
+      .sesion { gap: 10px; }
       .plan__acciones { width: 100%; }
       .plan__acciones > * { flex: 1 1 100%; }
       .cobro-plan { grid-template-columns: 1fr; }
       .cobro-plan .btn { width: 100%; }
+      .plan__cobro { text-align: left; }
+      .plan__cobro div { align-items: flex-start; }
     }
   `]
 })
@@ -609,7 +626,7 @@ export class SesionesComponent {
   atendidas = computed(() => this.todasLasSesiones().filter(s => s.estado === 'Atendida').length);
   porAtender = computed(() => this.todasLasSesiones()
     .filter(s => s.estado === 'Pendiente' || s.estado === 'Programada' || s.estado === 'Reprogramada').length);
-  saldo = computed(() => this.planes.planes().reduce((t, p) => t + (p.precioTotal - p.pagado), 0));
+  saldo = computed(() => this.planes.planes().reduce((t, p) => t + this.saldoPlan(p), 0));
 
   constructor(public planes: PlanesService) {
     const buscar = this.ruta.snapshot.queryParamMap.get('buscar');
@@ -626,24 +643,37 @@ export class SesionesComponent {
     return this.pacientesService.porId(pacienteId)?.dni ?? '—';
   }
 
+  precioPlan(plan: PlanSesiones): number {
+    return Math.max(Number(plan.precioTotal || 0), 0);
+  }
+
+  pagadoPlan(plan: PlanSesiones): number {
+    return Math.min(Math.max(Number(plan.pagado || 0), 0), this.precioPlan(plan));
+  }
+
+  saldoPlan(plan: PlanSesiones): number {
+    return Math.max(this.precioPlan(plan) - this.pagadoPlan(plan), 0);
+  }
+
   cobrar(plan: PlanSesiones): void {
-    const saldo = plan.precioTotal - plan.pagado;
-    const cuota = Math.min(saldo, Math.round(plan.precioTotal / plan.sesiones.length));
+    const saldo = this.saldoPlan(plan);
+    const cuota = Math.min(saldo, Math.round(this.precioPlan(plan) / Math.max(plan.sesiones.length, 1)));
     this.planes.registrarPago(plan.id, cuota);
   }
 
   cuotaSugerida(plan: PlanSesiones): number {
-    return Math.min(plan.precioTotal - plan.pagado, Math.round(plan.precioTotal / plan.sesiones.length));
+    return Math.min(this.saldoPlan(plan), Math.round(this.precioPlan(plan) / Math.max(plan.sesiones.length, 1)));
   }
 
   registrarPagoPlan(plan: PlanSesiones): void {
-    const monto = Number(this.montoPlan()[plan.id] || this.cuotaSugerida(plan));
+    const monto = Math.min(Math.max(Number(this.montoPlan()[plan.id] || this.cuotaSugerida(plan)), 0), this.saldoPlan(plan));
+    if (monto <= 0) { return; }
     this.planes.registrarPago(plan.id, monto, this.metodoPlan()[plan.id] || 'Efectivo');
     this.montoPlan.update(v => ({ ...v, [plan.id]: 0 }));
   }
 
   setMontoPlan(id: number, monto: number): void {
-    this.montoPlan.update(v => ({ ...v, [id]: monto }));
+    this.montoPlan.update(v => ({ ...v, [id]: Math.max(Number(monto || 0), 0) }));
   }
 
   setMetodoPlan(id: number, metodo: MetodoPago): void {
@@ -655,7 +685,9 @@ export class SesionesComponent {
   }
 
   cobrarSaldo(plan: PlanSesiones): void {
-    this.planes.registrarPago(plan.id, plan.precioTotal - plan.pagado, this.metodoPlan()[plan.id] || 'Efectivo');
+    const saldo = this.saldoPlan(plan);
+    if (saldo <= 0) { return; }
+    this.planes.registrarPago(plan.id, saldo, this.metodoPlan()[plan.id] || 'Efectivo');
   }
 
   abrirProgramador(plan: PlanSesiones): void {
