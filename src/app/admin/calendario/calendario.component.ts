@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import {
   DIAS_SEMANA, HOY_ISO, LOCALES, MESES, TRATAMIENTOS, aISO,
   formatoFechaLarga, localPorId, nombreCabina, nombreEspecialista,
@@ -28,11 +29,16 @@ interface EnLista {
 }
 
 interface ManualSesionForm {
-  tratamientoId: number;
   fecha: string;
   hora: string;
   zona: string;
   observaciones: string;
+}
+
+interface ManualTratamientoSeguimiento {
+  tratamientoId: number;
+  multisesion: boolean;
+  sesiones: ManualSesionForm[];
 }
 
 @Component({
@@ -48,13 +54,14 @@ export class CalendarioComponent {
   private configPanel = inject(ConfiguracionPanelService);
   private pacientes = inject(PacientesService);
   private planes = inject(PlanesService);
+  private router = inject(Router);
 
   soles = soles;
   Number = Number;
   meses = MESES;
   diasSemana = DIAS_SEMANA;
   locales = LOCALES;
-  tratamientosCatalogo = TRATAMIENTOS.filter(t => t.activo);
+  tratamientosCatalogo = TRATAMIENTOS;
   estadosCita = ESTADOS_CITA;
   metodosPago: MetodoPago[] = ['Efectivo', 'Yape', 'Plin', 'Tarjeta POS', 'Transferencia'];
 
@@ -93,7 +100,7 @@ export class CalendarioComponent {
   manualOrigen: 'Recepción' | 'WhatsApp' = 'Recepción';
   manualMultisesion = false;
   manualPlanNombre = '';
-  manualSesiones = signal<ManualSesionForm[]>([]);
+  manualSeguimientos = signal<ManualTratamientoSeguimiento[]>([]);
 
   estados = ['Todos', ...ESTADOS_CITA];
   estadosPago = ['Todos', 'Pagado', 'Pago en local', 'Pendiente', 'Reembolsado'];
@@ -184,11 +191,17 @@ export class CalendarioComponent {
 
   cambiarEstado(c: Cita, estado: EstadoCita): void {
     this.agenda.cambiarEstado(c.id, estado, this.responsable());
+    if (c.planId && c.numeroSesionPlan) {
+      this.planes.cambiarEstadoSesion(c.planId, c.numeroSesionPlan, this.estadoCitaASesion(estado));
+    }
   }
 
   registrarPago(c: Cita): void {
     const monto = Number(this.pagoMonto()[c.id] ?? (c.montoTotal - c.montoPagado));
     this.agenda.registrarPago(c.id, this.responsable(), this.pagoMetodo(), monto, this.pagoCodigo()[c.id]);
+    if (c.planId) {
+      this.planes.registrarPago(c.planId, monto, this.pagoMetodo(), this.responsable(), 'Recepción');
+    }
     this.pagoMonto.update(m => ({ ...m, [c.id]: 0 }));
     this.pagoCodigo.update(m => ({ ...m, [c.id]: '' }));
   }
@@ -203,8 +216,12 @@ export class CalendarioComponent {
 
   activarMultisesion(valor: boolean): void {
     this.manualMultisesion = valor;
-    if (valor && !this.manualSesiones().length) {
-      this.manualSesiones.set([this.crearSesionManualVacia(true)]);
+    if (valor && !this.manualSeguimientos().length) {
+      this.manualSeguimientos.set([this.crearSeguimientoManualVacio(true)]);
+      this.recalcularManualDesdeSeguimientos();
+    }
+    if (!valor) {
+      this.recalcularManual();
     }
   }
 
@@ -223,32 +240,75 @@ export class CalendarioComponent {
     this.recalcularManual();
   }
 
-  agregarSesionManual(): void {
-    this.manualSesiones.update(lista => [...lista, this.crearSesionManualVacia(false)]);
-    this.recalcularManualDesdeSesiones();
+  agregarSeguimientoManual(): void {
+    this.manualSeguimientos.update(lista => [...lista, this.crearSeguimientoManualVacio(false)]);
+    this.recalcularManualDesdeSeguimientos();
   }
 
-  quitarSesionManual(indice: number): void {
-    this.manualSesiones.update(lista => lista.length === 1 ? lista : lista.filter((_, i) => i !== indice));
-    this.recalcularManualDesdeSesiones();
+  quitarSeguimientoManual(indice: number): void {
+    this.manualSeguimientos.update(lista => lista.length === 1 ? lista : lista.filter((_, i) => i !== indice));
+    this.recalcularManualDesdeSeguimientos();
   }
 
-  actualizarSesionManual(indice: number, campo: keyof ManualSesionForm, valor: string | number): void {
-    this.manualSesiones.update(lista => lista.map((sesion, i) => i === indice ? {
-      ...sesion,
-      [campo]: campo === 'tratamientoId' ? Number(valor) : valor
-    } : sesion));
-    if (campo === 'tratamientoId') {
-      this.recalcularManualDesdeSesiones();
-    }
+  cambiarTratamientoSeguimiento(indice: number, tratamientoId: number): void {
+    this.manualSeguimientos.update(lista => lista.map((item, i) => i === indice ? { ...item, tratamientoId } : item));
+    this.recalcularManualDesdeSeguimientos();
+  }
+
+  alternarMultisesionTratamiento(indice: number, multisesion: boolean): void {
+    this.manualSeguimientos.update(lista => lista.map((item, i) => {
+      if (i !== indice) { return item; }
+      return {
+        ...item,
+        multisesion,
+        sesiones: multisesion ? item.sesiones : [item.sesiones[0] ?? this.crearSesionManualVacia(true)]
+      };
+    }));
+  }
+
+  agregarSesionTratamiento(indiceTratamiento: number): void {
+    this.manualSeguimientos.update(lista => lista.map((item, i) => i === indiceTratamiento
+      ? { ...item, multisesion: true, sesiones: [...item.sesiones, this.crearSesionManualVacia(false)] }
+      : item
+    ));
+  }
+
+  quitarSesionTratamiento(indiceTratamiento: number, indiceSesion: number): void {
+    this.manualSeguimientos.update(lista => lista.map((item, i) => {
+      if (i !== indiceTratamiento || item.sesiones.length === 1) { return item; }
+      const sesiones = item.sesiones.filter((_, s) => s !== indiceSesion);
+      return { ...item, sesiones, multisesion: sesiones.length > 1 ? item.multisesion : false };
+    }));
+  }
+
+  actualizarSesionTratamiento(indiceTratamiento: number, indiceSesion: number, campo: keyof ManualSesionForm, valor: string): void {
+    this.manualSeguimientos.update(lista => lista.map((item, i) => i === indiceTratamiento ? {
+      ...item,
+      sesiones: item.sesiones.map((sesion, s) => s === indiceSesion ? { ...sesion, [campo]: valor } : sesion)
+    } : item));
+  }
+
+  seguimientoManualValido(): boolean {
+    return this.manualSeguimientos().length > 0 &&
+      this.manualSeguimientos().every(item => !!item.tratamientoId && !!item.sesiones[0]?.fecha && !!item.sesiones[0]?.hora);
   }
 
   recalcularManual(): void {
     this.manualTotal = this.manualTratamientos().reduce((total, id) => total + (tratamientoPorId(id)?.precio ?? 0), 0);
+    this.manualPagado = Math.min(Number(this.manualPagado || 0), this.manualTotal);
   }
 
-  recalcularManualDesdeSesiones(): void {
-    this.manualTotal = this.manualSesiones().reduce((total, sesion) => total + (tratamientoPorId(sesion.tratamientoId)?.precio ?? 0), 0);
+  recalcularManualDesdeSeguimientos(): void {
+    this.manualTotal = this.manualSeguimientos().reduce((total, item) => total + (tratamientoPorId(item.tratamientoId)?.precio ?? 0), 0);
+    this.manualPagado = Math.min(Number(this.manualPagado || 0), this.manualTotal);
+  }
+
+  marcarPagoCompletoManual(): void {
+    this.manualPagado = Number(this.manualTotal || 0);
+  }
+
+  limpiarPagoManual(): void {
+    this.manualPagado = 0;
   }
 
   buscarPacienteManual(dni: string): void {
@@ -306,6 +366,11 @@ export class CalendarioComponent {
     this.reprogramando.set(null);
   }
 
+  abrirSeguimiento(cita: Cita): void {
+    const plan = cita.planId ? this.planes.porId(cita.planId) : undefined;
+    this.router.navigate(['/admin/sesiones'], { queryParams: { buscar: plan?.codigo ?? cita.codigo } });
+  }
+
   private registrarCitaSimple(): void {
     if (!this.manualFecha || !this.manualHora) {
       return;
@@ -348,10 +413,12 @@ export class CalendarioComponent {
   }
 
   private registrarPlanMultisesion(): void {
-    const sesionesValidas = this.manualSesiones().filter((sesion, indice) =>
-      indice === 0 || sesion.fecha || sesion.hora || sesion.zona || sesion.observaciones
+    const seguimientos = this.manualSeguimientos();
+    const sesionesValidas = seguimientos.flatMap((item, grupoIndice) => item.sesiones
+      .map((sesion) => ({ ...sesion, tratamientoId: item.tratamientoId, grupoTratamiento: grupoIndice + 1 }))
     );
-    if (!sesionesValidas.length || !sesionesValidas[0].fecha || !sesionesValidas[0].hora) {
+    const faltaPrimeraSesion = seguimientos.some(item => !item.sesiones[0]?.fecha || !item.sesiones[0]?.hora);
+    if (!sesionesValidas.length || faltaPrimeraSesion) {
       return;
     }
 
@@ -389,11 +456,12 @@ export class CalendarioComponent {
       sesiones: sesionesValidas.map((sesion, indice) => ({
         numero: indice + 1,
         tratamientoId: sesion.tratamientoId,
+        grupoTratamiento: sesion.grupoTratamiento,
         procedimiento: tratamientoPorId(sesion.tratamientoId)?.nombre ?? 'Tratamiento',
-        fecha: indice === 0 || this.manualPagado >= this.manualTotal ? (sesion.fecha || undefined) : undefined,
-        hora: indice === 0 || this.manualPagado >= this.manualTotal ? (sesion.hora || undefined) : undefined,
+        fecha: sesion.fecha || undefined,
+        hora: sesion.hora || undefined,
         zona: sesion.zona.trim() || undefined,
-        estado: indice === 0 ? 'Programada' : 'Pendiente',
+        estado: sesion.fecha && sesion.hora ? 'Programada' as const : 'Pendiente' as const,
         observaciones: sesion.observaciones.trim() || undefined,
         registradoPor: this.responsable()
       }))
@@ -401,7 +469,7 @@ export class CalendarioComponent {
 
     this.pacientes.registrarAtencion(paciente.id, sesionesValidas[0].fecha, Number(this.manualPagado));
     this.cerrarFormularioManual(sesionesValidas[0].fecha);
-    this.busqueda.set(plan.codigo);
+    this.busqueda.set('');
   }
 
   private cerrarFormularioManual(fecha: string): void {
@@ -422,7 +490,7 @@ export class CalendarioComponent {
     this.manualMultisesion = false;
     this.manualPlanNombre = '';
     this.manualTratamientos.set([TRATAMIENTOS[0]?.id ?? 1]);
-    this.manualSesiones.set([]);
+    this.manualSeguimientos.set([]);
     this.recalcularManual();
   }
 
@@ -444,12 +512,27 @@ export class CalendarioComponent {
 
   private crearSesionManualVacia(esPrimera: boolean): ManualSesionForm {
     return {
-      tratamientoId: this.tratamientosCatalogo[0]?.id ?? 1,
       fecha: esPrimera ? (this.manualFecha || HOY_ISO) : '',
       hora: esPrimera ? (this.manualHora || '09:00') : '',
       zona: '',
       observaciones: ''
     };
+  }
+
+  private crearSeguimientoManualVacio(esPrimero: boolean): ManualTratamientoSeguimiento {
+    return {
+      tratamientoId: this.tratamientosCatalogo[0]?.id ?? 1,
+      multisesion: false,
+      sesiones: [this.crearSesionManualVacia(esPrimero)]
+    };
+  }
+
+  private estadoCitaASesion(estado: EstadoCita) {
+    if (estado === 'Atendida') { return 'Atendida' as const; }
+    if (estado === 'En proceso') { return 'En proceso' as const; }
+    if (estado === 'No asistió') { return 'No asistió' as const; }
+    if (estado === 'Reprogramada' || estado === 'Llegó tarde') { return 'Reprogramada' as const; }
+    return 'Programada' as const;
   }
 
   private responsable(): string {

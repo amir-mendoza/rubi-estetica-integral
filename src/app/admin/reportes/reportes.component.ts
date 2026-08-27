@@ -97,8 +97,7 @@ interface ResumenPeriodo {
           <thead>
             <tr>
               <th>Fecha / hora</th><th>Paciente</th><th>Tratamiento</th><th>Zona / notas</th>
-              <th class="num">Precio</th><th class="num">Efectivo</th><th class="num">Yape</th><th class="num">Plin</th>
-              <th class="num">Izipay</th><th class="num">Tarjeta</th><th class="num">Transfer.</th><th class="num">Falta</th><th>Control</th>
+              <th class="num">Precio</th><th>Método de pago</th><th class="num">Pagado</th><th class="num">Falta</th><th>Control</th>
             </tr>
           </thead>
           <tbody>
@@ -124,12 +123,8 @@ interface ResumenPeriodo {
                   </div>
                 </td>
                 <td class="num">{{ soles(c.montoTotal) }}</td>
-                <td class="num">{{ soles(montoMetodo(c, 'Efectivo')) }}</td>
-                <td class="num">{{ soles(montoMetodo(c, 'Yape')) }}</td>
-                <td class="num">{{ soles(montoMetodo(c, 'Plin')) }}</td>
-                <td class="num">{{ soles(montoMetodo(c, 'Izipay')) }}</td>
-                <td class="num">{{ soles(montoMetodo(c, 'Tarjeta POS')) }}</td>
-                <td class="num">{{ soles(montoMetodo(c, 'Transferencia')) }}</td>
+                <td>{{ metodoPagoCita(c) }}</td>
+                <td class="num" style="color:var(--ok)">{{ soles(c.montoPagado) }}</td>
                 <td class="num" [style.color]="saldoCita(c) > 0 ? 'var(--alerta)' : 'var(--ok)'">{{ soles(saldoCita(c)) }}</td>
                 <td>
                   <div class="estado-stack">
@@ -139,7 +134,7 @@ interface ResumenPeriodo {
                 </td>
               </tr>
             } @empty {
-              <tr><td colspan="13" class="vacio">No hay registros con los filtros seleccionados.</td></tr>
+              <tr><td colspan="9" class="vacio">No hay registros con los filtros seleccionados.</td></tr>
             }
           </tbody>
         </table>
@@ -407,6 +402,13 @@ export class ReportesComponent {
         .reduce((total, pago) => total + pago.monto, 0);
     }
     return c.metodoPago === metodo ? c.montoPagado : 0;
+  }
+
+  metodoPagoCita(c: Cita): string {
+    const metodos = c.pagosDetalle?.length
+      ? Array.from(new Set(c.pagosDetalle.filter(pago => pago.monto !== 0).map(pago => pago.metodo)))
+      : c.metodoPago ? [c.metodoPago] : [];
+    return metodos.length ? metodos.join(' + ') : 'Por definir';
   }
 
   saldoCita(c: Cita): number {

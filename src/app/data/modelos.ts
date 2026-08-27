@@ -270,6 +270,8 @@ export const ESTADOS_SESION: EstadoSesion[] = [
 export interface SesionPlan {
   numero: number;
   tratamientoId: number;
+  /** Agrupa varias sesiones que pertenecen al mismo tratamiento dentro del plan. */
+  grupoTratamiento?: number;
   /** Nombre del procedimiento de esa sesion: limpieza, skin care, peeling, etc. */
   procedimiento: string;
   fecha?: string;

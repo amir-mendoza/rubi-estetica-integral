@@ -124,7 +124,7 @@
     <div class="tabla-envoltura">
         <table class="tabla">
           <thead>
-          <tr><th>Hora</th><th>Paciente</th><th>Tratamiento</th><th class="num">Precio</th><th class="num">Efectivo</th><th class="num">Yape</th><th class="num">Plin</th><th class="num">Izipay</th><th>Control</th></tr>
+          <tr><th>Hora</th><th>Paciente</th><th>Tratamiento</th><th class="num">Precio</th><th>Método de pago</th><th class="num">Pagado</th><th class="num">Falta</th><th>Control</th></tr>
           </thead>
           <tbody>
           @for (c of agendaHoy; track c.id) {
@@ -138,10 +138,9 @@
               </td>
               <td>{{ tratamientosCita(c) }}</td>
               <td class="num">{{ soles(c.montoTotal) }}</td>
-              <td class="num">{{ soles(montoMetodo(c, 'Efectivo')) }}</td>
-              <td class="num">{{ soles(montoMetodo(c, 'Yape')) }}</td>
-              <td class="num">{{ soles(montoMetodo(c, 'Plin')) }}</td>
-              <td class="num">{{ soles(montoMetodo(c, 'Izipay')) }}</td>
+              <td>{{ metodoPagoCita(c) }}</td>
+              <td class="num" style="color:var(--ok)">{{ soles(c.montoPagado) }}</td>
+              <td class="num" [style.color]="saldoCita(c) > 0 ? 'var(--alerta)' : 'var(--ok)'">{{ soles(saldoCita(c)) }}</td>
               <td>
                 <span [class]="claseEstado(c)">{{ c.estado }}</span>
                 <br><small>{{ c.estadoPago }}</small>

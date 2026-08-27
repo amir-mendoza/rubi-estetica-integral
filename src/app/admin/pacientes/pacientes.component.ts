@@ -92,7 +92,7 @@ import { AgendaService } from '../../compartido/agenda.service';
                         @for (c of citasDe(p.id); track c.id) {
                           <div class="historial">
                             <span>{{ c.fecha }} · {{ c.horaInicio }}</span>
-                            <span>{{ tratamientosCita(c) }}</span>
+                            <span>{{ tratamientosCita(c) }}<br><small>{{ tipoCita(c) }}</small></span>
                             <span>{{ c.estado }}</span>
                             <strong>{{ soles(c.montoTotal) }}</strong>
                           </div>
@@ -159,5 +159,9 @@ export class PacientesComponent {
   tratamientosCita(cita: { tratamientoId: number; tratamientosIncluidos?: number[] }): string {
     const ids = cita.tratamientosIncluidos?.length ? cita.tratamientosIncluidos : [cita.tratamientoId];
     return ids.map(id => tratamientoPorId(id)?.nombre ?? '—').join(' + ');
+  }
+
+  tipoCita(cita: { planId?: number }): string {
+    return cita.planId ? 'Seguimiento multisesión' : 'Cita simple';
   }
 }

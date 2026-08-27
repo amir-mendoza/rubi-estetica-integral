@@ -539,57 +539,7 @@ interface SemillaCita {
  * Las citas se agendan por bloque horario. El bloque de 09:00 de la sede 1 llega
  * al cupo para mostrar como el sistema cierra esa hora y ofrece la siguiente.
  */
-const SEMILLAS: SemillaCita[] = [
-  // ---- Hoy
-  { d: 0, hora: '09:00', pac: 1, trat: 1, loc: 1, esp: 2, hab: 2, estado: 'Atendida', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: 0, hora: '09:00', pac: 5, trat: 2, loc: 1, esp: 3, hab: 1, estado: 'Atendida', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: 0, hora: '09:00', pac: 2, trat: 7, loc: 1, esp: 6, hab: 3, estado: 'En proceso', pago: 'Pago en local', origen: 'Recepción', por: 'Recepción · Milagros' },
-  { d: 0, hora: '09:00', pac: 8, trat: 1, loc: 1, estado: 'Programada', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: 0, hora: '10:00', pac: 3, trat: 8, loc: 1, estado: 'Programada', pago: 'Pendiente', origen: 'Web', por: 'Web' },
-  { d: 0, hora: '11:00', pac: 10, trat: 3, loc: 1, estado: 'Programada', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web', notas: 'Pago en línea confirmado por Izipay.' },
-  { d: 0, hora: '12:00', pac: 9, trat: 6, loc: 2, esp: 4, hab: 7, estado: 'En proceso', pago: 'Pendiente', origen: 'WhatsApp', por: 'Recepción · Jazmín' },
-  { d: 0, hora: '12:00', pac: 4, trat: 5, loc: 2, estado: 'Programada', pago: 'Pago en local', origen: 'Recepción', por: 'Recepción · Jazmín' },
-  { d: 0, hora: '16:00', pac: 7, trat: 9, loc: 2, estado: 'Programada', pago: 'Pagado', metodo: 'Efectivo', origen: 'WhatsApp', por: 'Recepción · Jazmín' },
-  { d: 0, hora: '17:00', pac: 6, trat: 1, loc: 2, estado: 'Cancelada', pago: 'Reembolsado', metodo: 'Izipay', origen: 'Web', por: 'Web', notas: 'Cancelada por la paciente con 6 horas de anticipación.' },
-
-  // ---- Ayer
-  { d: -1, hora: '09:00', pac: 8, trat: 1, loc: 1, esp: 2, hab: 2, estado: 'Atendida', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: -1, hora: '11:00', pac: 3, trat: 10, loc: 1, esp: 3, hab: 1, estado: 'Atendida', pago: 'Pagado', metodo: 'Efectivo', origen: 'Recepción', por: 'Recepción · Milagros' },
-  { d: -1, hora: '15:00', pac: 5, trat: 6, loc: 2, esp: 4, hab: 7, estado: 'Atendida', pago: 'Pagado', metodo: 'Efectivo', origen: 'Recepción', por: 'Recepción · Jazmín' },
-  { d: -1, hora: '17:00', pac: 2, trat: 4, loc: 1, estado: 'No asistió', pago: 'Pendiente', origen: 'Web', por: 'Web' },
-
-  // ---- Dias anteriores de la semana
-  { d: -2, hora: '10:00', pac: 7, trat: 2, loc: 1, esp: 3, hab: 1, estado: 'Atendida', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: -2, hora: '12:00', pac: 4, trat: 7, loc: 2, esp: 6, hab: 8, estado: 'Atendida', pago: 'Pagado', metodo: 'Efectivo', origen: 'Recepción', por: 'Recepción · Jazmín' },
-  { d: -3, hora: '09:00', pac: 10, trat: 1, loc: 1, esp: 2, hab: 2, estado: 'Atendida', pago: 'Pagado', metodo: 'Efectivo', origen: 'WhatsApp', por: 'Recepción · Milagros' },
-  { d: -3, hora: '16:00', pac: 1, trat: 9, loc: 1, esp: 3, hab: 3, estado: 'Atendida', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: -4, hora: '11:00', pac: 6, trat: 5, loc: 2, esp: 4, hab: 10, estado: 'Atendida', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: -5, hora: '10:00', pac: 9, trat: 1, loc: 2, esp: 6, hab: 12, estado: 'Atendida', pago: 'Pagado', metodo: 'Efectivo', origen: 'Recepción', por: 'Recepción · Jazmín' },
-  { d: -6, hora: '14:00', pac: 8, trat: 3, loc: 1, esp: 5, hab: 5, estado: 'Atendida', pago: 'Pagado', metodo: 'Efectivo', origen: 'Recepción', por: 'Recepción · Milagros' },
-
-  // ---- Manana
-  { d: 1, hora: '09:00', pac: 2, trat: 1, loc: 1, estado: 'Programada', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: 1, hora: '10:00', pac: 6, trat: 8, loc: 1, estado: 'Programada', pago: 'Pago en local', origen: 'Web', por: 'Web' },
-  { d: 1, hora: '12:00', pac: 5, trat: 10, loc: 1, estado: 'Programada', pago: 'Pendiente', origen: 'Web', por: 'Web' },
-  { d: 1, hora: '15:00', pac: 3, trat: 6, loc: 2, estado: 'Programada', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: 1, hora: '17:00', pac: 7, trat: 7, loc: 2, estado: 'Programada', pago: 'Pago en local', origen: 'WhatsApp', por: 'Recepción · Jazmín' },
-
-  // ---- Proximos dias
-  { d: 2, hora: '09:00', pac: 4, trat: 2, loc: 1, estado: 'Programada', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: 2, hora: '11:00', pac: 8, trat: 1, loc: 1, estado: 'Programada', pago: 'Pago en local', origen: 'Recepción', por: 'Recepción · Milagros' },
-  { d: 2, hora: '16:00', pac: 10, trat: 5, loc: 2, estado: 'Programada', pago: 'Pendiente', origen: 'Web', por: 'Web' },
-  { d: 3, hora: '10:00', pac: 1, trat: 4, loc: 1, estado: 'Programada', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: 3, hora: '14:00', pac: 9, trat: 9, loc: 2, estado: 'Programada', pago: 'Pago en local', origen: 'WhatsApp', por: 'Recepción · Jazmín' },
-  { d: 4, hora: '09:00', pac: 5, trat: 2, loc: 1, estado: 'Programada', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: 4, hora: '12:00', pac: 7, trat: 1, loc: 2, estado: 'Programada', pago: 'Pago en local', origen: 'Web', por: 'Web' },
-  { d: 5, hora: '11:00', pac: 3, trat: 3, loc: 1, estado: 'Programada', pago: 'Pendiente', origen: 'Web', por: 'Web' },
-  { d: 6, hora: '15:00', pac: 2, trat: 6, loc: 2, estado: 'Programada', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: 7, hora: '10:00', pac: 6, trat: 1, loc: 1, estado: 'Programada', pago: 'Pago en local', origen: 'Recepción', por: 'Recepción · Milagros' },
-  { d: 8, hora: '16:00', pac: 4, trat: 10, loc: 1, estado: 'Programada', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: 9, hora: '09:00', pac: 10, trat: 7, loc: 2, estado: 'Programada', pago: 'Pago en local', origen: 'Web', por: 'Web' },
-  { d: 11, hora: '13:00', pac: 8, trat: 5, loc: 2, estado: 'Programada', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web' },
-  { d: 13, hora: '11:00', pac: 1, trat: 2, loc: 1, estado: 'Programada', pago: 'Pago en local', origen: 'WhatsApp', por: 'Recepción · Jazmín' }
-];
+const SEMILLAS: SemillaCita[] = [];
 
 function nombreTratamiento(id: number): Tratamiento {
   return TRATAMIENTOS.find(t => t.id === id)!;
@@ -823,68 +773,7 @@ export const PROMOCIONES: Promocion[] = [
  * identificada por DNI y avanza sesion por sesion con el intervalo de dias que
  * indique la especialista.
  */
-export const PLANES: PlanSesiones[] = [
-  {
-    id: 1,
-    codigo: 'PL-3001',
-    pacienteId: 1,
-    dni: '74859632',
-    nombre: 'Plan facial luminosidad',
-    localId: 1,
-    intervaloDias: 15,
-    inicio: conDias(-30),
-    precioTotal: 360,
-    pagado: 270,
-    estado: 'En curso',
-    notas: 'Piel sensible: se reemplazó el peeling por hidratación reforzada.',
-    sesiones: [
-      { numero: 1, tratamientoId: 1, procedimiento: 'Limpieza facial profunda', fecha: conDias(-30), estado: 'Atendida', observaciones: 'Buena tolerancia. Sin descamación.' },
-      { numero: 2, tratamientoId: 8, procedimiento: 'Hidratación con ácido hialurónico', fecha: conDias(-15), estado: 'Atendida', observaciones: 'Mejora visible de luminosidad.' },
-      { numero: 3, tratamientoId: 7, procedimiento: 'Skin care de mantenimiento', fecha: conDias(0), estado: 'En proceso' },
-      { numero: 4, tratamientoId: 9, procedimiento: 'Peeling suave', fecha: conDias(15), estado: 'Programada' }
-    ]
-  },
-  {
-    id: 2,
-    codigo: 'PL-3002',
-    pacienteId: 5,
-    dni: '09823471',
-    nombre: 'Modelamiento corporal 6 sesiones',
-    localId: 2,
-    intervaloDias: 15,
-    inicio: conDias(-45),
-    precioTotal: 890,
-    pagado: 890,
-    estado: 'En curso',
-    sesiones: [
-      { numero: 1, tratamientoId: 5, procedimiento: 'Hidrolipoclasia', fecha: conDias(-45), estado: 'Atendida', observaciones: 'Medidas iniciales registradas.' },
-      { numero: 2, tratamientoId: 6, procedimiento: 'Drenaje linfático', fecha: conDias(-30), estado: 'Atendida' },
-      { numero: 3, tratamientoId: 5, procedimiento: 'Hidrolipoclasia', fecha: conDias(-15), estado: 'Atendida', observaciones: '-3 cm de cintura.' },
-      { numero: 4, tratamientoId: 6, procedimiento: 'Drenaje linfático', fecha: conDias(2), estado: 'Programada' },
-      { numero: 5, tratamientoId: 10, procedimiento: 'Lifting 360° Tens Booster', estado: 'Pendiente' },
-      { numero: 6, tratamientoId: 6, procedimiento: 'Drenaje linfático de cierre', estado: 'Pendiente' }
-    ]
-  },
-  {
-    id: 3,
-    codigo: 'PL-3003',
-    pacienteId: 4,
-    dni: '73920145',
-    nombre: 'Protocolo antiacné',
-    localId: 1,
-    intervaloDias: 30,
-    inicio: conDias(-60),
-    precioTotal: 540,
-    pagado: 180,
-    estado: 'Pausado',
-    notas: 'La paciente pidió retomar después de su viaje.',
-    sesiones: [
-      { numero: 1, tratamientoId: 1, procedimiento: 'Limpieza facial profunda', fecha: conDias(-60), estado: 'Atendida' },
-      { numero: 2, tratamientoId: 9, procedimiento: 'Peeling facial', fecha: conDias(-30), estado: 'No asistió', observaciones: 'No asistió, se reprogramará.' },
-      { numero: 3, tratamientoId: 8, procedimiento: 'Dermapen', estado: 'Pendiente' }
-    ]
-  }
-];
+export const PLANES: PlanSesiones[] = [];
 
 /* ============================================================= AYUDANTES == */
 

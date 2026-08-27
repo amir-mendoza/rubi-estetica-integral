@@ -83,7 +83,7 @@ export class AgendaService {
       id: existente.id,
       codigo: existente.codigo,
       registradaEl: existente.registradaEl,
-      pagosDetalle: existente.pagosDetalle ?? cita.pagosDetalle
+      pagosDetalle: cita.pagosDetalle ?? existente.pagosDetalle
     };
 
     this.lista.update(lista => lista.map(item => item.id === existente.id ? actualizada : item));

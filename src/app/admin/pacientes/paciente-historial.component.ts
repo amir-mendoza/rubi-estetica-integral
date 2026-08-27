@@ -32,19 +32,20 @@ import { PacientesService } from '../../compartido/pacientes.service';
           <div class="tabla-panel__cabecera"><h3>Citas y tratamientos</h3><span class="dato__label">{{ citas().length }} registros</span></div>
           <div class="tabla-envoltura">
             <table class="tabla">
-              <thead><tr><th>Fecha</th><th>Tratamientos</th><th>Local</th><th>Zona / notas</th><th>Estado</th><th class="num">Pagado</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Tratamientos</th><th>Tipo</th><th>Local</th><th>Zona / notas</th><th>Estado</th><th class="num">Pagado</th></tr></thead>
               <tbody>
                 @for (c of citas(); track c.id) {
                   <tr>
                     <td>{{ c.fecha }}<br><small>{{ c.horaInicio }}</small></td>
                     <td>{{ tratamientosCita(c) }}</td>
+                    <td><span [class]="c.planId ? 'chip chip--info' : 'chip'">{{ c.planId ? 'Multisesión' : 'Simple' }}</span></td>
                     <td>{{ local(c.localId) }}</td>
                     <td>{{ c.zonaTratamiento || c.notas || '—' }}</td>
                     <td>{{ c.estado }}<br><small>{{ c.estadoPago }}</small></td>
                     <td class="num">{{ soles(c.montoPagado) }}</td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="6" class="vacio">Sin citas registradas.</td></tr>
+                  <tr><td colspan="7" class="vacio">Sin citas registradas.</td></tr>
                 }
               </tbody>
             </table>

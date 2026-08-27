@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { LOCALES, formatoFechaLarga, soles, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
 import { ESTADOS_SESION, EstadoSesion, PlanSesiones, SesionPlan, MetodoPago } from '../../data/modelos';
 import { PlanesService } from '../../compartido/planes.service';
@@ -261,6 +262,32 @@ interface DiaDisponible {
                             (click)="planes.cambiarEstadoSesion(plan.id, s.numero, e)">{{ e }}</button>
                   }
                 </div>
+                <div class="sesion-editor">
+                  <div class="campo">
+                    <label>Tratamiento</label>
+                    <select [ngModel]="s.tratamientoId" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'tratamientoId', Number($event))" name="editarTrat{{ plan.id }}{{ s.numero }}">
+                      @for (t of tratamientosLista; track t.id) {
+                        <option [value]="t.id">{{ t.nombre }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="campo">
+                    <label>Fecha</label>
+                    <input type="date" [ngModel]="s.fecha || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'fecha', $event)" name="editarFecha{{ plan.id }}{{ s.numero }}">
+                  </div>
+                  <div class="campo">
+                    <label>Hora</label>
+                    <input type="time" [ngModel]="s.hora || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'hora', $event)" name="editarHora{{ plan.id }}{{ s.numero }}">
+                  </div>
+                  <div class="campo">
+                    <label>Zona</label>
+                    <input type="text" [ngModel]="s.zona || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'zona', $event)" name="editarZona{{ plan.id }}{{ s.numero }}" placeholder="Rostro, labios, abdomen">
+                  </div>
+                  <div class="campo sesion-editor__nota">
+                    <label>Observación</label>
+                    <input type="text" [ngModel]="s.observaciones || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'observaciones', $event)" name="editarObs{{ plan.id }}{{ s.numero }}" placeholder="Nota de recepción o especialista">
+                  </div>
+                </div>
               </div>
             </li>
           }
@@ -284,6 +311,18 @@ interface DiaDisponible {
                 <small>Registra aquí lo que la paciente entrega en caja. Si todavía falta saldo, el sistema lo mantiene visible para la siguiente visita.</small>
               </div>
             }
+            <div class="agregar-sesion-plan">
+              <div class="campo">
+                <label>Agregar sesión a tratamiento</label>
+                <select [ngModel]="tratamientoNuevoPlan()[plan.id] || tratamientoSugerido(plan)" (ngModelChange)="setTratamientoNuevoPlan(plan.id, Number($event))" name="nuevoTrat{{ plan.id }}">
+                  @for (t of tratamientosDePlan(plan); track t.id) {
+                    <option [value]="t.id">{{ t.nombre }}</option>
+                  }
+                </select>
+              </div>
+              <button class="btn btn--linea btn--sm" type="button" (click)="agregarSesionAPlan(plan)">Agregar sesión</button>
+              <small>Úsalo si la paciente necesita una sesión adicional o si recepción debe coordinar una nueva fecha después de atenderla.</small>
+            </div>
           </div>
         </footer>
 
@@ -372,6 +411,17 @@ interface DiaDisponible {
     .sesion__fecha { font-size: .9rem; margin: 0 0 4px; }
     .sesion__obs { font-size: .9rem; color: var(--gris); margin: 0 0 8px; font-style: italic; }
     .sesion__acciones { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .sesion-editor {
+      display: grid;
+      grid-template-columns: minmax(180px, 1.2fr) repeat(3, minmax(130px, .8fr));
+      gap: 10px;
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px dashed var(--linea);
+      border-radius: var(--radio);
+      background: #fff;
+    }
+    .sesion-editor__nota { grid-column: 1 / -1; }
     .accion {
       border: 1px solid var(--linea); border-radius: 999px; background: #fff;
       min-width: 94px; padding: 6px 14px; font-family: inherit; font-size: .86rem; color: var(--gris); cursor: pointer;
@@ -381,14 +431,27 @@ interface DiaDisponible {
     .plan__pie { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px; padding: 18px 4%; border-top: 1px solid var(--linea); background: var(--rosa-50); }
     .plan__pie > * { min-width: 0; max-width: 100%; }
     .plan__notas { margin: 0; font-size: .9rem; font-style: italic; }
-    .plan__acciones { display: flex; gap: 10px; flex-wrap: wrap; }
+    .plan__acciones { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
     .accion-explicada { display: grid; gap: 5px; max-width: min(100%, 240px); }
     .accion-explicada small, .cobro-plan small { color: var(--gris); font-size: .86rem; line-height: 1.4; }
     .cobro-plan {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: 10px; align-items: end; min-width: 0;
       padding: 12px; border: 1px solid var(--linea); border-radius: var(--radio); background: #fff;
     }
+    .cobro-plan .btn { min-width: 0; white-space: normal; line-height: 1.25; }
     .cobro-plan small { grid-column: 1 / -1; }
+    .agregar-sesion-plan {
+      display: grid;
+      grid-template-columns: minmax(190px, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+      min-width: min(100%, 360px);
+      padding: 12px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio);
+      background: #fff;
+    }
+    .agregar-sesion-plan small { grid-column: 1 / -1; color: var(--gris); font-size: .86rem; line-height: 1.4; }
     .vacio { text-align: center; color: var(--gris-claro); padding: 30px 0; margin: 0; }
     .programador-sesion {
       margin: 0 24px 24px;
@@ -478,6 +541,7 @@ interface DiaDisponible {
       .cobro-plan { grid-template-columns: 1fr; }
       .programador-sesion__controles { grid-template-columns: 1fr; }
       .semana-disponible { grid-template-columns: repeat(7, 128px); }
+      .sesion-editor, .agregar-sesion-plan { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 720px) {
@@ -492,6 +556,7 @@ export class SesionesComponent {
   private agenda = inject(AgendaService);
   private configPanel = inject(ConfiguracionPanelService);
   private pacientesService = inject(PacientesService);
+  private ruta = inject(ActivatedRoute);
   Number = Number;
   soles = soles;
   fechaLarga = formatoFechaLarga;
@@ -504,6 +569,7 @@ export class SesionesComponent {
   metodosPago: MetodoPago[] = ['Efectivo', 'Yape', 'Plin', 'Tarjeta POS', 'Transferencia'];
   montoPlan = signal<Record<number, number>>({});
   metodoPlan = signal<Record<number, MetodoPago>>({});
+  tratamientoNuevoPlan = signal<Record<number, number>>({});
   programandoPlanId = signal<number | null>(null);
   programarFecha = signal<Record<number, string>>({});
   programarHora = signal<Record<number, string>>({});
@@ -545,7 +611,12 @@ export class SesionesComponent {
     .filter(s => s.estado === 'Pendiente' || s.estado === 'Programada' || s.estado === 'Reprogramada').length);
   saldo = computed(() => this.planes.planes().reduce((t, p) => t + (p.precioTotal - p.pagado), 0));
 
-  constructor(public planes: PlanesService) {}
+  constructor(public planes: PlanesService) {
+    const buscar = this.ruta.snapshot.queryParamMap.get('buscar');
+    if (buscar) {
+      this.busqueda.set(buscar);
+    }
+  }
 
   sede(id: number): string {
     return id ? (LOCALES.find(l => l.id === id)?.nombre ?? '—') : 'Por definir';
@@ -577,6 +648,10 @@ export class SesionesComponent {
 
   setMetodoPlan(id: number, metodo: MetodoPago): void {
     this.metodoPlan.update(v => ({ ...v, [id]: metodo }));
+  }
+
+  setTratamientoNuevoPlan(planId: number, tratamientoId: number): void {
+    this.tratamientoNuevoPlan.update(v => ({ ...v, [planId]: tratamientoId }));
   }
 
   cobrarSaldo(plan: PlanSesiones): void {
@@ -617,6 +692,25 @@ export class SesionesComponent {
     if (!fecha || !hora) { return; }
     this.planes.programarSiguienteManual(plan.id, fecha, hora);
     this.programandoPlanId.set(null);
+  }
+
+  actualizarSesionPlan(planId: number, sesion: SesionPlan, campo: 'tratamientoId' | 'fecha' | 'hora' | 'zona' | 'observaciones', valor: string | number): void {
+    this.planes.actualizarSesion(planId, sesion.numero, { [campo]: campo === 'tratamientoId' ? Number(valor) : String(valor) });
+  }
+
+  agregarSesionAPlan(plan: PlanSesiones): void {
+    this.planes.agregarSesionATratamiento(plan.id, this.tratamientoNuevoPlan()[plan.id] || this.tratamientoSugerido(plan));
+  }
+
+  tratamientosDePlan(plan: PlanSesiones) {
+    const ids = Array.from(new Set(plan.sesiones.map(s => s.tratamientoId)));
+    return ids.length
+      ? ids.map(id => TRATAMIENTOS.find(t => t.id === id)).filter((t): t is typeof TRATAMIENTOS[number] => !!t)
+      : this.tratamientosLista;
+  }
+
+  tratamientoSugerido(plan: PlanSesiones): number {
+    return plan.sesiones[0]?.tratamientoId || this.tratamientosLista[0]?.id || 1;
   }
 
   semanaDisponible(plan: PlanSesiones): DiaDisponible[] {

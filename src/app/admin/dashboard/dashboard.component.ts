@@ -289,6 +289,18 @@ export class DashboardComponent {
     return c.metodoPago === metodo ? c.montoPagado : 0;
   }
 
+  metodoPagoCita(c: Cita): string {
+    const metodos = c.pagosDetalle?.length
+      ? Array.from(new Set(c.pagosDetalle.filter(pago => pago.monto !== 0).map(pago => pago.metodo)))
+      : c.metodoPago ? [c.metodoPago] : [];
+    return metodos.length ? metodos.join(' + ') : 'Por definir';
+  }
+
+  saldoCita(c: Cita): number {
+    if (c.estado === 'Cancelada' || c.estado === 'No asistió' || c.estadoPago === 'Reembolsado') { return 0; }
+    return Math.max(c.montoTotal - c.montoPagado, 0);
+  }
+
   claseEstado(c: Cita): string {
     switch (c.estado) {
       case 'Atendida': return 'chip chip--ok';

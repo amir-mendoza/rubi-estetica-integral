@@ -36,6 +36,10 @@ export class PlanesService {
     return this.lista().filter(p => p.dni === dni);
   }
 
+  porId(id: number): PlanSesiones | undefined {
+    return this.lista().find(p => p.id === id);
+  }
+
   atendidas(plan: PlanSesiones): number {
     return plan.sesiones.filter(s => s.estado === 'Atendida').length;
   }
@@ -50,6 +54,7 @@ export class PlanesService {
   }
 
   cambiarEstadoSesion(planId: number, numero: number, estado: EstadoSesion): void {
+    let actualizado: PlanSesiones | undefined;
     this.lista.update(lista => lista.map(p => {
       if (p.id !== planId) { return p; }
       const sesiones = p.sesiones.map(s => (s.numero === numero ? {
@@ -58,8 +63,12 @@ export class PlanesService {
         registradoPor: s.registradoPor || 'Recepción'
       } : s));
       const finalizado = sesiones.every(s => s.estado === 'Atendida');
-      return { ...p, sesiones, estado: finalizado ? 'Finalizado' : p.estado };
+      actualizado = { ...p, sesiones, estado: finalizado ? 'Finalizado' : 'En curso' };
+      return actualizado;
     }));
+    if (actualizado) {
+      this.sincronizarCitaDeSesion(actualizado, numero);
+    }
   }
 
   /**
@@ -100,8 +109,9 @@ export class PlanesService {
 
   registrarPago(planId: number, monto: number, metodo: MetodoPago = 'Efectivo', usuario = 'Recepción', canal: 'Recepción' | 'WhatsApp' = 'Recepción'): void {
     const hora = new Date().toTimeString().slice(0, 5);
+    let actualizado: PlanSesiones | undefined;
     this.lista.update(lista => lista.map(p => (p.id === planId
-      ? {
+      ? (actualizado = {
           ...p,
           pagado: Math.min(p.pagado + monto, p.precioTotal),
           fechaLiquidacion: Math.min(p.pagado + monto, p.precioTotal) >= p.precioTotal ? HOY_ISO : p.fechaLiquidacion,
@@ -117,8 +127,11 @@ export class PlanesService {
               codigoOperacion: `${metodo.toUpperCase().replace(/\s/g, '-')}-${Date.now().toString().slice(-6)}`
             } satisfies DetallePago
           ]
-        }
+        })
       : p)));
+    if (actualizado) {
+      this.sincronizarSesionesProgramadas(actualizado);
+    }
   }
 
   agregarSesion(planId: number, procedimiento: string, tratamientoId: number): void {
@@ -131,6 +144,57 @@ export class PlanesService {
         sesiones: [...p.sesiones, { numero, tratamientoId, procedimiento, estado: 'Pendiente' as EstadoSesion }]
       };
     }));
+  }
+
+  agregarSesionATratamiento(planId: number, tratamientoId: number): void {
+    let actualizado: PlanSesiones | undefined;
+    this.lista.update(lista => lista.map(p => {
+      if (p.id !== planId) { return p; }
+      const numero = p.sesiones.reduce((max, s) => Math.max(max, s.numero), 0) + 1;
+      const grupo = p.sesiones.find(s => s.tratamientoId === tratamientoId)?.grupoTratamiento
+        ?? (p.sesiones.reduce((max, s) => Math.max(max, s.grupoTratamiento ?? 0), 0) + 1);
+      const tratamiento = tratamientoPorId(tratamientoId);
+      actualizado = {
+        ...p,
+        estado: 'En curso' as const,
+        sesiones: [
+          ...p.sesiones,
+          {
+            numero,
+            tratamientoId,
+            grupoTratamiento: grupo,
+            procedimiento: tratamiento?.nombre ?? 'Tratamiento',
+            estado: 'Pendiente' as EstadoSesion,
+            registradoPor: 'Recepción'
+          }
+        ]
+      };
+      return actualizado;
+    }));
+  }
+
+  actualizarSesion(planId: number, numero: number, cambios: Partial<Pick<SesionPlan, 'fecha' | 'hora' | 'zona' | 'observaciones' | 'tratamientoId' | 'procedimiento'>>): void {
+    let actualizado: PlanSesiones | undefined;
+    this.lista.update(lista => lista.map(p => {
+      if (p.id !== planId) { return p; }
+      const sesiones = p.sesiones.map(s => {
+        if (s.numero !== numero) { return s; }
+        const tratamientoId = cambios.tratamientoId ?? s.tratamientoId;
+        return {
+          ...s,
+          ...cambios,
+          tratamientoId,
+          procedimiento: cambios.procedimiento ?? tratamientoPorId(tratamientoId)?.nombre ?? s.procedimiento,
+          estado: cambios.fecha && cambios.hora && s.estado === 'Pendiente' ? 'Programada' as EstadoSesion : s.estado,
+          registradoPor: s.registradoPor || 'Recepción'
+        };
+      });
+      actualizado = { ...p, sesiones, estado: 'En curso' as const };
+      return actualizado;
+    }));
+    if (actualizado) {
+      this.sincronizarCitaDeSesion(actualizado, numero);
+    }
   }
 
   crearPlan(plan: Omit<PlanSesiones, 'id' | 'codigo'>): PlanSesiones {
@@ -151,9 +215,7 @@ export class PlanesService {
   }
 
   puedeProgramarSiguiente(plan: PlanSesiones): boolean {
-    const saldo = Math.max(plan.precioTotal - plan.pagado, 0);
-    const yaAtendida = plan.sesiones.some(s => s.estado === 'Atendida');
-    return !(saldo > 0 && yaAtendida);
+    return plan.sesiones.some(s => s.estado === 'Pendiente' || s.estado === 'Reprogramada');
   }
 
   resumenPendiente(plan: PlanSesiones): string {
@@ -161,10 +223,7 @@ export class PlanesService {
     if (!saldo) {
       return 'Plan liquidado: ya puedes seguir programando sesiones sin bloqueo de pago.';
     }
-    if (plan.sesiones.some(s => s.estado === 'Atendida')) {
-      return `Antes de programar la siguiente sesión debe cancelarse el saldo pendiente de S/ ${saldo}.`;
-    }
-    return `La primera sesión puede atenderse con adelanto. Saldo pendiente actual: S/ ${saldo}.`;
+    return `Saldo pendiente actual: S/ ${saldo}. Recepción puede coordinar la fecha, pero debe recordar el cobro antes de atender.`;
   }
 
   private sincronizarSesionesProgramadas(plan: PlanSesiones): void {
@@ -182,7 +241,7 @@ export class PlanesService {
     const horaFin = this.sumarMinutos(sesion.hora, duracion);
     const saldoPendiente = Math.max(plan.precioTotal - plan.pagado, 0);
     const esPrimeraSesion = numeroSesion === 1;
-    const montoPagado = esPrimeraSesion ? plan.pagado : 0;
+    const montoPagado = plan.pagado;
     const cita: Omit<Cita, 'id' | 'codigo' | 'registradaEl'> & { planId: number; numeroSesionPlan: number } = {
       fecha: sesion.fecha,
       horaInicio: sesion.hora,
@@ -194,9 +253,9 @@ export class PlanesService {
       estado: sesion.estado === 'Atendida' ? 'Atendida' : 'Programada',
       estadoPago: saldoPendiente === 0 ? 'Pagado' : (montoPagado > 0 ? 'Pago en local' : 'Pendiente'),
       metodoPago: plan.pagosDetalle?.at(-1)?.metodo,
-      montoTotal: tratamiento.precio,
+      montoTotal: plan.precioTotal,
       montoPagado,
-      pagosDetalle: esPrimeraSesion ? plan.pagosDetalle : [],
+      pagosDetalle: plan.pagosDetalle ?? [],
       registradaPor: sesion.registradoPor || 'Recepción',
       confirmadaPor: montoPagado > 0 ? (sesion.registradoPor || 'Recepción') : undefined,
       codigoOperacion: plan.pagosDetalle?.at(-1)?.codigoOperacion,

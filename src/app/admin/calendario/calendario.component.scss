@@ -41,6 +41,18 @@
   gap: 10px;
   padding: 8px 0 2px;
 }
+.cita-manual__pago-rapido {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border: 1px dashed var(--linea);
+  border-radius: var(--radio);
+  background: #fff;
+}
+.cita-manual__pago-rapido span { color: var(--gris); font-size: .9rem; }
 .aviso {
   grid-column: 1 / -1;
   padding: 12px 14px;
@@ -58,6 +70,42 @@
 .cita-manual__tratamientos { grid-column: 1 / -1; border: 1px solid var(--linea); border-radius: var(--radio); padding: 14px; background: var(--rosa-50); }
 .cita-manual__sub { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 10px; }
 .trat-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-top: 8px; }
+.seguimiento-row { display: grid; gap: 14px; margin-top: 12px; padding: 16px; border: 1px solid var(--linea); border-radius: var(--radio-lg); background: #fff; }
+.seguimiento-row__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--linea);
+}
+.seguimiento-row__cabecera div { display: flex; flex-direction: column; gap: 3px; }
+.seguimiento-row__cabecera strong { color: var(--vino); font-size: 1rem; }
+.seguimiento-row__cabecera span { color: var(--gris); font-size: .9rem; }
+.seguimiento-row__grid { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(220px, auto); gap: 14px; align-items: end; }
+.seguimiento-row__toggle { align-self: end; }
+.toggle-mini {
+  display: inline-flex;
+  width: 100%;
+  padding: 4px;
+  border: 1px solid var(--linea);
+  border-radius: 999px;
+  background: var(--rosa-50);
+}
+.toggle-mini button { flex: 1; border: 0; border-radius: 999px; background: transparent; color: var(--gris); font-family: inherit; font-weight: 700; padding: 8px 14px; cursor: pointer; }
+.toggle-mini__activo {
+  background: var(--vino) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 18px rgba(102, 10, 49, .18);
+}
+.sesiones-tratamiento { display: grid; gap: 10px; }
+.sesiones-tratamiento__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 .sesion-row {
   margin-top: 10px;
   border: 1px solid var(--linea);
@@ -173,6 +221,7 @@
 /* Acciones de recepcion */
 .cita__acciones { margin-top: 14px; display: grid; gap: 6px; }
 .cita__acciones-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.cita__acciones-top-botones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .cita__botones { display: flex; flex-wrap: wrap; gap: 6px; }
 .accion {
   border: 1px solid var(--linea); border-radius: 999px; background: #fff;
@@ -227,6 +276,8 @@
   .cita-manual__form { grid-template-columns: 1fr; }
   .cita-manual__ancho { grid-column: auto; }
   .trat-row { grid-template-columns: 1fr; }
+  .seguimiento-row__cabecera { flex-direction: column; }
+  .seguimiento-row__grid { grid-template-columns: 1fr; }
   .sesion-row__grid { grid-template-columns: 1fr; }
   .cita { grid-template-columns: 1fr; }
   .cita__datos { grid-template-columns: repeat(2, 1fr); }
