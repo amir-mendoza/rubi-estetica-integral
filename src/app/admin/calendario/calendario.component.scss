@@ -43,13 +43,6 @@
 .estado-cuenta--ok { border: 1px solid rgba(44, 139, 93, .24); background: rgba(44, 139, 93, .08); }
 .estado-cuenta--alerta { border: 1px solid rgba(184, 124, 35, .28); background: #fffaf2; }
 .cita-manual__ancho { grid-column: span 2; }
-.cita-manual__selector {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 8px 0 2px;
-}
 .cita-manual__pago-rapido {
   grid-column: 1 / -1;
   display: flex;
@@ -78,7 +71,6 @@
 }
 .cita-manual__tratamientos { grid-column: 1 / -1; border: 1px solid var(--linea); border-radius: var(--radio); padding: 14px; background: var(--rosa-50); }
 .cita-manual__sub { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
-.trat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; margin-top: 8px; }
 .seguimiento-row { display: grid; gap: 14px; margin-top: 12px; padding: 16px; border: 1px solid var(--linea); border-radius: var(--radio-lg); background: #fff; min-width: 0; max-width: 100%; }
 .seguimiento-row__cabecera {
   display: flex;
@@ -290,7 +282,6 @@
 @media (max-width: 900px) {
   .cita-manual__form { grid-template-columns: 1fr; }
   .cita-manual__ancho { grid-column: auto; }
-  .trat-row { grid-template-columns: 1fr; }
   .seguimiento-row__cabecera { flex-direction: column; }
   .seguimiento-row__grid { grid-template-columns: 1fr; }
   .sesion-row__grid { grid-template-columns: 1fr; }
