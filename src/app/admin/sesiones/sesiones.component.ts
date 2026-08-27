@@ -328,33 +328,40 @@ interface FormTratamientoPlan {
                     <button class="accion" [class.accion--activa]="s.estado === e"
                             (click)="planes.cambiarEstadoSesion(plan.id, s.numero, e)">{{ e }}</button>
                   }
+                  <button type="button" class="accion accion--configurar"
+                          [class.accion--activa]="sesionEditorAbierto(plan.id, s.numero)"
+                          (click)="alternarEditorSesion(plan.id, s.numero)">
+                    {{ sesionEditorAbierto(plan.id, s.numero) ? 'Ocultar configuración' : 'Configurar sesión' }}
+                  </button>
                 </div>
-                <div class="sesion-editor">
-                  <div class="campo">
-                    <label>Tratamiento</label>
-                    <select [ngModel]="s.tratamientoId" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'tratamientoId', Number($event))" name="editarTrat{{ plan.id }}{{ s.numero }}">
-                      @for (t of tratamientosLista; track t.id) {
-                        <option [value]="t.id">{{ t.nombre }}</option>
-                      }
-                    </select>
+                @if (sesionEditorAbierto(plan.id, s.numero)) {
+                  <div class="sesion-editor">
+                    <div class="campo">
+                      <label>Tratamiento</label>
+                      <select [ngModel]="s.tratamientoId" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'tratamientoId', Number($event))" name="editarTrat{{ plan.id }}{{ s.numero }}">
+                        @for (t of tratamientosLista; track t.id) {
+                          <option [value]="t.id">{{ t.nombre }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="campo">
+                      <label>Fecha</label>
+                      <input type="date" [ngModel]="s.fecha || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'fecha', $event)" name="editarFecha{{ plan.id }}{{ s.numero }}">
+                    </div>
+                    <div class="campo">
+                      <label>Hora</label>
+                      <input type="time" [ngModel]="s.hora || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'hora', $event)" name="editarHora{{ plan.id }}{{ s.numero }}">
+                    </div>
+                    <div class="campo">
+                      <label>Zona</label>
+                      <input type="text" [ngModel]="s.zona || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'zona', $event)" name="editarZona{{ plan.id }}{{ s.numero }}" placeholder="Rostro, labios, abdomen">
+                    </div>
+                    <div class="campo sesion-editor__nota">
+                      <label>Observación</label>
+                      <input type="text" [ngModel]="s.observaciones || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'observaciones', $event)" name="editarObs{{ plan.id }}{{ s.numero }}" placeholder="Nota de recepción o especialista">
+                    </div>
                   </div>
-                  <div class="campo">
-                    <label>Fecha</label>
-                    <input type="date" [ngModel]="s.fecha || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'fecha', $event)" name="editarFecha{{ plan.id }}{{ s.numero }}">
-                  </div>
-                  <div class="campo">
-                    <label>Hora</label>
-                    <input type="time" [ngModel]="s.hora || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'hora', $event)" name="editarHora{{ plan.id }}{{ s.numero }}">
-                  </div>
-                  <div class="campo">
-                    <label>Zona</label>
-                    <input type="text" [ngModel]="s.zona || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'zona', $event)" name="editarZona{{ plan.id }}{{ s.numero }}" placeholder="Rostro, labios, abdomen">
-                  </div>
-                  <div class="campo sesion-editor__nota">
-                    <label>Observación</label>
-                    <input type="text" [ngModel]="s.observaciones || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'observaciones', $event)" name="editarObs{{ plan.id }}{{ s.numero }}" placeholder="Nota de recepción o especialista">
-                  </div>
-                </div>
+                }
               </div>
             </li>
           }
@@ -480,6 +487,7 @@ interface FormTratamientoPlan {
     .sesion__fecha { font-size: .9rem; margin: 0 0 4px; }
     .sesion__obs { font-size: .9rem; color: var(--gris); margin: 0 0 8px; font-style: italic; }
     .sesion__acciones { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .accion--configurar { margin-left: 8px; border-style: dashed; }
     .sesion-editor {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
@@ -765,6 +773,7 @@ export class SesionesComponent {
   formPagado = signal<number>(0);
   formNotas = signal('');
   formTratamientosPlan = signal<FormTratamientoPlan[]>([]);
+  editoresSesionAbiertos = signal<Record<string, boolean>>({});
 
   lista = computed<PlanSesiones[]>(() => this.planes.buscar(this.busqueda()).filter(p =>
     (this.estado() === 'Todos' || p.estado === this.estado()) &&
@@ -827,6 +836,15 @@ export class SesionesComponent {
 
   setMetodoPlan(id: number, metodo: MetodoPago): void {
     this.metodoPlan.update(v => ({ ...v, [id]: metodo }));
+  }
+
+  sesionEditorAbierto(planId: number, numeroSesion: number): boolean {
+    return !!this.editoresSesionAbiertos()[this.claveEditorSesion(planId, numeroSesion)];
+  }
+
+  alternarEditorSesion(planId: number, numeroSesion: number): void {
+    const clave = this.claveEditorSesion(planId, numeroSesion);
+    this.editoresSesionAbiertos.update(v => ({ ...v, [clave]: !v[clave] }));
   }
 
   setTratamientoNuevoPlan(planId: number, tratamientoId: number): void {
@@ -1157,6 +1175,10 @@ export class SesionesComponent {
     const total = Math.max(Number(this.formPrecioBase() || 0), 0) + extras;
     this.formPrecioTotal.set(total);
     this.formPagado.set(Math.min(Math.max(Number(this.formPagado() || 0), 0), total));
+  }
+
+  private claveEditorSesion(planId: number, numeroSesion: number): string {
+    return `${planId}-${numeroSesion}`;
   }
 
   private todasLasSesiones(): SesionPlan[] {
