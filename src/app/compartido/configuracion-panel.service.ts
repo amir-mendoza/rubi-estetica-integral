@@ -64,6 +64,8 @@ const CLAVE_AGENDA = 'rubi.cfg.agenda';
 const CLAVE_PAGOS = 'rubi.cfg.pagos';
 const CLAVE_USUARIOS = 'rubi.cfg.usuarios';
 const CLAVE_SYNC = 'rubi.cfg.sync';
+const APERTURA_DEFECTO = '09:00';
+const CIERRE_DEFECTO = '19:00';
 
 const NEGOCIO_POR_DEFECTO: ConfiguracionNegocio = {
   nombreComercial: 'Rubí Estética Integral',
@@ -82,7 +84,7 @@ const AGENDA_POR_DEFECTO: ConfiguracionAgenda = {
   asignarAlLlegar: true,
   aceptarSinCita: true,
   horariosPorLocal: Object.fromEntries(
-    LOCALES.map(local => [local.id, [{ dias: 'Todos los días', apertura: '09:00', cierre: '22:00' }]])
+    LOCALES.map(local => [local.id, [{ dias: 'Todos los días', apertura: APERTURA_DEFECTO, cierre: CIERRE_DEFECTO }]])
   ) as Record<number, HorarioConfigurado[]>
 };
 
@@ -124,7 +126,7 @@ const SYNC_POR_DEFECTO: ConfiguracionSincronizacion = {
 @Injectable({ providedIn: 'root' })
 export class ConfiguracionPanelService {
   readonly negocio = signal<ConfiguracionNegocio>(this.leer(CLAVE_NEGOCIO, NEGOCIO_POR_DEFECTO));
-  readonly agenda = signal<ConfiguracionAgenda>(this.leer(CLAVE_AGENDA, AGENDA_POR_DEFECTO));
+  readonly agenda = signal<ConfiguracionAgenda>(this.normalizarAgenda(this.leer(CLAVE_AGENDA, AGENDA_POR_DEFECTO)));
   readonly pagos = signal<ConfiguracionPagos>(this.leer(CLAVE_PAGOS, PAGOS_POR_DEFECTO));
   readonly usuarios = signal<UsuarioSistemaConfig[]>(this.leer(CLAVE_USUARIOS, USUARIOS_POR_DEFECTO));
   readonly sincronizacion = signal<ConfiguracionSincronizacion>(this.leer(CLAVE_SYNC, SYNC_POR_DEFECTO));
@@ -160,7 +162,7 @@ export class ConfiguracionPanelService {
     });
   }
 
-  usarHorarioComercial(localId: number, apertura = '09:00', cierre = '22:00'): void {
+  usarHorarioComercial(localId: number, apertura = APERTURA_DEFECTO, cierre = CIERRE_DEFECTO): void {
     const agenda = this.agenda();
     this.actualizarAgenda({
       atencion24h: false,
@@ -171,7 +173,7 @@ export class ConfiguracionPanelService {
     });
   }
 
-  usarHorarioComercialEnTodasLasSedes(apertura = '09:00', cierre = '22:00'): void {
+  usarHorarioComercialEnTodasLasSedes(apertura = APERTURA_DEFECTO, cierre = CIERRE_DEFECTO): void {
     const horariosPorLocal = Object.fromEntries(
       LOCALES.map(local => [local.id, [{ dias: 'Todos los días', apertura, cierre }]])
     ) as Record<number, HorarioConfigurado[]>;
@@ -222,7 +224,7 @@ export class ConfiguracionPanelService {
     if (this.agenda().atencion24h) {
       return [{ dias: 'Todos los días', apertura: '00:00', cierre: '24:00' }];
     }
-    return this.agenda().horariosPorLocal[localId]?.map(h => ({ ...h })) ?? [{ dias: 'Todos los días', apertura: '09:00', cierre: '22:00' }];
+    return this.agenda().horariosPorLocal[localId]?.map(h => ({ ...h })) ?? [{ dias: 'Todos los días', apertura: APERTURA_DEFECTO, cierre: CIERRE_DEFECTO }];
   }
 
   combinarLocalesConHorarios<T extends { id: number; horario: HorarioConfigurado[] }>(locales: T[]): T[] {
@@ -261,6 +263,21 @@ export class ConfiguracionPanelService {
     state.set(nuevo);
     this.guardar(clave, nuevo);
     this.marcarActualizacion();
+  }
+
+  private normalizarAgenda(agenda: ConfiguracionAgenda): ConfiguracionAgenda {
+    const horariosPorLocal = { ...agenda.horariosPorLocal };
+    let cambio = false;
+    for (const local of LOCALES) {
+      const horarios = horariosPorLocal[local.id] ?? [];
+      const eraHorarioAnterior = horarios.length === 1 && horarios[0].apertura === '09:00' && horarios[0].cierre === '22:00';
+      const eraHorario24h = agenda.atencion24h || (horarios.length === 1 && horarios[0].apertura === '00:00' && (horarios[0].cierre === '24:00' || horarios[0].cierre === '00:00'));
+      if (!horarios.length || eraHorarioAnterior || eraHorario24h) {
+        horariosPorLocal[local.id] = [{ dias: 'Todos los días', apertura: APERTURA_DEFECTO, cierre: CIERRE_DEFECTO }];
+        cambio = true;
+      }
+    }
+    return cambio ? { ...agenda, atencion24h: false, horariosPorLocal } : agenda;
   }
 
   private marcarActualizacion(): void {

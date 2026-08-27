@@ -15,7 +15,7 @@ function localVacio(): Local {
     referencia: '',
     distrito: 'San Juan de Lurigancho, Lima',
     telefono: '945 189 720',
-    horario: [{ dias: 'Todos los días', apertura: '09:00', cierre: '22:00' }],
+    horario: [{ dias: 'Todos los días', apertura: '09:00', cierre: '19:00' }],
     imagen: 'img/local-1.jpg',
     mapa: 'https://www.google.com/maps',
     latitud: -12.0042,
@@ -393,7 +393,7 @@ export class LocalesAdminComponent {
 
   alternar247(): void {
     if (this.es247()) {
-      this.localForm.update(local => ({ ...local, horario: [{ ...local.horario[0], apertura: '09:00', cierre: '22:00' }] }));
+      this.localForm.update(local => ({ ...local, horario: [{ ...local.horario[0], apertura: '09:00', cierre: '19:00' }] }));
       return;
     }
     this.localForm.update(local => ({ ...local, horario: [{ ...local.horario[0], apertura: '00:00', cierre: '24:00' }] }));

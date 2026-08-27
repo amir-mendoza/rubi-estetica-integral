@@ -16,7 +16,7 @@ export const LOCALES: Local[] = [
     distrito: 'San Juan de Lurigancho, Lima',
     telefono: '945 189 720',
     horario: [
-      { dias: 'Todos los días', apertura: '00:00', cierre: '24:00' }
+      { dias: 'Todos los días', apertura: '09:00', cierre: '19:00' }
     ],
     imagen: 'img/local-1.jpg',
     mapa: 'https://www.google.com/maps/search/?api=1&query=-12.00423259951209,-77.01189597596573',
@@ -33,7 +33,7 @@ export const LOCALES: Local[] = [
     distrito: 'San Juan de Lurigancho, Lima',
     telefono: '945 189 721',
     horario: [
-      { dias: 'Todos los días', apertura: '00:00', cierre: '24:00' }
+      { dias: 'Todos los días', apertura: '09:00', cierre: '19:00' }
     ],
     imagen: 'img/local-2.jpg',
     mapa: 'https://www.google.com/maps/search/?api=1&query=-12.003582220477465,-77.01212351240744',
