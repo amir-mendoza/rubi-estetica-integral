@@ -161,10 +161,6 @@ interface FormTratamientoPlan {
               <label>Nombre del Plan</label>
               <input type="text" [ngModel]="formNombrePlan()" (ngModelChange)="formNombrePlan.set($event)" name="formNombrePlan" required placeholder="Ej. Plan facial luminosidad">
             </div>
-            <div class="campo">
-              <label>Intervalo de sesiones (días)</label>
-              <input type="number" min="1" [ngModel]="formIntervaloDias()" (ngModelChange)="formIntervaloDias.set($event)" name="formIntervaloDias" required>
-            </div>
           </div>
 
           <div class="promo-form__fila">
@@ -300,8 +296,7 @@ interface FormTratamientoPlan {
             <span class="dato__label">{{ plan.codigo }}</span>
             <h3>{{ paciente(plan.pacienteId) }}</h3>
             <p class="plan__meta">
-              DNI {{ plan.dni }} · {{ plan.nombre }} · {{ sede(plan.localId) }} ·
-              Una sesión cada {{ plan.intervaloDias }} días
+              DNI {{ plan.dni }} · {{ plan.nombre }} · {{ sede(plan.localId) }}
             </p>
           </div>
           <div class="plan__estado">
@@ -807,7 +802,6 @@ export class SesionesComponent {
   formLocalId = signal(0);
   formBaseCarga = signal('Personalizado');
   formNombrePlan = signal('');
-  formIntervaloDias = signal(15);
   formPrecioTotal = signal<number>(0);
   formPrecioBase = signal<number>(0);
   formPagado = signal<number>(0);
@@ -1167,7 +1161,7 @@ export class SesionesComponent {
       dni: this.formDni(),
       nombre: this.formNombrePlan(),
       localId: this.formLocalId(),
-      intervaloDias: this.formIntervaloDias(),
+      intervaloDias: 0,
       inicio: sesiones.find(s => !!s.fecha)?.fecha || aISO(new Date()),
       precioTotal: this.formPrecioTotal(),
       pagado: this.formPagado(),
