@@ -90,6 +90,7 @@ export class CalendarioComponent {
   manualDni = '';
   manualCelular = '';
   manualNombre = '';
+  manualApellido = '';
   manualCorreo = '';
   manualLocalId = LOCALES[0]?.id ?? 1;
   manualNotas = '';
@@ -299,9 +300,15 @@ export class CalendarioComponent {
     const paciente = this.pacientes.porDni(this.manualDni) ?? null;
     this.manualPacienteEncontrado.set(paciente);
     if (paciente) {
-      this.manualNombre = `${paciente.nombre} ${paciente.apellido}`.trim();
+      this.manualNombre = paciente.nombre;
+      this.manualApellido = paciente.apellido;
       this.manualCelular = paciente.celular;
       this.manualCorreo = paciente.correo;
+    } else {
+      this.manualNombre = '';
+      this.manualApellido = '';
+      this.manualCelular = '';
+      this.manualCorreo = '';
     }
   }
 
@@ -376,7 +383,8 @@ export class CalendarioComponent {
 
     const paciente = this.pacientes.registrarOActualizar({
       dni: this.manualDni,
-      nombreCompleto: this.manualNombre,
+      nombre: this.manualNombre,
+      apellido: this.manualApellido,
       celular: this.manualCelular,
       correo: this.manualCorreo,
       observaciones: this.manualNotas.trim()
@@ -397,7 +405,7 @@ export class CalendarioComponent {
     const plan = this.planes.crearPlan({
       pacienteId: paciente.id,
       dni: this.manualDni,
-      nombre: this.manualPlanNombre.trim() || `Plan ${this.manualNombre}`,
+      nombre: this.manualPlanNombre.trim() || `Plan ${this.manualNombre} ${this.manualApellido}`.trim(),
       localId: Number(this.manualLocalId),
       intervaloDias: 7,
       inicio: sesionesValidas[0].fecha,
@@ -432,6 +440,7 @@ export class CalendarioComponent {
     this.manualDni = '';
     this.manualCelular = '';
     this.manualNombre = '';
+    this.manualApellido = '';
     this.manualCorreo = '';
     this.manualPacienteEncontrado.set(null);
     this.manualNotas = '';

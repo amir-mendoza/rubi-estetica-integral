@@ -29,7 +29,8 @@
       </div>
       <div class="campo"><label>DNI</label><input required maxlength="8" [ngModel]="manualDni" (ngModelChange)="buscarPacienteManual($event)" name="manualDni" placeholder="Busca y autocompleta"></div>
       <div class="campo"><label>Celular</label><input required [(ngModel)]="manualCelular" name="manualCelular"></div>
-      <div class="campo cita-manual__ancho"><label>Nombre completo</label><input required [(ngModel)]="manualNombre" name="manualNombre"></div>
+      <div class="campo"><label>Nombre</label><input required [(ngModel)]="manualNombre" name="manualNombre" placeholder="Ej. Maria"></div>
+      <div class="campo"><label>Apellido</label><input required [(ngModel)]="manualApellido" name="manualApellido" placeholder="Ej. Lopez Rivera"></div>
       <div class="campo cita-manual__ancho"><label>Correo (opcional)</label><input type="email" [(ngModel)]="manualCorreo" name="manualCorreo" placeholder="correo@ejemplo.com"></div>
       @if (manualPacienteEncontrado()) {
         <div class="estado-cuenta estado-cuenta--ok">
@@ -169,7 +170,7 @@
       </div>
 
       <button class="btn btn--vino btn--sm" type="submit"
-              [disabled]="!manualDni || !manualCelular || !manualNombre || !seguimientoManualValido()">
+              [disabled]="!manualDni || !manualCelular || !manualNombre || !manualApellido || !seguimientoManualValido()">
         Guardar cita / seguimiento
       </button>
     </form>

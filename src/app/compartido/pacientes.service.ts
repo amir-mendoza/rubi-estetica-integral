@@ -4,7 +4,9 @@ import { Paciente } from '../data/modelos';
 
 export interface RegistroPacienteInput {
   dni: string;
-  nombreCompleto: string;
+  nombre?: string;
+  apellido?: string;
+  nombreCompleto?: string;
   celular: string;
   correo?: string;
   observaciones?: string;
@@ -26,13 +28,13 @@ export class PacientesService {
 
   registrarOActualizar(input: RegistroPacienteInput): Paciente {
     const existente = this.porDni(input.dni);
-    const [nombre, ...resto] = input.nombreCompleto.trim().split(/\s+/);
+    const { nombre, apellido } = this.normalizarNombre(input);
 
     if (existente) {
       const actualizado: Paciente = {
         ...existente,
         nombre: nombre || existente.nombre,
-        apellido: resto.join(' ') || existente.apellido,
+        apellido: apellido || existente.apellido,
         celular: input.celular || existente.celular,
         correo: input.correo?.trim() || existente.correo,
         observaciones: input.observaciones?.trim() || existente.observaciones
@@ -45,7 +47,7 @@ export class PacientesService {
     const nuevo: Paciente = {
       id,
       nombre: nombre || 'Paciente',
-      apellido: resto.join(' '),
+      apellido,
       dni: input.dni,
       celular: input.celular,
       correo: input.correo?.trim() || '',
@@ -57,6 +59,20 @@ export class PacientesService {
     };
     this.lista.update(lista => [nuevo, ...lista]);
     return nuevo;
+  }
+
+  private normalizarNombre(input: RegistroPacienteInput): Pick<Paciente, 'nombre' | 'apellido'> {
+    const nombre = input.nombre?.trim() ?? '';
+    const apellido = input.apellido?.trim() ?? '';
+    if (nombre || apellido) {
+      return { nombre, apellido };
+    }
+
+    const partes = (input.nombreCompleto ?? '').trim().split(/\s+/).filter(Boolean);
+    return {
+      nombre: partes[0] ?? '',
+      apellido: partes.slice(1).join(' ')
+    };
   }
 
   registrarAtencion(pacienteId: number, fecha: string, montoPagado: number): void {

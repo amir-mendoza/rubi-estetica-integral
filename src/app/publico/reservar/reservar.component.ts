@@ -423,7 +423,8 @@ export class ReservarComponent implements OnDestroy {
   private registrarReservaConfirmada() {
     const paciente = this.pacientes.registrarOActualizar({
       dni: this.dni.trim(),
-      nombreCompleto: `${this.nombre} ${this.apellido}`.trim(),
+      nombre: this.nombre.trim(),
+      apellido: this.apellido.trim(),
       celular: this.celular.trim(),
       correo: this.correo.trim(),
       observaciones: this.observaciones.trim()

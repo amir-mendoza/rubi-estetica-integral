@@ -951,7 +951,8 @@ export class SesionesComponent {
 
     const paciente = this.pacientesService.registrarOActualizar({
       dni: this.formDni(),
-      nombreCompleto: `${this.formNombre()} ${this.formApellido()}`.trim(),
+      nombre: this.formNombre(),
+      apellido: this.formApellido(),
       celular: this.formCelular(),
       correo: this.formCorreo(),
       observaciones: this.formNotas()

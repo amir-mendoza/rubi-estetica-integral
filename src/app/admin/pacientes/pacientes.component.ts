@@ -35,16 +35,20 @@ import { SesionService } from '../../compartido/sesion.service';
         </div>
         <form class="paciente-form" (ngSubmit)="guardarPaciente()">
           <div class="aviso-cuenta">
-            Pide DNI, nombre completo, celular y correo si lo recuerda. Luego pregunta si prefiere entrar con PIN de 6 números o con una contraseña. La paciente debe decirlo y confirmarlo en el momento.
+            Pide DNI, nombre, apellido, celular y correo si lo recuerda. Luego pregunta si prefiere entrar con PIN de 6 números o con una contraseña. La paciente debe decirlo y confirmarlo en el momento.
           </div>
           <div class="paciente-form__grid">
             <div class="campo">
               <label>DNI (8 dígitos)</label>
               <input required maxlength="8" [ngModel]="nuevoDni()" (ngModelChange)="buscarDniFormulario($event)" name="nuevoDni" placeholder="Ej. 74859632">
             </div>
-            <div class="campo paciente-form__ancho">
-              <label>Nombre completo</label>
-              <input required [ngModel]="nuevoNombreCompleto()" (ngModelChange)="nuevoNombreCompleto.set($event)" name="nuevoNombreCompleto" placeholder="Nombre y apellido de la paciente">
+            <div class="campo">
+              <label>Nombre</label>
+              <input required [ngModel]="nuevoNombre()" (ngModelChange)="nuevoNombre.set($event)" name="nuevoNombre" placeholder="Ej. Maria">
+            </div>
+            <div class="campo">
+              <label>Apellido</label>
+              <input required [ngModel]="nuevoApellido()" (ngModelChange)="nuevoApellido.set($event)" name="nuevoApellido" placeholder="Ej. Lopez Rivera">
             </div>
             <div class="campo">
               <label>Celular</label>
@@ -315,7 +319,8 @@ export class PacientesComponent {
   abierta = signal<number | null>(null);
   mostrarFormulario = signal(false);
   nuevoDni = signal('');
-  nuevoNombreCompleto = signal('');
+  nuevoNombre = signal('');
+  nuevoApellido = signal('');
   nuevoCelular = signal('');
   nuevoCorreo = signal('');
   tipoAcceso = signal<'PIN' | 'Contraseña'>('PIN');
@@ -373,15 +378,22 @@ export class PacientesComponent {
     const paciente = this.pacientesService.porDni(limpio) ?? null;
     this.pacienteEncontrada.set(paciente);
     if (paciente) {
-      this.nuevoNombreCompleto.set(`${paciente.nombre} ${paciente.apellido}`.trim());
+      this.nuevoNombre.set(paciente.nombre);
+      this.nuevoApellido.set(paciente.apellido);
       this.nuevoCelular.set(paciente.celular);
       this.nuevoCorreo.set(paciente.correo || '');
+    } else {
+      this.nuevoNombre.set('');
+      this.nuevoApellido.set('');
+      this.nuevoCelular.set('');
+      this.nuevoCorreo.set('');
     }
   }
 
   formularioValido(): boolean {
     return this.nuevoDni().length === 8 &&
-      this.nuevoNombreCompleto().trim().length >= 3 &&
+      this.nuevoNombre().trim().length >= 2 &&
+      this.nuevoApellido().trim().length >= 2 &&
       this.nuevoCelular().trim().length >= 6 &&
       !this.errorClave();
   }
@@ -390,16 +402,16 @@ export class PacientesComponent {
     if (!this.formularioValido()) { return; }
     const paciente = this.pacientesService.registrarOActualizar({
       dni: this.nuevoDni(),
-      nombreCompleto: this.nuevoNombreCompleto(),
+      nombre: this.nuevoNombre(),
+      apellido: this.nuevoApellido(),
       celular: this.nuevoCelular(),
       correo: this.nuevoCorreo()
     });
-    const [nombre, ...resto] = this.nuevoNombreCompleto().trim().split(/\s+/);
     this.sesion.registrarDesdeRecepcion({
       pacienteId: paciente.id,
       dni: paciente.dni,
-      nombre: nombre || paciente.nombre,
-      apellido: resto.join(' ') || paciente.apellido,
+      nombre: paciente.nombre,
+      apellido: paciente.apellido,
       celular: paciente.celular,
       correo: paciente.correo,
       clave: this.nuevaClave()
@@ -411,7 +423,8 @@ export class PacientesComponent {
 
   limpiarFormulario(): void {
     this.nuevoDni.set('');
-    this.nuevoNombreCompleto.set('');
+    this.nuevoNombre.set('');
+    this.nuevoApellido.set('');
     this.nuevoCelular.set('');
     this.nuevoCorreo.set('');
     this.tipoAcceso.set('PIN');
