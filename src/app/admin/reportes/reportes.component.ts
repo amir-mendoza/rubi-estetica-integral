@@ -10,6 +10,7 @@ type PeriodoReporte = 'hoy' | 'ultimos7' | 'mesActual' | 'fecha' | 'semana' | 'm
 type EstadoPagoFiltro = 'Todos' | 'Pagados' | 'Con adelanto' | 'Pendientes';
 type OrigenFiltro = 'Todos' | 'Web' | 'WhatsApp' | 'Recepción';
 type EstadoVisual = 'Pagado' | 'Con adelanto' | 'Pendiente' | 'Cancelado';
+type TablaReporte = 'atenciones' | 'productos';
 
 interface RangoFechas { desde: string; hasta: string; etiqueta: string; }
 interface ResumenDia { fecha: string; dia: string; generado: number; cobrado: number; pendiente: number; }
@@ -129,63 +130,74 @@ interface IndicadorReporte { titulo: string; monto: string; nota: string; tono: 
 
     <section class="reportes-panel">
       <div class="panel-titulo">
-        <div><span class="dato__label">Atenciones y pacientes</span><h2>Detalle principal de citas, tratamientos y pagos</h2></div>
-        <span class="chip">{{ atencionesFiltradas().length }} registros</span>
+        <div>
+          <span class="dato__label">Detalle</span>
+          <h2>{{ tablaActiva() === 'atenciones' ? 'Atenciones y pacientes' : 'Ventas de productos' }}</h2>
+        </div>
+        <span class="chip">{{ tablaActiva() === 'atenciones' ? atencionesFiltradas().length + ' registros' : productosFiltrados().length + ' ventas' }}</span>
       </div>
-      <div class="tabla-envoltura">
-        <table class="tabla tabla-detalle">
-          <thead>
-            <tr><th>Fecha y hora</th><th>Paciente</th><th>Tratamiento</th><th>Zona / notas</th><th class="num">Precio total</th><th class="num">Pagado</th><th class="num">Saldo pendiente</th><th>Estado</th><th>Método</th><th>Origen</th></tr>
-          </thead>
-          <tbody>
-            @for (c of atencionesPaginadas(); track c.id) {
-              <tr>
-                <td><div class="mini-dato"><strong>{{ c.fecha }}</strong><span>{{ c.horaInicio }} · {{ c.codigo }}</span></div></td>
-                <td><div class="mini-dato"><strong>{{ pacienteNombre(c) }}</strong><span>{{ pacienteDetalle(c) }}</span></div></td>
-                <td>{{ tratamientosCita(c) }}</td>
-                <td><div class="mini-dato"><strong>{{ c.zonaTratamiento || 'Sin zona indicada' }}</strong><span>{{ c.notas || 'Sin notas' }}</span></div></td>
-                <td class="num">{{ soles(totalCita(c)) }}</td>
-                <td class="num color-verde">{{ soles(pagadoCita(c)) }}</td>
-                <td class="num" [class.color-naranja]="saldoCita(c) > 0" [class.color-verde]="saldoCita(c) === 0">{{ soles(saldoCita(c)) }}</td>
-                <td><span [class]="clasePago(estadoVisualCita(c))">{{ estadoVisualCita(c) }}</span></td>
-                <td>{{ metodoPagoCita(c) }}</td>
-                <td><span [class]="claseOrigen(c.origen)">{{ origenLegible(c.origen) }}</span></td>
-              </tr>
-            } @empty { <tr><td colspan="10" class="vacio">No hay atenciones con los filtros seleccionados.</td></tr> }
-          </tbody>
-        </table>
-      </div>
-      <div class="paginacion">
-        <button type="button" class="boton-icono" (click)="paginaAtenciones.set(paginaAtenciones() - 1)" [disabled]="paginaAtenciones() <= 1">Anterior</button>
-        @for (p of paginasAtenciones(); track p) { <button type="button" class="boton-icono" [class.boton-icono--activo]="p === paginaAtenciones()" (click)="paginaAtenciones.set(p)">{{ p }}</button> }
-        <button type="button" class="boton-icono" (click)="paginaAtenciones.set(paginaAtenciones() + 1)" [disabled]="paginaAtenciones() >= totalPaginasAtenciones()">Siguiente</button>
-      </div>
-    </section>
 
-    <section class="reportes-panel">
-      <div class="panel-titulo">
-        <div><span class="dato__label">Ventas de productos</span><h2>Detalle independiente de tienda</h2></div>
-        <span class="chip">{{ productosFiltrados().length }} ventas</span>
+      <div class="tabla-tabs">
+        <button type="button" [class.tabla-tab--activa]="tablaActiva() === 'atenciones'" (click)="tablaActiva.set('atenciones')">
+          Atenciones y pacientes
+          <span>{{ atencionesFiltradas().length }}</span>
+        </button>
+        <button type="button" [class.tabla-tab--activa]="tablaActiva() === 'productos'" (click)="tablaActiva.set('productos')">
+          Ventas de productos
+          <span>{{ productosFiltrados().length }}</span>
+        </button>
       </div>
-      <div class="tabla-envoltura">
-        <table class="tabla tabla-detalle">
-          <thead><tr><th>Fecha</th><th>Cliente</th><th>Productos</th><th class="num">Total</th><th class="num">Pagado</th><th class="num">Saldo</th><th>Estado</th><th>Método</th></tr></thead>
-          <tbody>
-            @for (p of productosPaginados(); track p.id) {
-              <tr>
-                <td><strong>{{ p.fecha }}</strong><br><small>{{ p.codigo }}</small></td><td>{{ p.cliente }}<br><small>{{ p.celular }}</small></td><td>{{ productosPedido(p) }}</td>
-                <td class="num">{{ soles(totalPedido(p)) }}</td><td class="num color-verde">{{ soles(pagadoPedido(p)) }}</td><td class="num" [class.color-naranja]="saldoPedido(p) > 0" [class.color-verde]="saldoPedido(p) === 0">{{ soles(saldoPedido(p)) }}</td>
-                <td><span [class]="clasePago(estadoVisualPedido(p))">{{ estadoVisualPedido(p) }}</span></td><td>{{ p.metodoPago || 'Por definir' }}</td>
-              </tr>
-            } @empty { <tr><td colspan="8" class="vacio">No hay ventas de productos con los filtros seleccionados.</td></tr> }
-          </tbody>
-        </table>
-      </div>
-      <div class="paginacion">
-        <button type="button" class="boton-icono" (click)="paginaProductos.set(paginaProductos() - 1)" [disabled]="paginaProductos() <= 1">Anterior</button>
-        @for (p of paginasProductos(); track p) { <button type="button" class="boton-icono" [class.boton-icono--activo]="p === paginaProductos()" (click)="paginaProductos.set(p)">{{ p }}</button> }
-        <button type="button" class="boton-icono" (click)="paginaProductos.set(paginaProductos() + 1)" [disabled]="paginaProductos() >= totalPaginasProductos()">Siguiente</button>
-      </div>
+
+      @if (tablaActiva() === 'atenciones') {
+        <div class="tabla-envoltura">
+          <table class="tabla tabla-detalle">
+            <thead>
+              <tr><th>Fecha y hora</th><th>Paciente</th><th>Tratamiento</th><th>Zona / notas</th><th class="num">Precio total</th><th class="num">Pagado</th><th class="num">Saldo pendiente</th><th>Estado</th><th>Método</th><th>Origen</th></tr>
+            </thead>
+            <tbody>
+              @for (c of atencionesPaginadas(); track c.id) {
+                <tr>
+                  <td><div class="mini-dato"><strong>{{ c.fecha }}</strong><span>{{ c.horaInicio }} · {{ c.codigo }}</span></div></td>
+                  <td><div class="mini-dato"><strong>{{ pacienteNombre(c) }}</strong><span>{{ pacienteDetalle(c) }}</span></div></td>
+                  <td>{{ tratamientosCita(c) }}</td>
+                  <td><div class="mini-dato"><strong>{{ c.zonaTratamiento || 'Sin zona indicada' }}</strong><span>{{ c.notas || 'Sin notas' }}</span></div></td>
+                  <td class="num">{{ soles(totalCita(c)) }}</td>
+                  <td class="num color-verde">{{ soles(pagadoCita(c)) }}</td>
+                  <td class="num" [class.color-naranja]="saldoCita(c) > 0" [class.color-verde]="saldoCita(c) === 0">{{ soles(saldoCita(c)) }}</td>
+                  <td><span [class]="clasePago(estadoVisualCita(c))">{{ estadoVisualCita(c) }}</span></td>
+                  <td>{{ metodoPagoCita(c) }}</td>
+                  <td><span [class]="claseOrigen(c.origen)">{{ origenLegible(c.origen) }}</span></td>
+                </tr>
+              } @empty { <tr><td colspan="10" class="vacio">No hay atenciones con los filtros seleccionados.</td></tr> }
+            </tbody>
+          </table>
+        </div>
+        <div class="paginacion">
+          <button type="button" class="boton-icono" (click)="paginaAtenciones.set(paginaAtenciones() - 1)" [disabled]="paginaAtenciones() <= 1">Anterior</button>
+          @for (p of paginasAtenciones(); track p) { <button type="button" class="boton-icono" [class.boton-icono--activo]="p === paginaAtenciones()" (click)="paginaAtenciones.set(p)">{{ p }}</button> }
+          <button type="button" class="boton-icono" (click)="paginaAtenciones.set(paginaAtenciones() + 1)" [disabled]="paginaAtenciones() >= totalPaginasAtenciones()">Siguiente</button>
+        </div>
+      } @else {
+        <div class="tabla-envoltura">
+          <table class="tabla tabla-detalle">
+            <thead><tr><th>Fecha</th><th>Cliente</th><th>Productos</th><th class="num">Total</th><th class="num">Pagado</th><th class="num">Saldo</th><th>Estado</th><th>Método</th></tr></thead>
+            <tbody>
+              @for (p of productosPaginados(); track p.id) {
+                <tr>
+                  <td><strong>{{ p.fecha }}</strong><br><small>{{ p.codigo }}</small></td><td>{{ p.cliente }}<br><small>{{ p.celular }}</small></td><td>{{ productosPedido(p) }}</td>
+                  <td class="num">{{ soles(totalPedido(p)) }}</td><td class="num color-verde">{{ soles(pagadoPedido(p)) }}</td><td class="num" [class.color-naranja]="saldoPedido(p) > 0" [class.color-verde]="saldoPedido(p) === 0">{{ soles(saldoPedido(p)) }}</td>
+                  <td><span [class]="clasePago(estadoVisualPedido(p))">{{ estadoVisualPedido(p) }}</span></td><td>{{ p.metodoPago || 'Por definir' }}</td>
+                </tr>
+              } @empty { <tr><td colspan="8" class="vacio">No hay ventas de productos con los filtros seleccionados.</td></tr> }
+            </tbody>
+          </table>
+        </div>
+        <div class="paginacion">
+          <button type="button" class="boton-icono" (click)="paginaProductos.set(paginaProductos() - 1)" [disabled]="paginaProductos() <= 1">Anterior</button>
+          @for (p of paginasProductos(); track p) { <button type="button" class="boton-icono" [class.boton-icono--activo]="p === paginaProductos()" (click)="paginaProductos.set(p)">{{ p }}</button> }
+          <button type="button" class="boton-icono" (click)="paginaProductos.set(paginaProductos() + 1)" [disabled]="paginaProductos() >= totalPaginasProductos()">Siguiente</button>
+        </div>
+      }
     </section>
   `,
   styles: [`
@@ -209,6 +221,11 @@ interface IndicadorReporte { titulo: string; monto: string; nota: string; tono: 
     .resumen-rapido { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
     .resumen-card { padding: 16px 18px; border: 1px solid var(--linea); border-radius: var(--radio-lg); background: #fff; }
     .resumen-card strong { display: block; color: var(--vino); font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.9rem; line-height: 1; }
+    .tabla-tabs { display: flex; flex-wrap: wrap; gap: 10px; padding: 16px 18px; border-bottom: 1px solid var(--linea); background: var(--rosa-50); }
+    .tabla-tabs button { border: 1px solid var(--linea); background: #fff; color: var(--vino); border-radius: 999px; padding: 10px 16px; cursor: pointer; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; font-size: .78rem; }
+    .tabla-tabs button span { display: inline-grid; place-items: center; min-width: 24px; height: 24px; margin-left: 8px; padding: 0 7px; border-radius: 999px; background: var(--rosa-50); color: var(--magenta); }
+    .tabla-tabs .tabla-tab--activa { background: var(--vino); border-color: var(--vino); color: #fff; box-shadow: 0 12px 24px rgba(116, 16, 55, .16); }
+    .tabla-tabs .tabla-tab--activa span { background: rgba(255,255,255,.18); color: #fff; }
     .tabla-detalle th, .tabla-detalle td { vertical-align: top; }
     .mini-dato { display: grid; gap: 4px; } .mini-dato span, small { color: var(--gris-claro); font-size: .84rem; }
     .paginacion { display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap; padding: 14px 18px 18px; border-top: 1px solid var(--linea); }
@@ -238,6 +255,7 @@ export class ReportesComponent {
   busqueda = signal('');
   paginaAtenciones = signal(1);
   paginaProductos = signal(1);
+  tablaActiva = signal<TablaReporte>('atenciones');
   porPagina = 8;
 
   rangoActivo = computed(() => this.calcularRango());
