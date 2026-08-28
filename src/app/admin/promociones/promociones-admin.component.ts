@@ -254,25 +254,94 @@ function promocionVacia(): Promocion {
       </section>
 
       <!-- ----------------------------------------------------- Vista previa -->
-      <section class="tabla-panel">
+      <section class="tabla-panel preview-panel">
         <div class="tabla-panel__cabecera">
           <h3>Vista previa</h3>
-          <span class="dato__label">Así se verá en el carrusel</span>
+          <span class="dato__label">Inicio y carrusel antes de publicar</span>
         </div>
-        <div class="vista-previa">
-          <div class="vista-previa__imagen">
-            <img [src]="borrador().imagen" [alt]="borrador().titulo || 'Vista previa'">
-          </div>
-          <div class="vista-previa__texto">
-            <span class="vista-previa__etiqueta">{{ borrador().etiqueta || 'Etiqueta' }}</span>
-            <h4>{{ borrador().titulo || 'Título de la promoción' }}</h4>
-            <p>{{ borrador().subtitulo || 'Subtítulo de la promoción' }}</p>
-            @if (borrador().precio) {
-              <div class="vista-previa__precio">
-                <strong>{{ soles(borrador().precio || 0) }}</strong>
-                @if (borrador().precioAntes) { <s>{{ soles(borrador().precioAntes || 0) }}</s> }
+
+        <div class="preview-stack">
+          <div class="preview-bloque">
+            <div class="preview-bloque__cabecera">
+              <div>
+                <span class="dato__label">Inicio / carrusel principal</span>
+                <p>Así se verá si la promoción queda destacada en la página de inicio.</p>
               </div>
-            }
+            </div>
+
+            <article class="preview-hero">
+              <div class="preview-hero__media">
+                <img [src]="borrador().imagen" [alt]="tituloPreview()">
+                <span class="preview-hero__badge">{{ sesionesTexto() }}</span>
+              </div>
+              <div class="preview-hero__body">
+                <span class="preview-pill">{{ etiquetaPreview() }}</span>
+                <h4>{{ tituloPreview() }}</h4>
+                <strong>{{ subtituloPreview() }}</strong>
+                <p>{{ descripcionPreview() }}</p>
+
+                <div class="preview-incluye">
+                  <span class="dato__label">Incluye</span>
+                  @for (s of sesionesPreview(); track $index; let i = $index) {
+                    <div class="preview-incluye__item">
+                      <span>{{ i + 1 }}</span>
+                      <div>
+                        <strong>{{ s.titulo || ('Sesión ' + (i + 1)) }}</strong>
+                        @if (s.tratamientoId) { <small>{{ tratamientoNombre(s.tratamientoId) }}</small> }
+                        @if (s.descripcion) { <p>{{ s.descripcion }}</p> }
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <div class="preview-hero__meta">
+                  <div>
+                    <span class="dato__label">Precio especial</span>
+                    <strong>{{ borrador().precio ? soles(borrador().precio || 0) : 'S/ 0' }}</strong>
+                    @if (borrador().precioAntes) { <s>Antes {{ soles(borrador().precioAntes || 0) }}</s> }
+                  </div>
+                  <div>
+                    <span class="dato__label">Vigente hasta</span>
+                    <b>{{ borrador().vigenciaHasta || 'Por definir' }}</b>
+                  </div>
+                </div>
+
+                <div class="preview-hero__acciones">
+                  <span>Reservar promoción</span>
+                  <span>Consultar por WhatsApp</span>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="preview-bloque preview-bloque--compacto">
+            <div class="preview-bloque__cabecera">
+              <div>
+                <span class="dato__label">Tarjeta de promociones</span>
+                <p>Así aparecerá en el listado o carrusel vertical de promociones.</p>
+              </div>
+            </div>
+
+            <article class="preview-card">
+              <img [src]="borrador().imagen" [alt]="tituloPreview()">
+              <div class="preview-card__body">
+                <span class="dato__label">{{ borrador().categoria || 'Categoría' }}</span>
+                <h4>{{ tituloPreview() }}</h4>
+                <p>{{ subtituloPreview() }}</p>
+                <ul>
+                  @for (s of sesionesPreview(); track $index) {
+                    <li>{{ s.titulo || 'Sesión' }}</li>
+                  }
+                </ul>
+                <div class="preview-card__pie">
+                  <div>
+                    @if (borrador().precioAntes) { <s>{{ soles(borrador().precioAntes || 0) }}</s> }
+                    <strong>{{ borrador().precio ? soles(borrador().precio || 0) : 'S/ 0' }}</strong>
+                  </div>
+                  <span>Reservar</span>
+                </div>
+              </div>
+            </article>
           </div>
         </div>
       </section>
@@ -396,41 +465,183 @@ function promocionVacia(): Promocion {
     }
     .interruptores { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; font-size: .9rem; color: var(--gris); }
     .interruptores label { display: flex; align-items: center; gap: 9px; }
-    .vista-previa {
-      display: grid;
-      grid-template-columns: minmax(220px, .9fr) minmax(0, 1fr);
-      gap: 0;
-      margin: 20px 22px 24px;
-      min-height: 300px;
+    .preview-panel { position: sticky; top: 18px; }
+    .preview-stack { display: grid; gap: 18px; padding: 20px 22px 24px; }
+    .preview-bloque {
       border: 1px solid var(--linea);
       border-radius: var(--radio-lg);
+      background: #fff;
       overflow: hidden;
+    }
+    .preview-bloque__cabecera {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px 18px 0;
+    }
+    .preview-bloque__cabecera p { margin: 4px 0 0; color: var(--gris); font-size: .9rem; }
+    .preview-hero {
+      display: grid;
+      grid-template-columns: minmax(240px, .92fr) minmax(0, 1.08fr);
+      min-height: 460px;
       background: #fff;
     }
-    .vista-previa__imagen {
+    .preview-hero__media {
+      position: relative;
       display: grid;
       place-items: center;
-      padding: 16px;
-      background: var(--rosa-50);
+      padding: 28px 22px;
+      background: linear-gradient(145deg, #fff7fb 0%, #f7e8ef 100%);
     }
-    .vista-previa img {
+    .preview-hero__media img {
       width: 100%;
       max-height: 360px;
       object-fit: contain;
       border-radius: var(--radio);
       background: #fff;
+      box-shadow: 0 18px 45px rgba(116, 16, 55, .12);
     }
-    .vista-previa__texto { padding: 28px; color: var(--tinta); align-self: center; }
-    .vista-previa__texto h4 { color: var(--vino); margin-bottom: 6px; }
-    .vista-previa__texto p { color: var(--gris); font-size: .94rem; }
-    .vista-previa__etiqueta {
-      display: inline-block; border: 1px solid rgba(176,27,114,.3); border-radius: 999px;
-      padding: 4px 12px; font-size: .78rem; letter-spacing: .16em; text-transform: uppercase; margin-bottom: 14px;
+    .preview-hero__badge {
+      position: absolute;
+      right: 24px;
+      bottom: 24px;
+      width: 94px;
+      height: 94px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 12px;
+      background: var(--magenta);
+      color: #fff;
+      font-size: .76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      box-shadow: 0 16px 32px rgba(176, 27, 114, .24);
+    }
+    .preview-hero__body { padding: 28px 28px 30px; align-self: center; color: var(--tinta); }
+    .preview-pill {
+      display: inline-block;
+      border: 1px solid rgba(176,27,114,.3);
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: .72rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
       color: var(--magenta);
+      font-weight: 700;
     }
-    .vista-previa__precio { display: flex; align-items: baseline; gap: 10px; }
-    .vista-previa__precio strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.7rem; color: var(--magenta); }
-    .vista-previa__precio s { color: var(--gris-claro); font-size: .9rem; }
+    .preview-hero h4 {
+      margin: 0 0 10px;
+      color: var(--vino);
+      font-size: clamp(2rem, 4vw, 3.6rem);
+      line-height: .96;
+    }
+    .preview-hero__body > strong {
+      display: block;
+      color: var(--vino);
+      font-size: 1.05rem;
+      margin-bottom: 12px;
+    }
+    .preview-hero__body > p { color: var(--gris); line-height: 1.7; margin-bottom: 18px; }
+    .preview-incluye {
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio);
+      background: var(--rosa-50);
+      margin-bottom: 20px;
+    }
+    .preview-incluye__item { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+    .preview-incluye__item > span {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--magenta);
+      color: #fff;
+      font-size: .74rem;
+      font-weight: 800;
+    }
+    .preview-incluye__item strong { display: block; color: var(--vino); font-size: .92rem; }
+    .preview-incluye__item small { display: block; color: var(--gris); margin-top: 2px; }
+    .preview-incluye__item p { margin: 3px 0 0; color: var(--gris); font-size: .84rem; line-height: 1.45; }
+    .preview-hero__meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--linea);
+    }
+    .preview-hero__meta strong {
+      display: block;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 2.2rem;
+      color: var(--magenta);
+      line-height: 1;
+    }
+    .preview-hero__meta s { display: block; color: var(--gris-claro); margin-top: 6px; }
+    .preview-hero__meta b { display: block; color: var(--vino); margin-top: 8px; }
+    .preview-hero__acciones {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .preview-hero__acciones span {
+      border: 1px solid var(--vino);
+      border-radius: var(--radio);
+      padding: 12px 16px;
+      color: var(--vino);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .preview-hero__acciones span:first-child { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+    .preview-card {
+      margin: 18px;
+      max-width: 360px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 16px 34px rgba(116, 16, 55, .08);
+    }
+    .preview-card img { width: 100%; aspect-ratio: 1.35 / 1; object-fit: contain; background: var(--rosa-50); }
+    .preview-card__body { padding: 18px; }
+    .preview-card h4 { margin: 8px 0 8px; color: var(--vino); font-size: 1.3rem; line-height: 1.18; }
+    .preview-card p { color: var(--gris); font-size: .9rem; line-height: 1.5; }
+    .preview-card ul { margin: 14px 0; padding: 0 0 0 16px; color: var(--gris); font-size: .86rem; }
+    .preview-card li { margin-bottom: 6px; }
+    .preview-card li::marker { color: var(--magenta); }
+    .preview-card__pie {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 14px;
+      border-top: 1px solid var(--linea);
+    }
+    .preview-card__pie s { display: block; color: var(--gris-claro); font-size: .82rem; }
+    .preview-card__pie strong {
+      display: block;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      color: var(--magenta);
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+    .preview-card__pie span {
+      color: var(--magenta);
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
     .fila-prod { display: flex; gap: 12px; align-items: center; }
     .fila-prod img { width: 52px; height: 40px; border-radius: var(--radio); object-fit: cover; background: var(--rosa-50); }
     .estados-promo { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
@@ -438,7 +649,13 @@ function promocionVacia(): Promocion {
     .boton-icono--peligro { color: var(--error); }
     .vacio { text-align: center; color: var(--gris-claro); padding: 26px 0; }
     @media (max-width: 1200px) { .kpis-4 { grid-template-columns: repeat(2, 1fr); } .promo-columnas, .categorias-admin { grid-template-columns: 1fr; } }
-    @media (max-width: 720px) { .vista-previa { grid-template-columns: 1fr; } }
+    @media (max-width: 720px) {
+      .preview-stack { padding: 16px; }
+      .preview-hero { grid-template-columns: 1fr; }
+      .preview-hero__body { padding: 22px; }
+      .preview-hero__meta { grid-template-columns: 1fr; }
+      .preview-card { max-width: none; }
+    }
     @media (max-width: 760px) {
       .sesiones-editor__cabecera { align-items: flex-start; flex-direction: column; }
       .sesion-edit { grid-template-columns: 34px 1fr; }
@@ -513,6 +730,47 @@ export class PromocionesAdminComponent {
 
   sesionesDetalle(): NonNullable<Promocion['sesionesDetalle']> {
     return this.borrador().sesionesDetalle ?? [];
+  }
+
+  tituloPreview(): string {
+    return this.borrador().titulo?.trim() || 'Título de la promoción';
+  }
+
+  subtituloPreview(): string {
+    return this.borrador().subtitulo?.trim() || 'Subtítulo de la promoción';
+  }
+
+  descripcionPreview(): string {
+    return this.borrador().descripcion?.trim() || 'Describe aquí qué incluye, para quién es y qué resultado promete esta promoción.';
+  }
+
+  etiquetaPreview(): string {
+    return this.borrador().etiqueta?.trim() || 'Promoción del mes';
+  }
+
+  sesionesConteo(): number {
+    return Math.max(Number(this.borrador().sesiones || this.sesionesPreview().length || 1), 1);
+  }
+
+  sesionesTexto(): string {
+    const total = this.sesionesConteo();
+    return `${total} ${total === 1 ? 'sesión' : 'sesiones'}`;
+  }
+
+  sesionesPreview(): NonNullable<Promocion['sesionesDetalle']> {
+    const detalle = this.sesionesDetalle().filter(s => s.titulo?.trim() || s.descripcion?.trim() || s.tratamientoId);
+    if (detalle.length) { return detalle; }
+    const cantidad = Math.max(Number(this.borrador().sesiones || 1), 1);
+    return Array.from({ length: cantidad }, (_, i) => ({
+      titulo: `Sesión ${i + 1}`,
+      descripcion: '',
+      tratamientoId: undefined
+    }));
+  }
+
+  tratamientoNombre(id?: number): string {
+    if (!id) { return ''; }
+    return this.tratamientos.find(t => t.id === Number(id))?.nombre ?? '';
   }
 
   actualizarCantidadSesiones(valor: string | number): void {
