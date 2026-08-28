@@ -101,6 +101,24 @@ export class AgendaService {
     } : c));
   }
 
+  vincularPlan(id: number, planId: number, numeroSesionPlan = 1, usuario = 'Recepción'): void {
+    this.lista.update(lista => lista.map(c => c.id === id ? {
+      ...c,
+      planId,
+      numeroSesionPlan,
+      notas: c.notas || `Cita convertida a multisesiones por ${usuario}. Recepción podrá agregar y reprogramar sesiones desde el seguimiento.`
+    } : c));
+  }
+
+  desvincularPlan(id: number, usuario = 'Recepción'): void {
+    this.lista.update(lista => lista.map(c => c.id === id ? {
+      ...c,
+      planId: undefined,
+      numeroSesionPlan: undefined,
+      notas: `Multisesiones desactivadas por ${usuario}. La cita queda como atención simple.`
+    } : c));
+  }
+
   /** Cobro presencial: recepcion confirma el monto recibido con el metodo elegido. */
   registrarPago(id: number, usuario: string, metodo: MetodoPago, monto?: number, codigo?: string): void {
     const hora = new Date().toTimeString().slice(0, 5);

@@ -318,6 +318,9 @@
                 <div class="cita__acciones-top-botones">
                   @if (f.cita.planId) {
                     <button class="boton-icono" (click)="abrirSeguimiento(f.cita)">Ver seguimiento</button>
+                    <button class="boton-icono boton-icono--peligro" (click)="desactivarMultisesiones(f.cita)">Desactivar multisesiones</button>
+                  } @else {
+                    <button class="boton-icono boton-icono--seguimiento" (click)="activarMultisesiones(f.cita)">Activar multisesiones</button>
                   }
                   <button class="boton-icono" (click)="abrirReprogramacion(f.cita)">
                     {{ reprogramando() === f.cita.id ? 'Cerrar horario' : 'Cambiar fecha/hora' }}

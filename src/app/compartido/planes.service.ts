@@ -244,6 +244,54 @@ export class PlanesService {
     return creado;
   }
 
+  crearPlanDesdeCita(cita: Cita, dni: string, nombrePaciente: string, usuario = 'Recepción'): PlanSesiones {
+    const tratamientos = cita.tratamientosIncluidos?.length ? cita.tratamientosIncluidos : [cita.tratamientoId];
+    let creado!: PlanSesiones;
+    this.lista.update(lista => {
+      const id = lista.reduce((max, p) => Math.max(max, p.id), 0) + 1;
+      const codigo = `PL-${3000 + id}`;
+      const precioTotal = Math.max(Number(cita.montoTotal || 0), 0);
+      const pagado = Math.min(Math.max(Number(cita.montoPagado || 0), 0), precioTotal);
+      creado = {
+        id,
+        codigo,
+        pacienteId: cita.pacienteId,
+        dni,
+        nombre: `Seguimiento ${nombrePaciente}`,
+        localId: cita.localId,
+        intervaloDias: 0,
+        inicio: cita.fecha,
+        precioTotal,
+        pagado,
+        pagosDetalle: cita.pagosDetalle ? cita.pagosDetalle.map(pago => ({ ...pago })) : [],
+        fechaLiquidacion: cita.pagadaEl,
+        estado: 'En curso',
+        notas: `Cita ${cita.codigo} convertida a multisesiones. Si la paciente necesita más secciones, recepción las agrega manualmente desde este seguimiento.`,
+        sesiones: tratamientos.map((tratamientoId, index) => {
+          const tratamiento = tratamientoPorId(tratamientoId);
+          return {
+            numero: index + 1,
+            tratamientoId,
+            grupoTratamiento: index + 1,
+            procedimiento: tratamiento?.nombre ?? 'Tratamiento',
+            fecha: cita.fecha,
+            hora: cita.horaInicio,
+            zona: cita.zonaTratamiento,
+            registradoPor: usuario,
+            estado: cita.estado === 'Atendida' ? 'Atendida' as EstadoSesion : 'Programada' as EstadoSesion,
+            observaciones: index === 0 ? cita.notas : undefined
+          };
+        })
+      };
+      return [...lista, creado];
+    });
+    return creado;
+  }
+
+  eliminarPlan(planId: number): void {
+    this.lista.update(lista => lista.filter(p => p.id !== planId));
+  }
+
   puedeProgramarSiguiente(plan: PlanSesiones): boolean {
     return plan.sesiones.some(s => s.estado === 'Pendiente' || s.estado === 'Reprogramada');
   }

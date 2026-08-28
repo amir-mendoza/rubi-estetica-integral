@@ -229,6 +229,19 @@
 .cita__acciones { margin-top: 14px; display: grid; gap: 6px; }
 .cita__acciones-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .cita__acciones-top-botones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.boton-icono--seguimiento {
+  border-color: rgba(176, 27, 114, .35);
+  background: var(--vino);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(102, 10, 49, .12);
+}
+.boton-icono--seguimiento:hover { background: var(--magenta); border-color: var(--magenta); }
+.boton-icono--peligro {
+  border-color: rgba(180, 40, 70, .32);
+  color: #9f2745;
+  background: #fff;
+}
+.boton-icono--peligro:hover { background: #fff3f5; border-color: #9f2745; color: #7c1630; }
 .cita__botones { display: flex; flex-wrap: wrap; gap: 6px; }
 .accion {
   border: 1px solid var(--linea); border-radius: 999px; background: #fff;
@@ -296,10 +309,12 @@
   .cita-manual__form { padding: 16px 14px 18px; }
   .cita-manual__sub .btn,
   .sesiones-tratamiento__cabecera .btn,
-  .cita-manual__pago-rapido .boton-icono {
+  .cita-manual__pago-rapido .boton-icono,
+  .cita__acciones-top-botones .boton-icono {
     width: 100%;
     justify-content: center;
   }
+  .cita__acciones-top-botones { width: 100%; }
   .estado-cuenta { align-items: flex-start; flex-direction: column; gap: 5px; }
   .estado-cuenta strong { white-space: normal; }
   .sesion-row__cabecera { align-items: flex-start; flex-direction: column; }

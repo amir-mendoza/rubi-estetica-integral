@@ -345,6 +345,25 @@ export class CalendarioComponent {
     this.router.navigate(['/admin/sesiones'], { queryParams: { buscar: plan?.codigo ?? cita.codigo } });
   }
 
+  activarMultisesiones(cita: Cita): void {
+    const seguro = confirm('¿Seguro que deseas convertir esta cita en multisesiones?');
+    if (!seguro) { return; }
+    const paciente = this.paciente(cita.pacienteId);
+    const dni = paciente?.dni ?? '';
+    const nombre = `${paciente?.nombre ?? 'Paciente'} ${paciente?.apellido ?? ''}`.trim();
+    const plan = this.planes.crearPlanDesdeCita(cita, dni, nombre, this.responsable());
+    this.agenda.vincularPlan(cita.id, plan.id, 1, this.responsable());
+    this.abrirSeguimiento({ ...cita, planId: plan.id, numeroSesionPlan: 1 });
+  }
+
+  desactivarMultisesiones(cita: Cita): void {
+    if (!cita.planId) { return; }
+    const seguro = confirm('¿Seguro que deseas desactivar las multisesiones? La cita volverá a ser simple y se quitará el seguimiento creado.');
+    if (!seguro) { return; }
+    this.planes.eliminarPlan(cita.planId);
+    this.agenda.desvincularPlan(cita.id, this.responsable());
+  }
+
   private registrarPlanMultisesion(): void {
     const seguimientos = this.manualSeguimientos();
     const sesionesValidas = seguimientos.flatMap((item, grupoIndice) => item.sesiones
