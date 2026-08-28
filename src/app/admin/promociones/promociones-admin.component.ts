@@ -92,14 +92,13 @@ function promocionVacia(): Promocion {
       </div>
     </section>
 
+    @if (formularioVisible()) {
     <div class="promo-columnas">
       <!-- ------------------------------------------------------ Formulario -->
       <section class="tabla-panel">
         <div class="tabla-panel__cabecera">
           <h3>{{ borrador().id ? 'Editar promoción' : 'Registrar promoción' }}</h3>
-          @if (borrador().id) {
-            <button class="boton-icono" (click)="nueva()">Cancelar edición</button>
-          }
+          <button class="boton-icono" (click)="cerrarFormulario()">Cerrar formulario</button>
         </div>
 
         <form class="promo-form" (ngSubmit)="guardar()">
@@ -346,6 +345,7 @@ function promocionVacia(): Promocion {
         </div>
       </section>
     </div>
+    }
 
     <!-- ----------------------------------------------------------- Listado -->
     <div class="tabla-panel">
@@ -694,6 +694,7 @@ export class PromocionesAdminComponent {
   borrador = signal<Promocion>(promocionVacia());
   aviso = signal('');
   imagenPersonalizada = signal('');
+  formularioVisible = signal(false);
 
   lista = computed(() => this.promociones.promociones());
   activas = computed(() => this.lista().filter(p => p.activa).length);
@@ -821,13 +822,23 @@ export class PromocionesAdminComponent {
 
   nueva(): void {
     this.borrador.set(promocionVacia());
+    this.imagenPersonalizada.set('');
     this.aviso.set('');
+    this.formularioVisible.set(true);
+  }
+
+  cerrarFormulario(): void {
+    this.borrador.set(promocionVacia());
+    this.imagenPersonalizada.set('');
+    this.aviso.set('');
+    this.formularioVisible.set(false);
   }
 
   cargar(p: Promocion): void {
     this.borrador.set({ ...p, sesionesDetalle: p.sesionesDetalle?.map(s => ({ ...s })) });
     this.imagenPersonalizada.set(p.imagen);
     this.aviso.set('');
+    this.formularioVisible.set(true);
   }
 
   usarImagenPersonalizada(): void {
@@ -854,6 +865,8 @@ export class PromocionesAdminComponent {
     this.promociones.guardar(p);
     this.aviso.set(p.id ? 'Promoción actualizada.' : 'Promoción registrada y publicada en el inicio.');
     this.borrador.set(promocionVacia());
+    this.imagenPersonalizada.set('');
+    this.formularioVisible.set(false);
   }
 
   eliminar(p: Promocion): void {
