@@ -69,6 +69,9 @@
           <span class="dato__label">Tratamientos con seguimiento</span>
           <button type="button" class="btn btn--linea btn--sm" (click)="agregarSeguimientoManual()">Agregar otro tratamiento</button>
         </div>
+        <datalist id="tratamientos-manual-list">
+          @for (t of tratamientosCatalogo; track t.id) { <option [value]="tratamientoEtiqueta(t.id)"></option> }
+        </datalist>
         @for (seguimiento of manualSeguimientos(); track $index; let ti = $index) {
           <div class="seguimiento-row">
             <div class="seguimiento-row__cabecera">
@@ -82,6 +85,11 @@
             <div class="seguimiento-row__grid">
               <div class="campo">
                 <label>Tratamiento</label>
+                <input list="tratamientos-manual-list"
+                       [ngModel]="busquedaTratamientoManual(ti, seguimiento.tratamientoId)"
+                       (ngModelChange)="buscarTratamientoManual(ti, $event)"
+                       [name]="'seguimientoBusqueda' + ti"
+                       placeholder="Escribe para buscar o abre la lista">
                 <select [ngModel]="seguimiento.tratamientoId" (ngModelChange)="cambiarTratamientoSeguimiento(ti, Number($event))" [name]="'seguimientoTratamiento' + ti">
                   @for (t of tratamientosCatalogo; track t.id) { <option [value]="t.id">{{ t.nombre }} · {{ soles(t.precio) }}</option> }
                 </select>

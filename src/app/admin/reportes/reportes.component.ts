@@ -184,7 +184,7 @@ interface IndicadorReporte { titulo: string; monto: string; nota: string; tono: 
             <tbody>
               @for (p of productosPaginados(); track p.id) {
                 <tr>
-                  <td><strong>{{ p.fecha }}</strong><br><small>{{ p.codigo }}</small></td><td>{{ p.cliente }}<br><small>{{ p.celular }}</small></td><td>{{ productosPedido(p) }}</td>
+                  <td><strong>{{ p.fecha }}</strong><br><small>{{ p.codigo }}</small></td><td>{{ nombrePedido(p) }}<br><small>DNI {{ p.dni || '—' }} · {{ p.celular }}</small></td><td>{{ productosPedido(p) }}</td>
                   <td class="num">{{ soles(totalPedido(p)) }}</td><td class="num color-verde">{{ soles(pagadoPedido(p)) }}</td><td class="num" [class.color-naranja]="saldoPedido(p) > 0" [class.color-verde]="saldoPedido(p) === 0">{{ soles(saldoPedido(p)) }}</td>
                   <td><span [class]="clasePago(estadoVisualPedido(p))">{{ estadoVisualPedido(p) }}</span></td><td>{{ p.metodoPago || 'Por definir' }}</td>
                 </tr>
@@ -302,6 +302,7 @@ export class ReportesComponent {
   pacienteDetalle(c: Cita): string { const p = this.pacientes.porId(c.pacienteId); return p ? `DNI ${p.dni} · ${p.celular}` : 'Sin DNI registrado'; }
   tratamientosCita(c: Cita): string { const ids = c.tratamientosIncluidos?.length ? c.tratamientosIncluidos : [c.tratamientoId]; return ids.map(id => tratamientoPorId(id)?.nombre ?? 'Tratamiento').join(' + '); }
   productosPedido(p: Pedido): string { return p.items.map(item => `${item.cantidad} x ${PRODUCTOS.find(prod => prod.id === item.productoId)?.nombre ?? 'Producto'}`).join(', '); }
+  nombrePedido(p: Pedido): string { return `${p.nombre ?? ''} ${p.apellido ?? ''}`.trim() || p.cliente; }
   totalCita(c: Cita): number { return this.esCitaContable(c) ? Math.max(Number(c.montoTotal || 0), 0) : 0; }
   pagadoCita(c: Cita): number { return this.esCitaContable(c) ? Math.min(Math.max(Number(c.montoPagado || 0), 0), this.totalCita(c)) : 0; }
   saldoCita(c: Cita): number { return Math.max(this.totalCita(c) - this.pagadoCita(c), 0); }
@@ -323,7 +324,7 @@ export class ReportesComponent {
       ['ATENCIONES'], ['Fecha', 'Hora', 'Paciente', 'Tratamiento', 'Zona / notas', 'Total', 'Pagado', 'Saldo', 'Estado', 'Método', 'Origen'],
       ...this.atencionesFiltradas().map(c => [c.fecha, c.horaInicio, this.pacienteNombre(c), this.tratamientosCita(c), `${c.zonaTratamiento || 'Sin zona'} ${c.notas || ''}`.trim(), String(this.totalCita(c)), String(this.pagadoCita(c)), String(this.saldoCita(c)), this.estadoVisualCita(c), this.metodoPagoCita(c), this.origenLegible(c.origen)]), [],
       ['PRODUCTOS'], ['Fecha', 'Cliente', 'Productos', 'Total', 'Pagado', 'Saldo', 'Estado', 'Método'],
-      ...this.productosFiltrados().map(p => [p.fecha, p.cliente, this.productosPedido(p), String(this.totalPedido(p)), String(this.pagadoPedido(p)), String(this.saldoPedido(p)), this.estadoVisualPedido(p), p.metodoPago || 'Por definir'])
+      ...this.productosFiltrados().map(p => [p.fecha, this.nombrePedido(p), this.productosPedido(p), String(this.totalPedido(p)), String(this.pagadoPedido(p)), String(this.saldoPedido(p)), this.estadoVisualPedido(p), p.metodoPago || 'Por definir'])
     ];
     const contenido = filas.map(fila => fila.map(celda => `"${String(celda).replace(/"/g, '""')}"`).join('\t')).join('\n');
     const url = URL.createObjectURL(new Blob([contenido], { type: 'application/vnd.ms-excel;charset=utf-8;' }));
@@ -347,7 +348,7 @@ export class ReportesComponent {
     const rango = this.rangoActivo(); const texto = this.busqueda().trim().toLowerCase();
     return PEDIDOS.filter(p => p.fecha >= rango.desde && p.fecha <= rango.hasta)
       .filter(p => this.coincideEstadoPago(this.estadoVisualPedido(p)))
-      .filter(p => !texto || `${p.cliente} ${p.celular} ${p.codigo} ${this.productosPedido(p)} ${p.metodoPago ?? ''}`.toLowerCase().includes(texto))
+      .filter(p => !texto || `${this.nombrePedido(p)} ${p.dni ?? ''} ${p.celular} ${p.codigo} ${this.productosPedido(p)} ${p.metodoPago ?? ''}`.toLowerCase().includes(texto))
       .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id - a.id);
   }
   private coincideEstadoPago(estado: EstadoVisual): boolean { return this.estadoPago() === 'Todos' || (this.estadoPago() === 'Pagados' && estado === 'Pagado') || (this.estadoPago() === 'Con adelanto' && estado === 'Con adelanto') || (this.estadoPago() === 'Pendientes' && estado === 'Pendiente'); }

@@ -127,6 +127,20 @@ interface FormTratamientoPlan {
           <div class="promo-form__fila">
             <div class="campo">
               <label>Cargar base (Preconfiguración)</label>
+              <input list="bases-plan-list"
+                     [ngModel]="formBaseBusqueda()"
+                     (ngModelChange)="buscarBaseCarga($event)"
+                     name="formBaseBusqueda"
+                     placeholder="Escribe promoción o tratamiento">
+              <datalist id="bases-plan-list">
+                <option value="Personalizado (vacío)"></option>
+                @for (p of promocionesLista; track p.id) {
+                  <option [value]="baseCargaEtiqueta('promo-' + p.id)"></option>
+                }
+                @for (t of tratamientosLista; track t.id) {
+                  <option [value]="baseCargaEtiqueta('trat-' + t.id)"></option>
+                }
+              </datalist>
               <select [ngModel]="formBaseCarga()" (ngModelChange)="cargarBase($event)" name="formBaseCarga">
                 <option value="Personalizado">Personalizado (vacío)</option>
                 <optgroup label="Promociones">
@@ -173,6 +187,11 @@ interface FormTratamientoPlan {
           </div>
 
           <div class="plan-builder">
+            <datalist id="tratamientos-plan-list">
+              @for (t of tratamientosLista; track t.id) {
+                <option [value]="tratamientoEtiqueta(t.id)"></option>
+              }
+            </datalist>
             @for (grupo of formTratamientosPlan(); track $index; let gi = $index) {
               <article class="plan-tratamiento">
                 <div class="plan-tratamiento__cabecera">
@@ -189,6 +208,11 @@ interface FormTratamientoPlan {
                 <div class="plan-tratamiento__grid">
                   <div class="campo">
                     <label>Tratamiento</label>
+                    <input list="tratamientos-plan-list"
+                           [ngModel]="busquedaTratamientoPlanForm(gi, grupo.tratamientoId)"
+                           (ngModelChange)="buscarTratamientoPlanForm(gi, $event)"
+                           name="planTratamientoBusqueda_{{ gi }}"
+                           placeholder="Escribe para buscar o abre la lista">
                     <select [ngModel]="grupo.tratamientoId" (ngModelChange)="actualizarTratamientoPlanForm(gi, Number($event))" name="planTratamiento_{{ gi }}">
                       @for (t of tratamientosLista; track t.id) {
                         <option [value]="t.id">{{ t.nombre }} · {{ soles(t.precio) }}</option>
@@ -682,12 +706,14 @@ export class SesionesComponent {
   formCorreo = signal('');
   formLocalId = signal(0);
   formBaseCarga = signal('Personalizado');
+  formBaseBusqueda = signal('Personalizado (vacío)');
   formNombrePlan = signal('');
   formPrecioTotal = signal<number>(0);
   formPrecioBase = signal<number>(0);
   formPagado = signal<number>(0);
   formNotas = signal('');
   formTratamientosPlan = signal<FormTratamientoPlan[]>([]);
+  formTratamientoBusqueda = signal<Record<number, string>>({});
   editoresSesionAbiertos = signal<Record<string, boolean>>({});
   pacientePlanEncontrado = signal<Paciente | null>(null);
 
@@ -833,6 +859,8 @@ export class SesionesComponent {
 
   cargarBase(val: string): void {
     this.formBaseCarga.set(val);
+    this.formBaseBusqueda.set(this.baseCargaEtiqueta(val));
+    this.formTratamientoBusqueda.set({});
     if (val === 'Personalizado') {
       this.formNombrePlan.set('');
       this.formPrecioBase.set(0);
@@ -881,6 +909,11 @@ export class SesionesComponent {
 
   agregarTratamientoPlanForm(): void {
     this.formTratamientosPlan.update(list => [...list, this.crearTratamientoPlanForm(this.tratamientosLista[0]?.id ?? 1)]);
+    const indice = this.formTratamientosPlan().length - 1;
+    const tratamientoId = this.formTratamientosPlan()[indice]?.tratamientoId;
+    if (tratamientoId) {
+      this.formTratamientoBusqueda.update(v => ({ ...v, [indice]: this.tratamientoEtiqueta(tratamientoId) }));
+    }
     this.recalcularPrecioNuevoPlan();
   }
 
@@ -891,7 +924,69 @@ export class SesionesComponent {
 
   actualizarTratamientoPlanForm(index: number, tratamientoId: number): void {
     this.formTratamientosPlan.update(list => list.map((grupo, i) => i === index ? { ...grupo, tratamientoId } : grupo));
+    this.formTratamientoBusqueda.update(v => ({ ...v, [index]: this.tratamientoEtiqueta(tratamientoId) }));
     this.recalcularPrecioNuevoPlan();
+  }
+
+  buscarBaseCarga(valor: string): void {
+    this.formBaseBusqueda.set(valor);
+    const normalizado = this.normalizarTexto(valor);
+    if (this.normalizarTexto('Personalizado (vacío)') === normalizado || this.normalizarTexto('Personalizado') === normalizado) {
+      this.cargarBase('Personalizado');
+      return;
+    }
+
+    const promo = this.promocionesLista.find(p =>
+      this.normalizarTexto(this.baseCargaEtiqueta(`promo-${p.id}`)) === normalizado ||
+      this.normalizarTexto(p.titulo) === normalizado
+    );
+    if (promo) {
+      this.cargarBase(`promo-${promo.id}`);
+      return;
+    }
+
+    const tratamiento = this.tratamientosLista.find(t =>
+      this.normalizarTexto(this.baseCargaEtiqueta(`trat-${t.id}`)) === normalizado ||
+      this.normalizarTexto(t.nombre) === normalizado
+    );
+    if (tratamiento) {
+      this.cargarBase(`trat-${tratamiento.id}`);
+    }
+  }
+
+  buscarTratamientoPlanForm(index: number, valor: string): void {
+    this.formTratamientoBusqueda.update(v => ({ ...v, [index]: valor }));
+    const tratamiento = this.tratamientosLista.find(t =>
+      this.normalizarTexto(this.tratamientoEtiqueta(t.id)) === this.normalizarTexto(valor) ||
+      this.normalizarTexto(t.nombre) === this.normalizarTexto(valor)
+    );
+    if (tratamiento) {
+      this.actualizarTratamientoPlanForm(index, tratamiento.id);
+    }
+  }
+
+  busquedaTratamientoPlanForm(index: number, tratamientoId: number): string {
+    return this.formTratamientoBusqueda()[index] ?? this.tratamientoEtiqueta(tratamientoId);
+  }
+
+  baseCargaEtiqueta(valor: string): string {
+    if (valor === 'Personalizado') { return 'Personalizado (vacío)'; }
+    if (valor.startsWith('promo-')) {
+      const id = Number(valor.replace('promo-', ''));
+      const promo = this.promocionesLista.find(p => p.id === id);
+      return promo ? `Promoción · ${promo.titulo} (${promo.sesiones} ses.)` : 'Promoción';
+    }
+    if (valor.startsWith('trat-')) {
+      const id = Number(valor.replace('trat-', ''));
+      const tratamiento = this.tratamientosLista.find(t => t.id === id);
+      return tratamiento ? `Tratamiento · ${tratamiento.nombre}` : 'Tratamiento';
+    }
+    return valor;
+  }
+
+  tratamientoEtiqueta(tratamientoId: number): string {
+    const tratamiento = this.tratamientosLista.find(t => t.id === tratamientoId);
+    return tratamiento ? `${tratamiento.nombre} · ${this.soles(tratamiento.precio)}` : '';
   }
 
   alternarMultisesionPlanForm(index: number, multisesion: boolean): void {
@@ -1002,6 +1097,8 @@ export class SesionesComponent {
     this.formNotas.set('');
     this.formTratamientosPlan.set([]);
     this.formBaseCarga.set('Personalizado');
+    this.formBaseBusqueda.set('Personalizado (vacío)');
+    this.formTratamientoBusqueda.set({});
     this.pacientePlanEncontrado.set(null);
   }
 
@@ -1039,5 +1136,9 @@ export class SesionesComponent {
 
   private todasLasSesiones(): SesionPlan[] {
     return this.planes.planes().flatMap(p => p.sesiones);
+  }
+
+  private normalizarTexto(valor: string): string {
+    return valor.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
   }
 }

@@ -85,6 +85,7 @@ export class CalendarioComponent {
   pagoCodigo = signal<Record<number, string>>({});
   editFecha = signal<Record<number, string>>({});
   editHora = signal<Record<number, string>>({});
+  manualTratamientoBusqueda = signal<Record<number, string>>({});
   manualPacienteEncontrado = signal(this.pacientes.porDni('') ?? null);
 
   manualDni = '';
@@ -236,7 +237,28 @@ export class CalendarioComponent {
 
   cambiarTratamientoSeguimiento(indice: number, tratamientoId: number): void {
     this.manualSeguimientos.update(lista => lista.map((item, i) => i === indice ? { ...item, tratamientoId } : item));
+    this.manualTratamientoBusqueda.update(v => ({ ...v, [indice]: this.tratamientoEtiqueta(tratamientoId) }));
     this.recalcularManualDesdeSeguimientos();
+  }
+
+  buscarTratamientoManual(indice: number, valor: string): void {
+    this.manualTratamientoBusqueda.update(v => ({ ...v, [indice]: valor }));
+    const seleccionado = this.tratamientosCatalogo.find(t =>
+      this.normalizarTexto(this.tratamientoEtiqueta(t.id)) === this.normalizarTexto(valor) ||
+      this.normalizarTexto(t.nombre) === this.normalizarTexto(valor)
+    );
+    if (seleccionado) {
+      this.cambiarTratamientoSeguimiento(indice, seleccionado.id);
+    }
+  }
+
+  busquedaTratamientoManual(indice: number, tratamientoId: number): string {
+    return this.manualTratamientoBusqueda()[indice] ?? this.tratamientoEtiqueta(tratamientoId);
+  }
+
+  tratamientoEtiqueta(tratamientoId: number): string {
+    const tratamiento = tratamientoPorId(tratamientoId);
+    return tratamiento ? `${tratamiento.nombre} · ${soles(tratamiento.precio)}` : '';
   }
 
   alternarMultisesionTratamiento(indice: number, multisesion: boolean): void {
@@ -449,6 +471,7 @@ export class CalendarioComponent {
     this.manualMetodo = 'Efectivo';
     this.manualPlanNombre = '';
     this.manualSeguimientos.set([this.crearSeguimientoManualVacio(true)]);
+    this.manualTratamientoBusqueda.set({});
     this.recalcularManualDesdeSeguimientos();
   }
 
@@ -535,5 +558,9 @@ export class CalendarioComponent {
     const [hi, mi] = inicio.split(':').map(Number);
     const [hf, mf] = fin.split(':').map(Number);
     return (hf * 60 + mf) - (hi * 60 + mi);
+  }
+
+  private normalizarTexto(valor: string): string {
+    return valor.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
   }
 }

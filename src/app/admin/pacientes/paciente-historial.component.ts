@@ -99,7 +99,7 @@ export class PacienteHistorialComponent {
     const p = this.paciente();
     if (!p) { return []; }
     const nombre = `${p.nombre} ${p.apellido}`.toLowerCase();
-    return PEDIDOS.filter(o => o.cliente.toLowerCase() === nombre || o.celular === p.celular)
+    return PEDIDOS.filter(o => (o.dni && o.dni === p.dni) || o.cliente.toLowerCase() === nombre || o.celular === p.celular)
       .sort((a, b) => b.fecha.localeCompare(a.fecha));
   });
   total = computed(() => this.citas().reduce((t, c) => t + c.montoPagado, 0) + this.pedidos().reduce((t, p) => t + p.pagado, 0));

@@ -42,10 +42,9 @@ export interface DetallePago {
 }
 
 export type EstadoPedido =
-  | 'Pendiente'
-  | 'Pagado'
-  | 'Preparando'
-  | 'Listo para recojo'
+  | 'Nuevo pedido'
+  | 'En preparación'
+  | 'Listo para entregar'
   | 'Entregado'
   | 'Cancelado';
 
@@ -204,6 +203,9 @@ export interface Pedido {
   id: number;
   codigo: string;
   fecha: string;
+  dni?: string;
+  nombre?: string;
+  apellido?: string;
   cliente: string;
   celular: string;
   items: { productoId: number; cantidad: number }[];
@@ -214,6 +216,8 @@ export interface Pedido {
   total: number;
   pagado: number;
   codigoOperacion?: string;
+  responsableEntrega?: string;
+  entregadoEl?: string;
 }
 
 export type RolUsuario = 'Administrador' | 'Recepcionista' | 'Especialista' | 'Paciente';

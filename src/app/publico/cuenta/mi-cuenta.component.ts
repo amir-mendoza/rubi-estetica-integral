@@ -153,7 +153,7 @@ export class MiCuentaComponent {
       return [];
     }
     const nombre = `${u.nombre} ${u.apellido}`.toLowerCase();
-    return PEDIDOS.filter(p => p.cliente.toLowerCase() === nombre);
+    return PEDIDOS.filter(p => (p.dni && p.dni === u.dni) || p.cliente.toLowerCase() === nombre);
   });
 
   formatoFecha(iso: string): string {
