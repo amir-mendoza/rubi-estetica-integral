@@ -6,6 +6,8 @@ Before starting the backend or deploying the application, read the
 [security, licensing and production checklist](docs/seguridad-licencias-produccion.md).
 The editable project risk register is available in
 [docs/registro-riesgos.ipynb](docs/registro-riesgos.ipynb).
+For a shorter solved-versus-pending view, use the
+[high-risk status checklist](docs/estado-altos-riesgos.ipynb).
 
 ## Development server
 
