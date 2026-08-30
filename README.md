@@ -4,6 +4,8 @@ This project uses [Angular](https://angular.dev/) 22.1.
 
 Before starting the backend or deploying the application, read the
 [security, licensing and production checklist](docs/seguridad-licencias-produccion.md).
+The editable project risk register is available in
+[docs/registro-riesgos.ipynb](docs/registro-riesgos.ipynb).
 
 ## Development server
 
@@ -41,7 +43,7 @@ This will compile your project and store the build artifacts in the `dist/` dire
 
 ## Running unit tests
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+To execute unit tests with Vitest, use the following command:
 
 ```bash
 ng test
