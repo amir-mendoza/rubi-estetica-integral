@@ -8,6 +8,8 @@ The editable project risk register is available in
 [docs/registro-riesgos.ipynb](docs/registro-riesgos.ipynb).
 For a shorter solved-versus-pending view, use the
 [high-risk status checklist](docs/estado-altos-riesgos.ipynb).
+Responsibilities for development, the business owner, SUNAT and hosting are split in
+[docs/responsabilidades-produccion.ipynb](docs/responsabilidades-produccion.ipynb).
 
 ## Development server
 

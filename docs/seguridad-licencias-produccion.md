@@ -8,7 +8,7 @@ la validacion final de un abogado peruano especializado en proteccion de datos.
 ## Decisiones cerradas
 
 - Frontend: Angular 22, version con soporte activo. No desplegar Angular 19.
-- Backend: Spring Boot sobre Eclipse Temurin 21 LTS. No usar Oracle JDK en
+- Backend: Spring Boot sobre Eclipse Temurin 25 LTS. No usar Oracle JDK en
   desarrollo, CI ni produccion.
 - Base de datos: MySQL 8.4 LTS en el VPS o en un servicio administrado. Nunca debe
   exponerse el puerto 3306 a internet.
@@ -180,7 +180,7 @@ y datos de habilitacion que la empresa determine con su asesor sanitario.
 | --- | --- | --- |
 | Angular | Permitido | Licencia MIT; conservar avisos al redistribuir. |
 | Spring Boot | Permitido | Licencia Apache 2.0; conservar avisos aplicables. |
-| Eclipse Temurin 21 | Permitido | OpenJDK GPLv2 con Classpath Exception; usar la misma distribucion en local, CI y VPS. |
+| Eclipse Temurin 25 | Permitido | OpenJDK GPLv2 con Classpath Exception; usar la misma distribucion en local, CI y VPS. Temurin anuncia disponibilidad al menos hasta septiembre de 2031. |
 | MySQL Community 8.4 | Permitido para operar el servicio | No empaquetar ni redistribuir MySQL como parte de un producto propietario sin revisar GPL/licencia comercial. |
 | Izipay | Sujeto a contrato | Usar credenciales, marcas y datos de pago segun el contrato y la documentacion de Izipay. |
 | Hostinger VPS | Sujeto a contrato/DPA | Documentar ubicacion, subencargados, transferencia internacional, respaldos y responsabilidades. |
