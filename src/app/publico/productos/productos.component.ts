@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CATEGORIAS_PRODUCTO, PRODUCTOS, soles } from '../../data/datos';
@@ -83,6 +83,7 @@ import { RedesService } from '../../compartido/redes.service';
       </div>
     </section>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .redes-bloque {
       display: flex; align-items: center; justify-content: space-between;

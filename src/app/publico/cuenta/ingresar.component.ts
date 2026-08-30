@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SesionService } from '../../compartido/sesion.service';
@@ -79,6 +79,7 @@ import { SesionService } from '../../compartido/sesion.service';
       </div>
     </section>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .acceso { display: grid; grid-template-columns: 1.1fr 1fr; gap: 36px; align-items: start; max-width: 940px; }
     .panel--suave { background: var(--rosa-50); }

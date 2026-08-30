@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -87,6 +87,7 @@ import { RouterLink } from '@angular/router';
       </div>
     </section>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .historia { display: grid; grid-template-columns: 1.05fr 1fr; gap: 72px; align-items: center; }
     .historia__imagen { margin: 0; border-radius: var(--radio-lg); overflow: hidden; }

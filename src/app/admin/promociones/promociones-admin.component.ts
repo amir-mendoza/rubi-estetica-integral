@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HOY_ISO, TRATAMIENTOS, soles } from '../../data/datos';
 import { CategoriaTratamiento, Promocion } from '../../data/modelos';
@@ -407,6 +407,7 @@ function promocionVacia(): Promocion {
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .kpis-4 { grid-template-columns: repeat(4, 1fr); margin-bottom: 22px; }
     .categorias-panel { margin-bottom: 22px; }

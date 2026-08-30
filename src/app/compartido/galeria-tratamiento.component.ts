@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, effect, input, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, effect, input, signal, viewChild, ChangeDetectionStrategy } from '@angular/core';
 
 interface Pieza {
   tipo: 'video' | 'imagen';
@@ -88,6 +88,7 @@ interface Pieza {
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .galeria { display: grid; gap: 14px; min-width: 0; }
     .galeria__escena {

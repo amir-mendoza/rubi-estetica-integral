@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CATEGORIAS_TRATAMIENTO, CITAS, TRATAMIENTOS, soles } from '../../data/datos';
 import { CategoriaTratamiento, Tratamiento } from '../../data/modelos';
@@ -279,6 +279,7 @@ function tratamientoVacio(): Tratamiento {
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .media-editor {
       min-width: 0; padding: 18px 4%; border: 1px solid var(--linea);

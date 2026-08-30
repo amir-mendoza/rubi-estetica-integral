@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CarritoService } from '../../compartido/carrito.service';
@@ -264,6 +264,7 @@ import { LOCALES, soles } from '../../data/datos';
       </div>
     </section>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .checkout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(320px, .95fr); gap: 32px; align-items: start; }
     .checkout > * { min-width: 0; }

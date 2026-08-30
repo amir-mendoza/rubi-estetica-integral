@@ -7,7 +7,8 @@ import {
   computed,
   effect,
   inject,
-  viewChild
+  viewChild,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { FondoService } from './fondo.service';
 
@@ -34,6 +35,7 @@ import { FondoService } from './fondo.service';
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .fondo {
       position: fixed;

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HORAS_SELECTOR, LOCALES, cabinasDeSede, cupoDeSede } from '../../data/datos';
 import { MarcaService } from '../../compartido/marca.service';
@@ -590,6 +590,7 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
       </div>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .pestanas { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
     .pestanas button {

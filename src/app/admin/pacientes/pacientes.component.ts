@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { soles, tratamientoPorId } from '../../data/datos';
@@ -207,6 +207,7 @@ import { SesionService } from '../../compartido/sesion.service';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .kpis-4 { grid-template-columns: repeat(4, 1fr); margin-bottom: 22px; }
     .fila-detalle td { background: var(--rosa-50); }

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MapaSedeComponent } from '../../compartido/mapa-sede.component';
@@ -100,6 +100,7 @@ import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.
       </div>
     </section>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .contacto { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; align-items: start; }
     .contacto__horario { display: flex; justify-content: space-between; gap: 12px; font-size: .94rem; color: var(--gris); padding: 6px 0; border-bottom: 1px dashed var(--linea); }

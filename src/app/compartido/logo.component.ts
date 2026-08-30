@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, ChangeDetectionStrategy } from '@angular/core';
 import { MarcaService } from './marca.service';
 
 @Component({
@@ -9,6 +9,7 @@ import { MarcaService } from './marca.service';
       <img [src]="panel ? marca.logoAdmin() : marca.logoSitio()" alt="Rubí Estética Integral">
     </span>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .logo {
       display: inline-flex;

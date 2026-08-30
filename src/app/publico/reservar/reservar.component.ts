@@ -1,4 +1,4 @@
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
@@ -29,6 +29,7 @@ const CATEGORIAS: (CategoriaTratamiento | 'Todos')[] = [
   standalone: true,
   imports: [RouterLink, FormsModule, RedesEnlacesComponent],
   templateUrl: './reservar.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './reservar.component.scss'
 })
 export class ReservarComponent implements OnDestroy {

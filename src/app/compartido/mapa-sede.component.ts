@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Local } from '../data/modelos';
 
@@ -42,6 +42,7 @@ import { Local } from '../data/modelos';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .mapa {
       border: 1px solid var(--linea); border-radius: var(--radio-lg);

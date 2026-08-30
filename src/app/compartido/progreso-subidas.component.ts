@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { CargadorRuedaComponent } from './cargador-rueda.component';
 import { CargadorService } from './cargador.service';
 import { SubidasService } from './subidas.service';
@@ -30,6 +30,7 @@ import { SubidasService } from './subidas.service';
       </div>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .subidas { display: grid; gap: 10px; min-width: 0; }
     .subidas--flotante {

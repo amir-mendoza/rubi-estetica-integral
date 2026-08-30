@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { RedesService } from './redes.service';
 
 @Component({
@@ -33,6 +33,7 @@ import { RedesService } from './redes.service';
       </ul>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .redes {
       display: flex;

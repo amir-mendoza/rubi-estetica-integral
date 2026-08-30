@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CITAS, ESPECIALISTAS, HOY_ISO, localPorId, nombrePaciente, soles, tratamientoPorId } from '../../data/datos';
@@ -110,6 +110,7 @@ function especialistaVacia(): Especialista {
       }
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .panel-form { margin-bottom: 22px; }
     .esp-form { display: grid; grid-template-columns: minmax(min(100%, 120px), 150px) repeat(4, minmax(min(100%, 150px), 1fr)); gap: 14px; padding: 20px 4% 24px; align-items: end; }

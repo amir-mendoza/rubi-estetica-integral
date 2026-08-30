@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -47,6 +47,7 @@ interface ManualTratamientoSeguimiento {
   standalone: true,
   imports: [FormsModule],
   templateUrl: './calendario.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './calendario.component.scss'
 })
 export class CalendarioComponent {

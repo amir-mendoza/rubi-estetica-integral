@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ESPECIALISTAS } from '../../data/datos';
 import { Especialista } from '../../data/modelos';
@@ -33,6 +33,7 @@ import { Especialista } from '../../data/modelos';
       </div>
     </section>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .ficha { background: #fff; border: 1px solid var(--linea); border-radius: var(--radio-lg); overflow: hidden; display: flex; flex-direction: column; }
     .ficha img { width: 100%; aspect-ratio: 4/4.4; object-fit: cover; }

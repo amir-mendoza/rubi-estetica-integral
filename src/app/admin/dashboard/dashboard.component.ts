@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   ESPECIALISTAS, LOCALES, PAGOS, PEDIDOS, PRODUCTOS, TRATAMIENTOS,
@@ -36,6 +36,7 @@ interface SeguimientoVista {
   standalone: true,
   imports: [RouterLink],
   templateUrl: './dashboard.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent {

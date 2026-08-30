@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PRODUCTOS, productoPorId, soles } from '../../data/datos';
@@ -112,6 +112,7 @@ import { RedesService } from '../../compartido/redes.service';
       </section>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .detalle-prod__redes {
       display: flex; align-items: center; flex-wrap: wrap; gap: 14px; min-width: 0;

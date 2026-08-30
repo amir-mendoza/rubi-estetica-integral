@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HOY_ISO, PEDIDOS, PRODUCTOS, aISO, productoPorId, soles } from '../../data/datos';
 import { EntregaPedido, EstadoPedido, MetodoPago, Pedido, Producto } from '../../data/modelos';
@@ -229,6 +229,7 @@ interface PedidoItemForm {
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .kpis-4 { grid-template-columns: repeat(4, 1fr); margin-bottom: 22px; }
     .pedido-form { margin-bottom: 22px; }

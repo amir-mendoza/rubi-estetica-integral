@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MapaSedeComponent } from '../../compartido/mapa-sede.component';
 import { CITAS, ESPECIALISTAS, HABITACIONES, HORAS_SELECTOR, HOY_ISO, LOCALES, formatoHora12, soles } from '../../data/datos';
@@ -219,6 +219,7 @@ function cabinaVacia(localId: number): Habitacion {
       </section>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .panel-form { margin-bottom: 22px; }
     .local-form { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)) minmax(340px, .86fr); gap: 14px; padding: 20px 22px 24px; align-items: end; }

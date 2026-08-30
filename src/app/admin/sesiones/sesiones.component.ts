@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { HORAS_SELECTOR, LOCALES, formatoFechaLarga, formatoHora12, soles, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
@@ -431,6 +431,7 @@ interface FormTratamientoPlan {
       <div class="tabla-panel"><p class="vacio">No hay planes que coincidan con la búsqueda.</p></div>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .kpis-4 { grid-template-columns: repeat(4, 1fr); margin-bottom: 22px; }
     .plan { background: #fff; border: 1px solid var(--linea); border-radius: var(--radio-lg); box-shadow: var(--sombra); margin-bottom: 20px; overflow: hidden; }

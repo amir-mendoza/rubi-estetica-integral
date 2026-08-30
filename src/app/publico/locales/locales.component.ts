@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MapaSedeComponent } from '../../compartido/mapa-sede.component';
 import { HABITACIONES, LOCALES } from '../../data/datos';
@@ -61,6 +61,7 @@ import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.
       </div>
     </section>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .sede {
       display: grid; grid-template-columns: 1fr 1.1fr; gap: 56px; align-items: center;

@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { PEDIDOS, PRODUCTOS, localPorId, soles, tratamientoPorId } from '../../data/datos';
 import { AgendaService } from '../../compartido/agenda.service';
@@ -78,6 +78,7 @@ import { PacientesService } from '../../compartido/pacientes.service';
       <div class="panel texto-centro"><h3>Paciente no encontrado</h3></div>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .ficha { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 22px; }
     .ficha div { display: grid; gap: 4px; }

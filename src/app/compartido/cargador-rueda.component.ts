@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { CargadorService, EstiloCargador } from './cargador.service';
 
 /**
@@ -49,6 +49,7 @@ import { CargadorService, EstiloCargador } from './cargador.service';
       }
     </span>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .rueda {
       position: relative; display: inline-block; flex: none;

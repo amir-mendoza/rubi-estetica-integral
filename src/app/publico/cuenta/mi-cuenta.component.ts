@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { SesionService } from '../../compartido/sesion.service';
 import {
@@ -110,6 +110,7 @@ import { Cita, Pedido } from '../../data/modelos';
       </div>
     </section>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .cuenta { display: grid; grid-template-columns: minmax(min(100%, 260px), 28%) minmax(0, 1fr); gap: 32px; align-items: start; }
     .perfil { display: flex; gap: 14px; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--linea); }

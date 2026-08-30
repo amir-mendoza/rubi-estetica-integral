@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CATEGORIAS_PRODUCTO, PRODUCTOS, soles } from '../../data/datos';
 import { Producto } from '../../data/modelos';
@@ -297,6 +297,7 @@ function enriquecerProducto(p: Producto): Producto {
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .kpis-4 { grid-template-columns: repeat(4, 1fr); margin-bottom: 22px; }
     .panel-form, .categorias-panel { margin-bottom: 22px; }

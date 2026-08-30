@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ESPECIALISTAS, LOCALES, PRODUCTOS, TRATAMIENTOS, soles } from '../../data/datos';
 import { PromoCarruselComponent } from './promo-carrusel.component';
@@ -10,6 +10,7 @@ import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.
   standalone: true,
   imports: [RouterLink, PromoCarruselComponent, RedesEnlacesComponent],
   templateUrl: './inicio.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './inicio.component.scss'
 })
 export class InicioComponent {

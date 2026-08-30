@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { soles } from '../../data/datos';
 import { PromocionesService } from '../../compartido/promociones.service';
@@ -110,6 +110,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
       </section>
     }
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .promociones {
       background: linear-gradient(180deg, #fff 0%, var(--rosa-50) 100%);

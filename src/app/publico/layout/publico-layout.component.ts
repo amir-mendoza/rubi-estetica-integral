@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, DestroyRef, ElementRef, HostListener, OnDestroy, computed, inject } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, HostListener, OnDestroy, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -17,6 +17,7 @@ import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent, FondoWebComponent, RedesEnlacesComponent, CargadorRutaComponent],
   templateUrl: './publico-layout.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './publico-layout.component.scss'
 })
 export class PublicoLayoutComponent implements AfterViewInit, OnDestroy {

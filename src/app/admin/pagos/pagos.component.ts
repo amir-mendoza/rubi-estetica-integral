@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HOY_ISO, LOCALES, PAGOS, localPorId, soles } from '../../data/datos';
 import { MetodoPago, MovimientoPago } from '../../data/modelos';
@@ -151,6 +151,7 @@ type PeriodoPago = 'hoy' | 'semana' | 'mes' | 'todo';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     .kpis-5 { grid-template-columns: repeat(5, 1fr); margin-bottom: 22px; }
     .cobro-inline {

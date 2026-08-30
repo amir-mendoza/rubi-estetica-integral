@@ -1,6 +1,9 @@
 # RubiPrototipo
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.27.
+This project uses [Angular](https://angular.dev/) 22.1.
+
+Before starting the backend or deploying the application, read the
+[security, licensing and production checklist](docs/seguridad-licencias-produccion.md).
 
 ## Development server
 
