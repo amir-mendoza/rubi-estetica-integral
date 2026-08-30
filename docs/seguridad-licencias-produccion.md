@@ -14,8 +14,10 @@ la validacion final de un abogado peruano especializado en proteccion de datos.
   exponerse el puerto 3306 a internet.
 - Pagos: Izipay mediante checkout alojado. Las llaves privadas y la validacion de
   webhooks pertenecen exclusivamente al backend.
-- Identidad: cada administradora, recepcionista y especialista debe tener una
-  cuenta individual. No se permite una cuenta compartida para acciones sobre
+- Identidad: existen solo dos paneles iniciales, Administracion y Recepcion. Rubi y
+  su socio usan cuentas administrativas separadas. Cada empleada autorizada usa su
+  propia cuenta de Recepcion, aunque varias trabajen en la misma computadora. No se
+  deja abierta una sesion de Rubi ni se comparten credenciales para actuar sobre
   datos personales.
 - Autenticacion: contrasenas almacenadas con Argon2id o BCrypt. Nunca texto plano,
   cifrado reversible ni credenciales en Angular/localStorage.
@@ -56,7 +58,9 @@ No se deben copiar pacientes ficticios ni credenciales del prototipo a produccio
 ## Controles obligatorios del backend
 
 - Autorizacion en cada endpoint por rol y por recurso, no solo ocultando botones.
-- Roles iniciales: Administracion, Recepcion y Especialista.
+- Roles iniciales: Administracion y Recepcion. Una especialista que tambien registre
+  pacientes recibe individualmente el permiso de Recepcion; no se crea un tercer
+  panel mientras el negocio no lo necesite.
 - Cookies de sesion `HttpOnly`, `Secure` y `SameSite`; no guardar JWT en
   localStorage.
 - MFA obligatorio para administracion y muy recomendado para recepcion.
@@ -162,6 +166,9 @@ La pagina vende productos y reserva servicios, por lo que antes de publicar debe
 - Definir terminos y condiciones de compra y reserva antes de habilitar pagos reales.
 - Emitir el comprobante de pago que corresponda mediante un sistema autorizado por
   SUNAT y vincularlo al pedido o atencion sin guardar la Clave SOL en la aplicacion.
+- Verificar antes de publicar cada cosmetico que su rotulado muestre la Notificacion
+  Sanitaria Obligatoria (NSO), lote y procedencia. La boleta del proveedor no
+  reemplaza la NSO del producto.
 
 Botox y otros procedimientos con infiltracion, inyeccion o sustancias modelantes
 requieren una verificacion regulatoria independiente del software. Antes de

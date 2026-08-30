@@ -10,6 +10,8 @@ For a shorter solved-versus-pending view, use the
 [high-risk status checklist](docs/estado-altos-riesgos.ipynb).
 Responsibilities for development, the business owner, SUNAT and hosting are split in
 [docs/responsabilidades-produccion.ipynb](docs/responsabilidades-produccion.ipynb).
+The agenda and evidence checklist for the client meeting on September 3, 2026 is in
+[docs/reunion-rubi-2026-09-03.ipynb](docs/reunion-rubi-2026-09-03.ipynb).
 
 ## Development server
 
