@@ -48,7 +48,25 @@
 .opcion__texto { flex: 1; }
 .opcion__precio {
   padding: 0 22px; font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 1.5rem; color: var(--vino); white-space: nowrap;
+  font-size: 1.65rem; color: var(--vino); white-space: nowrap;
+  align-items: flex-end;
+  text-align: right;
+  min-width: 104px;
+}
+.opcion__precio--stack {
+  gap: 6px;
+}
+.opcion__precio--stack span {
+  font-size: 1.05rem;
+  color: var(--vino);
+  font-weight: 600;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.opcion__precio--stack small {
+  font-size: 1.08rem;
+  line-height: 1.1;
+  color: var(--vino);
+  font-family: 'Cormorant Garamond', Georgia, serif;
 }
 .opcion--cualquiera { padding: 4px 0; }
 .lista-opciones { display: flex; flex-direction: column; }
@@ -117,6 +135,80 @@
 .filtro--chip { background: var(--rosa-50); border-color: var(--rosa); font-size: .86rem; }
 .filtro--activo { background: var(--vino); border-color: var(--vino); color: #fff; }
 .campo--busqueda { margin-bottom: 20px; }
+
+.reserva-acciones-superiores {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin: -8px 0 18px;
+  flex-wrap: wrap;
+}
+
+.seleccion-superior {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+  margin-bottom: 20px;
+  padding: 18px;
+  border: 1px solid rgba(176, 27, 114, .22);
+  border-radius: var(--radio-lg);
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(125, 15, 67, .06);
+}
+.seleccion-superior__detalle,
+.seleccion-superior__total {
+  min-width: 0;
+}
+.seleccion-superior__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.seleccion-superior__items span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--rosa);
+  border-radius: 999px;
+  background: var(--rosa-50);
+  color: var(--tinta);
+  font-size: .94rem;
+  overflow-wrap: anywhere;
+}
+.seleccion-superior__items b {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--magenta);
+  color: #fff;
+  font-size: .8rem;
+}
+.seleccion-superior__total {
+  display: grid;
+  gap: 5px;
+  justify-items: end;
+  padding-left: 18px;
+  border-left: 1px dashed var(--linea);
+}
+.seleccion-superior__total span {
+  font-size: .78rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gris-claro);
+}
+.seleccion-superior__total strong {
+  color: var(--vino);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.9rem;
+}
 
 /* Horarios */
 .horarios { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 118px), 1fr)); gap: 10px; }
@@ -244,7 +336,27 @@
     padding: 14px;
   }
   .opcion__precio {
+    width: 100%;
+    min-width: 0;
     padding: 0 14px 14px;
+    align-items: flex-start;
+    text-align: left;
+  }
+  .reserva-acciones-superiores {
+    justify-content: stretch;
+  }
+  .reserva-acciones-superiores .btn {
+    flex: 1 1 140px;
+  }
+  .seleccion-superior {
+    grid-template-columns: 1fr;
+  }
+  .seleccion-superior__total {
+    justify-items: start;
+    padding-left: 0;
+    padding-top: 14px;
+    border-left: 0;
+    border-top: 1px dashed var(--linea);
   }
   .acciones-paso,
   .confirmacion__acciones,

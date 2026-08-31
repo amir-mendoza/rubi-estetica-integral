@@ -135,6 +135,28 @@
               <h3>2. Elige uno o más tratamientos</h3>
               <p>Todos los tratamientos elegidos se suman en tu comprobante. La primera atención se agenda hoy; lo siguiente se coordina en recepción si hace falta.</p>
 
+              <div class="reserva-acciones-superiores">
+                <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
+                <button class="btn btn--primario btn--sm" [disabled]="!tratamientosSeleccionados().length" (click)="siguiente()">Continuar</button>
+              </div>
+
+              @if (tratamientosSeleccionados().length) {
+                <div class="seleccion-superior">
+                  <div class="seleccion-superior__detalle">
+                    <span class="dato__label">Tratamientos elegidos</span>
+                    <div class="seleccion-superior__items">
+                      @for (item of tratamientosSeleccionados(); track item.id; let i = $index) {
+                        <span><b>{{ i + 1 }}</b> {{ item.nombre }}</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="seleccion-superior__total">
+                    <span>Total acumulado</span>
+                    <strong>{{ soles(totalReserva()) }}</strong>
+                  </div>
+                </div>
+              }
+
               <div class="filtros">
                 @for (c of categorias; track c) {
                   <button class="filtro" [class.filtro--activo]="categoria() === c" (click)="elegirCategoria(c)">
@@ -175,21 +197,6 @@
                   <div class="aviso">No hay tratamientos con esos filtros. Prueba con otra categoría.</div>
                 }
               </div>
-
-              @if (tratamientosSeleccionados().length) {
-                <div class="panel" style="margin-top:18px; padding:18px">
-                  <h4 style="margin-bottom:12px">Tratamientos elegidos</h4>
-                  <div class="resumen__sesiones" style="border-bottom:0; padding:0">
-                    @for (item of tratamientosSeleccionados(); track item.id; let i = $index) {
-                      <span><b>{{ i + 1 }}</b> {{ item.nombre }}</span>
-                    }
-                  </div>
-                  <div class="resumen__fila" style="padding-bottom:0; border-bottom:0">
-                    <span>Total acumulado</span>
-                    <strong>{{ soles(totalReserva()) }}</strong>
-                  </div>
-                </div>
-              }
 
               <div class="acciones-paso">
                 <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>

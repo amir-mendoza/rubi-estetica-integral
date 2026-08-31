@@ -196,14 +196,20 @@ export class ReservarComponent implements OnDestroy {
       }
     }
 
-    if (localId) {
-      this.local.set(LOCALES.find(l => l.id === localId) ?? null);
-      this.paso.set(this.promocion() ? 3 : 2);
-    }
-
     if (tratId) {
       this.tratamientosIds.set([tratId]);
+    }
+
+    if (localId) {
+      this.local.set(LOCALES.find(l => l.id === localId) ?? null);
+    }
+
+    if (!this.local()) {
+      this.paso.set(1);
+    } else if (this.promocion() || this.tratamientosSeleccionados().length) {
       this.paso.set(3);
+    } else {
+      this.paso.set(2);
     }
   }
 
@@ -211,7 +217,7 @@ export class ReservarComponent implements OnDestroy {
     this.local.set(l);
     this.limpiarBloqueRetenido();
     this.avisoReserva.set('');
-    this.paso.set(this.promocion() ? 3 : 2);
+    this.paso.set(this.promocion() || this.tratamientosSeleccionados().length ? 3 : 2);
   }
 
   alternarTratamiento(t: Tratamiento): void {
