@@ -23,8 +23,21 @@ import { PromocionesService } from '../../compartido/promociones.service';
             </div>
             <div class="promociones__controles">
               <button class="promo__flecha" type="button" aria-label="Promocion anterior" (click)="anterior()">‹</button>
+              <button class="promo__auto" type="button" (click)="alternarAuto()">
+                {{ pausado() ? 'Reanudar' : 'Pausar' }}
+              </button>
               <button class="promo__flecha" type="button" aria-label="Promocion siguiente" (click)="siguiente()">›</button>
             </div>
+          </div>
+
+          <div class="promociones__lista" aria-label="Catalogo breve de promociones">
+            @for (p of promos(); track p.id; let i = $index) {
+              <button type="button" class="promo-mini" [class.promo-mini--activa]="i === indice()" (click)="ir(i)">
+                <span>{{ p.etiqueta }}</span>
+                <strong>{{ p.titulo }}</strong>
+                @if (p.precio) { <em>{{ soles(p.precio) }}</em> }
+              </button>
+            }
           </div>
 
           <div class="promociones__marco"
@@ -96,16 +109,6 @@ import { PromocionesService } from '../../compartido/promociones.service';
               }
             </div>
           </div>
-
-          <div class="promociones__lista" aria-label="Catalogo breve de promociones">
-            @for (p of promos(); track p.id; let i = $index) {
-              <button type="button" class="promo-mini" [class.promo-mini--activa]="i === indice()" (click)="ir(i)">
-                <span>{{ p.etiqueta }}</span>
-                <strong>{{ p.titulo }}</strong>
-                @if (p.precio) { <em>{{ soles(p.precio) }}</em> }
-              </button>
-            }
-          </div>
         </div>
       </section>
     }
@@ -116,7 +119,12 @@ import { PromocionesService } from '../../compartido/promociones.service';
       background: linear-gradient(180deg, #fff 0%, var(--rosa-50) 100%);
       overflow: hidden;
     }
+    .promociones .contenedor {
+      display: flex;
+      flex-direction: column;
+    }
     .promociones__encabezado {
+      order: 1;
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
@@ -131,8 +139,10 @@ import { PromocionesService } from '../../compartido/promociones.service';
       display: flex;
       gap: 10px;
       flex: none;
+      align-items: center;
     }
     .promociones__marco {
+      order: 2;
       position: relative;
       border: 1px solid var(--linea);
       border-radius: var(--radio-lg);
@@ -359,6 +369,26 @@ import { PromocionesService } from '../../compartido/promociones.service';
       border-color: var(--vino);
       color: #fff;
     }
+    .promo__auto {
+      min-height: 42px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio);
+      background: #fff;
+      color: var(--vino);
+      padding: 0 18px;
+      font-family: inherit;
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .2s ease, color .2s ease, border-color .2s ease;
+    }
+    .promo__auto:hover {
+      background: var(--rosa-50);
+      border-color: var(--magenta-300);
+      color: var(--magenta);
+    }
     .promo__puntos {
       display: flex;
       justify-content: center;
@@ -375,6 +405,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
     }
     .promo__puntos button.activo { background: var(--magenta); }
     .promociones__lista {
+      order: 3;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 14px;
@@ -422,6 +453,33 @@ import { PromocionesService } from '../../compartido/promociones.service';
     }
     @media (max-width: 960px) {
       .promociones__encabezado { align-items: flex-start; }
+      .promo__auto { display: none; }
+      .promociones__lista {
+        order: 2;
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(210px, 34%);
+        grid-template-columns: none;
+        gap: 12px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        margin-inline: -24px;
+        margin-top: 0;
+        margin-bottom: 16px;
+        padding: 2px 24px 14px;
+      }
+      .promociones__marco { order: 3; }
+      .promociones__lista::-webkit-scrollbar { display: none; }
+      .promo-mini {
+        scroll-snap-align: start;
+        padding: 15px;
+      }
+      .promo-mini:hover,
+      .promo-mini--activa {
+        transform: none;
+      }
       .promo {
         grid-template-columns: 1fr;
       }
@@ -429,14 +487,34 @@ import { PromocionesService } from '../../compartido/promociones.service';
       .promo__arte img { max-height: none; }
       .promo__contenido { padding: 34px 28px 24px; }
       .promo h3 { max-width: 14ch; }
-      .promociones__lista { grid-template-columns: 1fr; }
       .promo__puntos { justify-content: flex-start; padding-left: 28px; }
     }
     @media (max-width: 640px) {
       .promociones__encabezado { display: block; }
       .promociones__controles { margin-top: 18px; }
+      .promociones__lista {
+        grid-auto-columns: minmax(154px, 47%);
+        margin-inline: -16px;
+        padding-inline: 16px;
+      }
+      .promo-mini {
+        padding: 13px 12px;
+        min-height: 118px;
+      }
+      .promo-mini span {
+        font-size: .66rem;
+        margin-bottom: 7px;
+      }
+      .promo-mini strong {
+        font-size: 1rem;
+      }
       .promo__datos { grid-template-columns: 1fr; }
       .promo__arte { min-height: 0; }
+      .promo__arte img {
+        max-height: 300px;
+        aspect-ratio: 4 / 3;
+        object-fit: contain;
+      }
       .promo__sello {
         width: 86px;
         height: 86px;
@@ -445,6 +523,18 @@ import { PromocionesService } from '../../compartido/promociones.service';
         font-size: .78rem;
       }
       .promo__contenido { padding: 28px 22px 24px; }
+      .promo h3 {
+        max-width: none;
+        font-size: 1.75rem;
+      }
+      .promo__texto {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .promo__incluye p { display: none; }
+      .promo__puntos { display: none; }
       .promo__acciones .btn { width: 100%; }
     }
     @media (prefers-reduced-motion: no-preference) {
@@ -466,31 +556,57 @@ import { PromocionesService } from '../../compartido/promociones.service';
 export class PromoCarruselComponent implements OnInit, OnDestroy {
   private temporizador?: ReturnType<typeof setInterval>;
   private arrastre: { id: number; y: number } | null = null;
+  private consulta?: MediaQueryList;
 
   soles = soles;
   indice = signal(0);
+  compacto = signal(false);
+  pausado = signal(false);
   promos = computed(() => this.promociones.carrusel());
 
   constructor(private promociones: PromocionesService) {}
 
   ngOnInit(): void {
-    this.reanudar();
+    this.consulta = window.matchMedia('(max-width: 960px)');
+    this.actualizarVista();
+    this.consulta.addEventListener('change', this.alCambiarVista);
   }
 
   ngOnDestroy(): void {
     this.pausar();
+    this.consulta?.removeEventListener('change', this.alCambiarVista);
   }
 
-  ir(i: number): void { this.indice.set(i); }
+  ir(i: number): void {
+    this.indice.set(i);
+    this.pausado.set(true);
+    this.pausar();
+  }
 
   siguiente(): void {
-    const total = this.promos().length;
-    if (total) { this.indice.set((this.indice() + 1) % total); }
+    this.pausado.set(true);
+    this.pausar();
+    this.mover(1);
   }
 
   anterior(): void {
+    this.pausado.set(true);
+    this.pausar();
+    this.mover(-1);
+  }
+
+  alternarAuto(): void {
+    this.pausado.update(valor => !valor);
+    if (this.pausado()) {
+      this.pausar();
+    } else {
+      this.reanudar();
+    }
+  }
+
+  private mover(direccion: 1 | -1): void {
     const total = this.promos().length;
-    if (total) { this.indice.set((this.indice() - 1 + total) % total); }
+    if (total) { this.indice.set((this.indice() + direccion + total) % total); }
   }
 
   pausar(): void {
@@ -502,12 +618,14 @@ export class PromoCarruselComponent implements OnInit, OnDestroy {
 
   reanudar(): void {
     this.pausar();
-    this.temporizador = setInterval(() => this.siguiente(), 7000);
+    if (this.compacto() || this.pausado()) { return; }
+    this.temporizador = setInterval(() => this.mover(1), 7000);
   }
 
   iniciarArrastre(evento: PointerEvent): void {
     this.arrastre = { id: evento.pointerId, y: evento.clientY };
     (evento.currentTarget as HTMLElement).setPointerCapture(evento.pointerId);
+    this.pausado.set(true);
     this.pausar();
   }
 
@@ -515,7 +633,7 @@ export class PromoCarruselComponent implements OnInit, OnDestroy {
     if (!this.arrastre || this.arrastre.id !== evento.pointerId) { return; }
     const desplazamiento = evento.clientY - this.arrastre.y;
     if (Math.abs(desplazamiento) < 42) { return; }
-    desplazamiento < 0 ? this.siguiente() : this.anterior();
+    this.mover(desplazamiento < 0 ? 1 : -1);
     this.arrastre = { ...this.arrastre, y: evento.clientY };
   }
 
@@ -529,6 +647,17 @@ export class PromoCarruselComponent implements OnInit, OnDestroy {
   cancelarArrastre(): void {
     this.arrastre = null;
     this.reanudar();
+  }
+
+  private alCambiarVista = () => this.actualizarVista();
+
+  private actualizarVista(): void {
+    this.compacto.set(this.consulta?.matches ?? false);
+    if (this.compacto()) {
+      this.pausar();
+    } else if (!this.pausado()) {
+      this.reanudar();
+    }
   }
 
   whatsappPromo(promo: { titulo: string; precio?: number }): string {

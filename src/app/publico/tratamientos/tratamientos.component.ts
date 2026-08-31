@@ -37,7 +37,7 @@ import { Tratamiento } from '../../data/modelos';
         </div>
 
         <div class="tratamientos-layout">
-          <div class="grid grid-3 tratamientos-lista">
+          <div class="grid grid-3 tratamientos-lista catalogo-compacto catalogo-tratamientos">
             @for (t of lista(); track t.id) {
               <article class="tarjeta-trat">
                 <a [routerLink]="['/tratamientos', t.id]" class="tarjeta-trat__imagen">

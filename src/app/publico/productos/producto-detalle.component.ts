@@ -12,51 +12,56 @@ import { RedesService } from '../../compartido/redes.service';
   imports: [RouterLink, RedesEnlacesComponent],
   template: `
     @if (producto(); as p) {
-      <section class="seccion seccion--compacta">
-        <div class="contenedor detalle-prod">
-          <figure class="detalle-prod__imagen"><img class="img-cobertura" [src]="p.imagen" [alt]="p.nombre"></figure>
-          <div>
+      <section class="seccion seccion--compacta detalle-prod-seccion">
+        <div class="contenedor">
+          <div class="detalle-prod__navegacion">
             <a routerLink="/productos" class="volver-link">← Volver a productos</a>
             <div class="miga">
               <a routerLink="/">Inicio</a> / <a routerLink="/productos">Productos</a> / {{ p.nombre }}
             </div>
-            <span class="eyebrow">{{ p.marca }} · {{ p.categoria }}</span>
-            <h1 style="font-size:2.4rem">{{ p.nombre }}</h1>
-            <p class="lead">{{ p.descripcion }}</p>
+          </div>
 
-            <div class="precio" style="margin:24px 0">
-              @if (p.precioAntes) { <span class="precio__antes">{{ soles(p.precioAntes) }}</span> }
-              <span class="precio__actual" style="font-size:2.2rem">{{ soles(p.precio) }}</span>
-            </div>
+          <div class="detalle-prod">
+            <figure class="detalle-prod__imagen"><img class="img-cobertura" [src]="p.imagen" [alt]="p.nombre"></figure>
+            <div class="detalle-prod__contenido">
+              <span class="eyebrow">{{ p.marca }} · {{ p.categoria }}</span>
+              <h1 style="font-size:2.4rem">{{ p.nombre }}</h1>
+              <p class="lead">{{ p.descripcion }}</p>
 
-            @if (p.stock > 0) {
-              <span class="chip chip--ok chip--punto">Disponible · {{ p.stock }} unidades</span>
-            } @else {
-              <span class="chip chip--error chip--punto">Sin stock por ahora</span>
-            }
-
-            <div class="detalle-prod__acciones">
-              <button class="btn btn--primario" [disabled]="p.stock === 0" (click)="carrito.agregar(p)">
-                Agregar al carrito
-              </button>
-              <a routerLink="/carrito" class="btn btn--linea">Ver carrito ({{ carrito.cantidad() }})</a>
-            </div>
-
-            <div class="detalle-prod__entrega">
-              <h4>Entrega del producto</h4>
-              <ul>
-                <li>Recojo en Sede Las Flores 1522 sin costo</li>
-                <li>Recojo en Sede Las Flores 1544 sin costo</li>
-                <li>Por ahora no realizamos envíos a domicilio</li>
-              </ul>
-            </div>
-
-            @if (redes.activas().length) {
-              <div class="detalle-prod__redes">
-                <span>Síguenos</span>
-                <app-redes-enlaces />
+              <div class="precio" style="margin:24px 0">
+                @if (p.precioAntes) { <span class="precio__antes">{{ soles(p.precioAntes) }}</span> }
+                <span class="precio__actual" style="font-size:2.2rem">{{ soles(p.precio) }}</span>
               </div>
-            }
+
+              @if (p.stock > 0) {
+                <span class="chip chip--ok chip--punto">Disponible · {{ p.stock }} unidades</span>
+              } @else {
+                <span class="chip chip--error chip--punto">Sin stock por ahora</span>
+              }
+
+              <div class="detalle-prod__acciones">
+                <button class="btn btn--primario" [disabled]="p.stock === 0" (click)="carrito.agregar(p)">
+                  Agregar al carrito
+                </button>
+                <a routerLink="/carrito" class="btn btn--linea">Ver carrito ({{ carrito.cantidad() }})</a>
+              </div>
+
+              <div class="detalle-prod__entrega">
+                <h4>Entrega del producto</h4>
+                <ul>
+                  <li>Recojo en Sede Las Flores 1522 sin costo</li>
+                  <li>Recojo en Sede Las Flores 1544 sin costo</li>
+                  <li>Por ahora no realizamos envíos a domicilio</li>
+                </ul>
+              </div>
+
+              @if (redes.activas().length) {
+                <div class="detalle-prod__redes">
+                  <span>Síguenos</span>
+                  <app-redes-enlaces />
+                </div>
+              }
+            </div>
           </div>
         </div>
       </section>
@@ -96,7 +101,7 @@ import { RedesService } from '../../compartido/redes.service';
       <section class="seccion seccion--rosa">
         <div class="contenedor">
           <div class="encabezado-seccion"><h2>Otros productos</h2><div class="filete"></div></div>
-          <div class="grid grid-4">
+          <div class="grid grid-4 catalogo-compacto catalogo-productos">
             @for (o of relacionados(); track o.id) {
               <article class="tarjeta-prod">
                 <a [routerLink]="['/productos', o.id]" class="tarjeta-prod__imagen"><img class="img-cobertura" [src]="o.imagen" [alt]="o.nombre"></a>
@@ -121,7 +126,17 @@ import { RedesService } from '../../compartido/redes.service';
     .detalle-prod__redes > span {
       font-size: .82rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris-claro);
     }
+    .detalle-prod__navegacion {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .detalle-prod__navegacion .miga {
+      margin-bottom: 0;
+      overflow-wrap: anywhere;
+    }
     .detalle-prod { display: grid; grid-template-columns: 1fr 1.1fr; gap: 64px; align-items: center; }
+    .detalle-prod__contenido { min-width: 0; }
     .volver-link {
       display: inline-flex;
       align-items: center;
@@ -149,8 +164,34 @@ import { RedesService } from '../../compartido/redes.service';
       background: #fff;
     }
     .detalle-prod-info h3 { font-size: 1.3rem; margin-bottom: 12px; }
-    @media (max-width: 960px) { .detalle-prod { grid-template-columns: 1fr; gap: 32px; } }
-    @media (max-width: 960px) { .detalle-prod-info__grid { grid-template-columns: 1fr; gap: 28px; } }
+    @media (max-width: 960px) {
+      .detalle-prod-seccion { padding-top: 34px; }
+      .detalle-prod {
+        grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+        gap: 32px;
+        align-items: start;
+      }
+      .detalle-prod__navegacion { margin-bottom: 18px; }
+      .detalle-prod__imagen img { aspect-ratio: 4 / 3; }
+      .detalle-prod-info__grid { grid-template-columns: 1fr; gap: 28px; }
+    }
+    @media (max-width: 700px) {
+      .detalle-prod { grid-template-columns: 1fr; gap: 22px; }
+      .detalle-prod__imagen img {
+        aspect-ratio: 16 / 10;
+        max-height: 330px;
+      }
+    }
+    @media (max-width: 640px) {
+      .detalle-prod-seccion { padding-top: 28px; }
+      .detalle-prod__imagen { border-radius: 6px; }
+      .detalle-prod__navegacion .miga {
+        font-size: .78rem;
+        line-height: 1.7;
+        letter-spacing: .12em;
+      }
+      .detalle-prod__contenido h1 { font-size: 2rem !important; }
+    }
   `]
 })
 export class ProductoDetalleComponent {

@@ -143,8 +143,18 @@ interface Pieza {
       transition: color .3s ease, border-color .3s ease;
     }
     .galeria__tiktok:hover { color: var(--magenta); border-color: var(--magenta-300); }
+    @media (max-width: 960px) {
+      .galeria__escena {
+        aspect-ratio: 16 / 10;
+        max-height: 420px;
+      }
+    }
     @media (max-width: 640px) {
-      .galeria__escena { aspect-ratio: 3 / 4; }
+      .galeria__escena {
+        aspect-ratio: 16 / 10;
+        max-height: 330px;
+        border-radius: 6px;
+      }
     }
   `]
 })

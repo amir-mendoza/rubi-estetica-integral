@@ -11,11 +11,12 @@ import { RedesService } from '../../compartido/redes.service';
 import { CargadorRutaComponent } from '../../compartido/cargador-ruta.component';
 import { LOCALES } from '../../data/datos';
 import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
+import { PetalosComponent } from '../../compartido/petalos.component';
 
 @Component({
   selector: 'app-publico-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent, FondoWebComponent, RedesEnlacesComponent, CargadorRutaComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent, FondoWebComponent, RedesEnlacesComponent, CargadorRutaComponent, PetalosComponent],
   templateUrl: './publico-layout.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './publico-layout.component.scss'

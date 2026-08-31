@@ -39,7 +39,7 @@ import { RedesService } from '../../compartido/redes.service';
           </div>
         </div>
 
-        <div class="grid grid-4">
+        <div class="grid grid-4 catalogo-compacto catalogo-productos">
           @for (p of lista(); track p.id) {
             <article class="tarjeta-prod">
               <a [routerLink]="['/productos', p.id]" class="tarjeta-prod__imagen">
