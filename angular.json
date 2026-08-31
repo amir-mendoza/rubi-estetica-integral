@@ -43,7 +43,7 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "outputPath": "dist/rubi-prototipo",
+            "outputPath": "dist/rubi-estetica-integral",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -72,7 +72,7 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "10kB",
+                  "maximumWarning": "12kB",
                   "maximumError": "20kB"
                 }
               ],

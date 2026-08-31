@@ -1,70 +1,47 @@
-# RubiPrototipo
+# Rubí Estética Integral
 
-This project uses [Angular](https://angular.dev/) 22.1.
+Web Angular para Rubí Estética Integral.
 
-Before starting the backend or deploying the application, read the
-[security, licensing and production checklist](docs/seguridad-licencias-produccion.md).
-The editable project risk register is available in
-[docs/registro-riesgos.ipynb](docs/registro-riesgos.ipynb).
-For a shorter solved-versus-pending view, use the
-[high-risk status checklist](docs/estado-altos-riesgos.ipynb).
-Responsibilities for development, the business owner, SUNAT and hosting are split in
-[docs/responsabilidades-produccion.ipynb](docs/responsabilidades-produccion.ipynb).
-The agenda and evidence checklist for the client meeting on September 3, 2026 is in
-[docs/reunion-rubi-2026-09-03.ipynb](docs/reunion-rubi-2026-09-03.ipynb).
+## Requisitos locales
 
-## Development server
+- Node.js compatible con Angular CLI 22.
+- npm.
 
-To start a local development server, run:
+Versiones validadas en esta máquina:
 
-```bash
-ng serve
-```
+- Angular CLI 22.1.6
+- Angular 22.1.4
+- Node.js 24.19.0
+- npm 11.13.0
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Comandos
 
 ```bash
-ng generate component component-name
+npm install
+npm run build:prod
+npm audit
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+El build de producción queda en:
 
 ```bash
-ng generate --help
+dist/rubi-estetica-integral
 ```
 
-## Building
+## Despliegue en Hostinger
 
-To build the project run:
+1. Ejecutar `npm run build:prod`.
+2. Entrar al panel de Hostinger.
+3. Abrir el administrador de archivos del dominio.
+4. Entrar a `public_html`.
+5. Subir el contenido interno de `dist/rubi-estetica-integral/browser`.
+6. Confirmar que `index.html`, los archivos `.js`, `.css`, `img`, `video`, `favicon` y `.htaccess` queden dentro de `public_html`.
 
-```bash
-ng build
-```
+El archivo `public/.htaccess` se copia al build para que las rutas de Angular funcionen al recargar páginas internas como `/productos/5` o `/tratamientos/9`.
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Revisión antes de publicar
 
-## Running unit tests
-
-To execute unit tests with Vitest, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Ejecutar `npm audit` y confirmar 0 vulnerabilidades.
+- Ejecutar `npm run build:prod` y confirmar que termina sin errores.
+- Revisar en móvil y tablet: inicio, tratamientos, detalle de tratamiento, productos, detalle de producto, locales, contacto, carrito, reserva e ingreso.
+- No subir `node_modules`, `dist`, `.angular/cache` ni archivos `.env`.

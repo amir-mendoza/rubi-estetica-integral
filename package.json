@@ -1,10 +1,12 @@
 {
-  "name": "rubi-prototipo",
+  "name": "rubi-estetica-integral",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:prod": "ng build --configuration production",
+    "audit": "npm audit",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -19,7 +21,7 @@
     "@angular/router": "^22.1.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.15.0"
+    "zone.js": "^0.16.2"
   },
   "devDependencies": {
     "@angular/build": "^22.1.6",
