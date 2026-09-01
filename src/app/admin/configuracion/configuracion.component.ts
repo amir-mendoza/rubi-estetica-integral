@@ -89,7 +89,7 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
           </div>
           <div class="campo">
             <label>Ruta o URL del logo</label>
-            <input type="text" [ngModel]="logoRuta()" (ngModelChange)="logoRuta.set($event)" placeholder="img/logo-rubi-transparente.png">
+            <input type="text" [ngModel]="logoRuta()" (ngModelChange)="logoRuta.set($event)" placeholder="img/marca-rubi-logo-magenta.png">
             <span class="campo__ayuda">Usa PNG transparente para que se vea bien sobre fondo blanco, vino o cualquier sección.</span>
           </div>
           <div class="campo">
@@ -98,7 +98,7 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
           </div>
           <div class="acciones-marca">
             <button class="btn btn--vino btn--sm" (click)="guardarLogo()">Guardar logo web</button>
-            <button class="btn btn--linea btn--sm" (click)="logoRuta.set('img/logo-rubi-web-transparente.png'); guardarLogo()">Usar logo oficial</button>
+            <button class="btn btn--linea btn--sm" (click)="logoRuta.set('img/marca-rubi-logo-magenta.png'); guardarLogo()">Usar logo oficial</button>
           </div>
         </div>
 
@@ -109,7 +109,7 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
           </div>
           <div class="campo">
             <label>Ruta o URL del logo del panel</label>
-            <input type="text" [ngModel]="logoAdminRuta()" (ngModelChange)="logoAdminRuta.set($event)" placeholder="img/logo-rubi-panel-transparente.png">
+            <input type="text" [ngModel]="logoAdminRuta()" (ngModelChange)="logoAdminRuta.set($event)" placeholder="img/marca-rubi-logo-blanco.png">
             <span class="campo__ayuda">Este logo se usa sobre el menú vino del panel. Recomendado: PNG claro/transparente.</span>
           </div>
           <div class="campo">
@@ -118,7 +118,7 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
           </div>
           <div class="acciones-marca">
             <button class="btn btn--vino btn--sm" (click)="guardarLogoAdmin()">Guardar logo panel</button>
-            <button class="btn btn--linea btn--sm" (click)="logoAdminRuta.set('img/logo-rubi-panel-transparente.png'); guardarLogoAdmin()">Usar logo claro</button>
+            <button class="btn btn--linea btn--sm" (click)="logoAdminRuta.set('img/marca-rubi-logo-blanco.png'); guardarLogoAdmin()">Usar logo claro</button>
           </div>
         </div>
 
@@ -130,7 +130,7 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
           </div>
           <div class="campo">
             <label>Ruta o URL del favicon</label>
-            <input type="text" [ngModel]="faviconRuta()" (ngModelChange)="faviconRuta.set($event)" placeholder="favicon.svg">
+            <input type="text" [ngModel]="faviconRuta()" (ngModelChange)="faviconRuta.set($event)" placeholder="img/marca-rubi-favicon-magenta.png">
             <span class="campo__ayuda">Recomendado: imagen cuadrada PNG/SVG de 32x32 o 64x64.</span>
           </div>
           <div class="campo">
@@ -139,7 +139,7 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
           </div>
           <div class="acciones-marca">
             <button class="btn btn--vino btn--sm" (click)="guardarFavicon()">Guardar favicon</button>
-            <button class="btn btn--linea btn--sm" (click)="faviconRuta.set('favicon.svg'); guardarFavicon()">Usar favicon actual</button>
+            <button class="btn btn--linea btn--sm" (click)="faviconRuta.set('img/marca-rubi-favicon-magenta.png'); guardarFavicon()">Usar favicon oficial</button>
           </div>
         </div>
 
