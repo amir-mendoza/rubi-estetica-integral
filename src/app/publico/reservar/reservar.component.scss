@@ -242,6 +242,31 @@
 }
 .reserva-tiempo small { color: var(--gris); font-size: .88rem; }
 
+.aceptacion-legal {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin: 18px 0 20px;
+  padding: 16px 18px;
+  border: 1px solid rgba(176, 27, 114, .22);
+  border-radius: var(--radio-lg);
+  background: rgba(255, 244, 249, .72);
+  color: var(--gris);
+  font-size: .96rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.aceptacion-legal input {
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  accent-color: var(--magenta);
+}
+.aceptacion-legal a {
+  font-weight: 600;
+}
+
 /* Resumen lateral */
 .resumen__fila {
   display: grid; grid-template-columns: minmax(0, .75fr) minmax(0, 1fr); gap: 16px;

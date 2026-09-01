@@ -1,7 +1,7 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MapaSedeComponent } from '../../compartido/mapa-sede.component';
-import { CITAS, ESPECIALISTAS, HABITACIONES, HORAS_SELECTOR, HOY_ISO, LOCALES, formatoHora12, soles } from '../../data/datos';
+import { CITAS, ESPECIALISTAS, HABITACIONES, HORARIO_ATENCION, HORAS_SELECTOR, HOY_ISO, LOCALES, formatoHora12, soles } from '../../data/datos';
 import { Habitacion, Local } from '../../data/modelos';
 import { SubidasService } from '../../compartido/subidas.service';
 import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
@@ -15,13 +15,17 @@ function localVacio(): Local {
     referencia: '',
     distrito: 'San Juan de Lurigancho, Lima',
     telefono: '945 189 720',
-    horario: [{ dias: 'Todos los días', apertura: '09:00', cierre: '19:00' }],
+    horario: horarioComercial(),
     imagen: 'img/local-1.jpg',
     mapa: 'https://www.google.com/maps',
     latitud: -12.0042,
     longitud: -77.0119,
     activo: true
   };
+}
+
+function horarioComercial(): Local['horario'] {
+  return HORARIO_ATENCION.map(horario => ({ ...horario }));
 }
 
 function cabinaVacia(localId: number): Habitacion {
@@ -60,8 +64,10 @@ function cabinaVacia(localId: number): Habitacion {
           @if (es247()) {
             <div class="local-form__247-label">Abierto todo el día, todos los días</div>
           } @else {
-            <div class="campo"><label>Apertura</label><select [ngModel]="localForm().horario[0].apertura" (ngModelChange)="editarHorario('apertura', $event)" name="apertura">@for (h of horasSelector; track h.valor) { <option [value]="h.valor">{{ h.etiqueta }}</option> }</select></div>
-            <div class="campo"><label>Cierre</label><select [ngModel]="localForm().horario[0].cierre" (ngModelChange)="editarHorario('cierre', $event)" name="cierre">@for (h of horasSelector; track h.valor) { <option [value]="h.valor">{{ h.etiqueta }}</option> }<option value="24:00">12:00 AM</option></select></div>
+            @for (horario of localForm().horario; track horario.dias; let indice = $index) {
+              <div class="campo"><label>{{ horario.dias }}: apertura</label><select [ngModel]="horario.apertura" (ngModelChange)="editarHorario(indice, 'apertura', $event)" [name]="'apertura' + indice">@for (h of horasSelector; track h.valor) { <option [value]="h.valor">{{ h.etiqueta }}</option> }</select></div>
+              <div class="campo"><label>{{ horario.dias }}: cierre</label><select [ngModel]="horario.cierre" (ngModelChange)="editarHorario(indice, 'cierre', $event)" [name]="'cierre' + indice">@for (h of horasSelector; track h.valor) { <option [value]="h.valor">{{ h.etiqueta }}</option> }<option value="24:00">12:00 AM</option></select></div>
+            }
           }
           <div class="campo"><label>Latitud</label><input type="number" step="0.000001" [ngModel]="localForm().latitud" (ngModelChange)="editarLocal('latitud', Number($event))" name="latitud"></div>
           <div class="campo"><label>Longitud</label><input type="number" step="0.000001" [ngModel]="localForm().longitud" (ngModelChange)="editarLocal('longitud', Number($event))" name="longitud"></div>
@@ -80,7 +86,9 @@ function cabinaVacia(localId: number): Habitacion {
                 <p>{{ localForm().referencia || 'Referencia para llegar' }} · {{ localForm().distrito }}</p>
                 <div class="preview-local-card__meta">
                   <span>{{ localForm().telefono }}</span>
-                  <span>{{ formatoHora(localForm().horario[0].apertura) }} - {{ formatoHora(localForm().horario[0].cierre) }}</span>
+                  @for (horario of localForm().horario; track horario.dias) {
+                    <span>{{ horario.dias }}: {{ formatoHora(horario.apertura) }} - {{ formatoHora(horario.cierre) }}</span>
+                  }
                 </div>
                 <a [href]="googleMapsLocal(localForm())" target="_blank" rel="noopener">Abrir en Google Maps</a>
               </div>
@@ -380,24 +388,25 @@ export class LocalesAdminComponent {
     this.localForm.update(local => ({ ...local, ...coordenadas, mapa: this.googleMapsLocal({ ...local, ...coordenadas }) }));
   }
 
-  editarHorario(campo: 'apertura' | 'cierre', valor: string): void {
+  editarHorario(indice: number, campo: 'apertura' | 'cierre', valor: string): void {
     this.localForm.update(local => ({
       ...local,
-      horario: [{ ...local.horario[0], [campo]: valor }]
+      horario: local.horario.map((horario, i) => i === indice ? { ...horario, [campo]: valor } : horario)
     }));
   }
 
   es247(): boolean {
-    const horario = this.localForm().horario[0];
-    return horario.apertura === '00:00' && (horario.cierre === '24:00' || horario.cierre === '00:00');
+    const horarios = this.localForm().horario;
+    const horario = horarios[0];
+    return horarios.length === 1 && horario.apertura === '00:00' && (horario.cierre === '24:00' || horario.cierre === '00:00');
   }
 
   alternar247(): void {
     if (this.es247()) {
-      this.localForm.update(local => ({ ...local, horario: [{ ...local.horario[0], apertura: '09:00', cierre: '19:00' }] }));
+      this.localForm.update(local => ({ ...local, horario: horarioComercial() }));
       return;
     }
-    this.localForm.update(local => ({ ...local, horario: [{ ...local.horario[0], apertura: '00:00', cierre: '24:00' }] }));
+    this.localForm.update(local => ({ ...local, horario: [{ dias: 'Todos los días', apertura: '00:00', cierre: '24:00' }] }));
   }
 
   cargarImagenLocal(evento: Event): void {

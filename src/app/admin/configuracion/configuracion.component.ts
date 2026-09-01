@@ -429,7 +429,7 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
             <label><input type="checkbox" [ngModel]="configPanel.agenda().aceptarSinCita" (ngModelChange)="configPanel.actualizarAgenda({ aceptarSinCita: $event })"> Aceptar pacientes sin cita según disponibilidad del momento</label>
           </div>
           <div class="acciones-marca">
-            <button class="btn btn--linea btn--sm" (click)="aplicarHorarioComercial()">Usar horario comercial 9:00 AM - 7:00 PM</button>
+            <button class="btn btn--linea btn--sm" (click)="aplicarHorarioComercial()">Restaurar horario oficial</button>
             <button class="btn btn--linea btn--sm" (click)="configPanel.restablecerAgenda()">Restablecer agenda</button>
           </div>
         </div>
@@ -452,7 +452,7 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
                 </div>
               }
               <div class="horario-config__acciones">
-                <button class="btn btn--linea btn--sm" (click)="aplicarHorarioLocal(l.id)">Aplicar 9:00 AM - 7:00 PM</button>
+                <button class="btn btn--linea btn--sm" (click)="aplicarHorarioLocal(l.id)">Restaurar horario oficial</button>
               </div>
             </div>
           }
@@ -794,11 +794,11 @@ export class ConfiguracionComponent {
   }
 
   aplicarHorarioComercial(): void {
-    this.configPanel.usarHorarioComercialEnTodasLasSedes('09:00', '19:00');
+    this.configPanel.usarHorarioComercialEnTodasLasSedes();
   }
 
   aplicarHorarioLocal(localId: number): void {
-    this.configPanel.usarHorarioComercial(localId, '09:00', '19:00');
+    this.configPanel.usarHorarioComercial(localId);
   }
 
   cambiarBloqueMin(valor: string | number): void {

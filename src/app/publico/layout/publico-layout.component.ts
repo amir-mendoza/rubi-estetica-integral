@@ -12,11 +12,12 @@ import { CargadorRutaComponent } from '../../compartido/cargador-ruta.component'
 import { LOCALES } from '../../data/datos';
 import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
 import { PetalosComponent } from '../../compartido/petalos.component';
+import { CookiesAvisoComponent } from '../../compartido/cookies-aviso.component';
 
 @Component({
   selector: 'app-publico-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent, FondoWebComponent, RedesEnlacesComponent, CargadorRutaComponent, PetalosComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent, FondoWebComponent, RedesEnlacesComponent, CargadorRutaComponent, PetalosComponent, CookiesAvisoComponent],
   templateUrl: './publico-layout.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './publico-layout.component.scss'
@@ -33,6 +34,7 @@ export class PublicoLayoutComponent implements AfterViewInit, OnDestroy {
   locales = computed(() => this.configPanel.combinarLocalesConHorarios(LOCALES));
   compacto = false;
   menuAbierto = false;
+  pieMovil = typeof window !== 'undefined' && window.innerWidth <= 640;
   anio = new Date().getFullYear();
 
   enlaces = [
@@ -48,6 +50,11 @@ export class PublicoLayoutComponent implements AfterViewInit, OnDestroy {
   @HostListener('window:scroll')
   onScroll(): void {
     this.compacto = window.scrollY > 40;
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    this.pieMovil = window.innerWidth <= 640;
   }
 
   ngAfterViewInit(): void {

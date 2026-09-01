@@ -17,6 +17,9 @@ export const routes: Routes = [
       { path: 'reservar', loadComponent: () => import('./publico/reservar/reservar.component').then(m => m.ReservarComponent) },
       { path: 'locales', loadComponent: () => import('./publico/locales/locales.component').then(m => m.LocalesComponent) },
       { path: 'contacto', loadComponent: () => import('./publico/contacto/contacto.component').then(m => m.ContactoComponent) },
+      { path: 'libro-reclamaciones', loadComponent: () => import('./publico/libro-reclamaciones/libro-reclamaciones.component').then(m => m.LibroReclamacionesComponent) },
+      { path: 'legal', pathMatch: 'full', redirectTo: 'legal/terminos' },
+      { path: 'legal/:documento', loadComponent: () => import('./publico/legal/legal.component').then(m => m.LegalComponent) },
       { path: 'ingresar', loadComponent: () => import('./publico/cuenta/ingresar.component').then(m => m.IngresarComponent) },
       { path: 'registro', loadComponent: () => import('./publico/cuenta/registro.component').then(m => m.RegistroComponent) },
       { path: 'mi-cuenta', loadComponent: () => import('./publico/cuenta/mi-cuenta.component').then(m => m.MiCuentaComponent) }

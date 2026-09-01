@@ -67,6 +67,7 @@ export class ReservarComponent implements OnDestroy {
   mensajePago = signal('');
   codigoOperacion = signal<string | null>(null);
   codigoReserva = signal('—');
+  aceptoLegales = signal(false);
   tiempoReservaSeg = signal(0);
   reservaExpiraEn = signal<number | null>(null);
   mostrarExtension = signal(false);
@@ -292,6 +293,10 @@ export class ReservarComponent implements OnDestroy {
   }
 
   confirmar(): void {
+    if (!this.aceptoLegales()) {
+      this.mensajePago.set('Debes aceptar los términos y condiciones y la política de privacidad para confirmar la reserva.');
+      return;
+    }
     if (!this.bloque()) {
       this.avisoReserva.set('Tu hora ya no está retenida. Vuelve a elegir fecha y hora para continuar.');
       this.paso.set(3);
@@ -322,6 +327,7 @@ export class ReservarComponent implements OnDestroy {
     this.etiqueta.set('Todas');
     this.busqueda.set('');
     this.codigoReserva.set('—');
+    this.aceptoLegales.set(false);
     const u = this.sesion.usuario();
     this.nombre = u?.nombre ?? '';
     this.apellido = u?.apellido ?? '';

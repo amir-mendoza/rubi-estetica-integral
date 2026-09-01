@@ -85,40 +85,78 @@
 <footer class="pie">
   <div class="contenedor">
     <div class="pie__grid">
-      <div>
+      <div class="pie__marca">
         <app-logo [claro]="true"></app-logo>
         <p class="pie__texto">
           Especialistas en reducción de medidas, modelamiento corporal y tratamientos faciales
           no invasivos. Protocolos supervisados por profesionales colegiados.
         </p>
         <app-redes-enlaces class="pie__redes" [claro]="true" [conTexto]="true" />
+
+        <div class="pie__reservas">
+          <span class="pie__etiqueta">Reservas por WhatsApp</span>
+          <div class="pie__reservas-enlaces">
+            <a href="https://wa.me/51945189720" target="_blank" rel="noopener" aria-label="Reservar por WhatsApp al 945 189 720">945 189 720</a>
+            <a href="https://wa.me/51951716939" target="_blank" rel="noopener" aria-label="Reservar por WhatsApp al 951 716 939">951 716 939</a>
+          </div>
+        </div>
       </div>
 
-      <div>
-        <h5>Navegación</h5>
-        <ul>
-          <li><a routerLink="/tratamientos">Tratamientos</a></li>
-          <li><a routerLink="/especialistas">Especialistas</a></li>
-          <li><a routerLink="/productos">Tienda</a></li>
-          <li><a routerLink="/reservar">Reservar cita</a></li>
-          <li><a routerLink="/contacto">Contacto</a></li>
-          <li><a routerLink="/ingresar">Ingresar o crear cuenta</a></li>
-        </ul>
-      </div>
-
-      @for (local of locales(); track local.id) {
-        <div>
-          <h5>{{ local.nombre }}</h5>
-          <ul class="pie__lista-datos">
-            <li>{{ local.direccion }}</li>
-            <li>{{ local.referencia }}</li>
-            <li>{{ local.distrito }}</li>
-            <li><a [href]="'tel:' + local.telefono">{{ local.telefono }}</a></li>
-            @for (h of local.horario; track h.dias) {
-              <li>{{ h.dias }}: {{ h.apertura }} — {{ h.cierre }}</li>
-            }
+      <details class="pie__grupo" [open]="!pieMovil">
+        <summary><span>Navegación</span><span class="pie__indicador" aria-hidden="true"></span></summary>
+        <div class="pie__grupo-contenido">
+          <h5>Navegación</h5>
+          <ul>
+            <li><a routerLink="/tratamientos">Tratamientos</a></li>
+            <li><a routerLink="/especialistas">Especialistas</a></li>
+            <li><a routerLink="/productos">Tienda</a></li>
+            <li><a routerLink="/reservar">Reservar cita</a></li>
+            <li><a routerLink="/contacto">Contacto</a></li>
+            <li><a routerLink="/ingresar">Ingresar o crear cuenta</a></li>
           </ul>
         </div>
+      </details>
+
+      <details class="pie__grupo" [open]="!pieMovil">
+        <summary><span>Información legal</span><span class="pie__indicador" aria-hidden="true"></span></summary>
+        <div class="pie__grupo-contenido">
+          <h5>Información legal</h5>
+          <ul>
+            <li><a routerLink="/legal/terminos">Términos y condiciones</a></li>
+            <li><a routerLink="/legal/privacidad">Política de privacidad</a></li>
+            <li><a routerLink="/legal/cookies">Política de cookies</a></li>
+          </ul>
+          <a routerLink="/libro-reclamaciones" class="pie__libro" aria-label="Abrir el Libro de Reclamaciones Virtual">
+            <span class="pie__libro-imagen">
+              <img src="/img/aviso-libro-reclamaciones-virtual.png" alt="Aviso del Libro de Reclamaciones Virtual" />
+            </span>
+            <span class="pie__libro-texto">
+              <strong>Libro de reclamaciones</strong>
+              <small>Registra un reclamo o queja</small>
+            </span>
+          </a>
+        </div>
+      </details>
+
+      @for (local of locales(); track local.id) {
+        <details class="pie__grupo pie__grupo--sede" [open]="!pieMovil">
+          <summary><span>{{ local.nombre }}</span><span class="pie__indicador" aria-hidden="true"></span></summary>
+          <div class="pie__grupo-contenido">
+            <h5>{{ local.nombre }}</h5>
+            <address class="pie__direccion">
+              {{ local.direccion }}<br>
+              {{ local.referencia }}<br>
+              {{ local.distrito }}
+            </address>
+            <a [href]="local.mapa" target="_blank" rel="noopener" class="pie__mapa">Ver ubicación en Google Maps</a>
+            <ul class="pie__lista-datos">
+              <li><a [href]="'tel:' + local.telefono">{{ local.telefono }}</a></li>
+              @for (h of local.horario; track h.dias) {
+                <li>{{ h.dias }}: {{ h.apertura }} — {{ h.cierre }}</li>
+              }
+            </ul>
+          </div>
+        </details>
       }
     </div>
 
@@ -136,3 +174,5 @@
   </svg>
 </a>
 }
+
+<app-cookies-aviso />

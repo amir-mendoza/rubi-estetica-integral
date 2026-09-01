@@ -6,6 +6,12 @@ import {
 
 /* ============================================================== LOCALES === */
 
+export const HORARIO_ATENCION = [
+  { dias: 'Lunes a viernes', apertura: '08:00', cierre: '20:00' },
+  { dias: 'Sábados', apertura: '08:00', cierre: '16:00' },
+  { dias: 'Domingos', apertura: '10:00', cierre: '13:00' }
+];
+
 export const LOCALES: Local[] = [
   {
     id: 1,
@@ -15,9 +21,7 @@ export const LOCALES: Local[] = [
     referencia: 'San Juan de Lurigancho 15404',
     distrito: 'San Juan de Lurigancho, Lima',
     telefono: '945 189 720',
-    horario: [
-      { dias: 'Todos los días', apertura: '09:00', cierre: '19:00' }
-    ],
+    horario: HORARIO_ATENCION.map(horario => ({ ...horario })),
     imagen: 'img/local-1.jpg',
     mapa: 'https://www.google.com/maps/search/?api=1&query=-12.00423259951209,-77.01189597596573',
     latitud: -12.00423259951209,
@@ -31,10 +35,8 @@ export const LOCALES: Local[] = [
     direccion: 'Av. Las Flores de Primavera 1544',
     referencia: 'San Juan de Lurigancho 15408',
     distrito: 'San Juan de Lurigancho, Lima',
-    telefono: '945 189 721',
-    horario: [
-      { dias: 'Todos los días', apertura: '09:00', cierre: '19:00' }
-    ],
+    telefono: '951 716 939',
+    horario: HORARIO_ATENCION.map(horario => ({ ...horario })),
     imagen: 'img/local-2.jpg',
     mapa: 'https://www.google.com/maps/search/?api=1&query=-12.003582220477465,-77.01212351240744',
     latitud: -12.003582220477465,
@@ -67,7 +69,7 @@ export const HABITACIONES: Habitacion[] = [
 
 /**
  * La paciente reserva un bloque horario (la hora a la que piensa llegar), no una
- * cabina ni una especialista. Las dos sedes atienden las 24 horas y cada bloque
+ * cabina ni una especialista. Las dos sedes atienden dentro del horario comercial y cada bloque
  * de una hora acepta hasta 10 pacientes; la especialista y la cabina se asignan
  * en el local segun el orden de llegada.
  */
@@ -550,8 +552,8 @@ interface SemillaCita {
 }
 
 /**
- * Las citas se agendan por bloque horario. El bloque de 09:00 de la sede 1 llega
- * al cupo para mostrar como el sistema cierra esa hora y ofrece la siguiente.
+ * Las citas se agendan por bloque horario y cada sede limita la atención a diez
+ * pacientes por hora de forma predeterminada.
  */
 const SEMILLAS: SemillaCita[] = [];
 

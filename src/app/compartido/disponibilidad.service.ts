@@ -56,10 +56,7 @@ export class DisponibilidadService {
     const [a, m, d] = fechaISO.split('-').map(Number);
     const dia = new Date(a, m - 1, d).getDay(); // 0 = domingo
     const horarios = this.configPanel.obtenerHorariosLocal(local.id);
-    const general = horarios.find(h => h.dias.toLowerCase().includes('todos'));
-    const bloque = general ?? (dia === 0
-      ? horarios.find(h => h.dias.toLowerCase().includes('domingo'))
-      : horarios.find(h => !h.dias.toLowerCase().includes('domingo')));
+    const bloque = horarios.find(h => this.aplicaEnDia(h.dias, dia));
     if (!bloque) { return null; }
     return { apertura: aMinutos(bloque.apertura), cierre: aMinutos(bloque.cierre) };
   }
@@ -242,5 +239,17 @@ export class DisponibilidadService {
     } catch {
       return `ses-${Math.random().toString(36).slice(2, 10)}`;
     }
+  }
+
+  private aplicaEnDia(diasConfigurados: string, dia: number): boolean {
+    const texto = diasConfigurados.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (texto.includes('todos')) { return true; }
+    if (texto.includes('lunes') && texto.includes('viernes')) { return dia >= 1 && dia <= 5; }
+    if (texto.includes('lunes') && texto.includes('sabado')) { return dia >= 1 && dia <= 6; }
+    if (texto.includes('sabado')) { return dia === 6; }
+    if (texto.includes('domingo')) { return dia === 0; }
+
+    const nombreDia = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'][dia];
+    return texto.includes(nombreDia);
   }
 }

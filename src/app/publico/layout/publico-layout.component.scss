@@ -120,11 +120,14 @@
 }
 .pie__grid {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1.2fr 1.2fr;
+  grid-template-columns: 1.35fr .85fr 1fr 1.1fr 1.1fr;
   gap: 44px;
   padding-bottom: 48px;
   border-bottom: 1px solid rgba(255, 255, 255, .12);
 }
+.pie__marca, .pie__grupo { min-width: 0; }
+.pie__grupo { border: 0; }
+.pie__grupo summary { display: none; }
 .pie h5 {
   color: #fff; font-family: 'Jost', sans-serif;
   font-size: .86rem; letter-spacing: .2em; text-transform: uppercase;
@@ -136,6 +139,75 @@
 .pie__texto { margin: 20px 0 18px; font-size: 1rem; color: rgba(255, 255, 255, .72); max-width: 40ch; }
 .pie__redes { display: block; margin-top: 18px; }
 .pie__lista-datos li { font-size: 1rem; }
+.pie__direccion {
+  margin: 0;
+  color: rgba(255, 255, 255, .7);
+  font-size: 1rem;
+  font-style: normal;
+  line-height: 1.65;
+}
+.pie__mapa {
+  display: inline-flex;
+  margin: 16px 0;
+  color: #fff !important;
+  font-size: .86rem !important;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.pie__reservas {
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, .18);
+}
+.pie__etiqueta {
+  display: block;
+  color: rgba(255, 255, 255, .56);
+  font-size: .74rem;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.pie__reservas-enlaces { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.pie__reservas-enlaces a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, .28);
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 500;
+  letter-spacing: .04em;
+  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+}
+.pie__reservas-enlaces a:hover {
+  border-color: rgba(255, 255, 255, .7);
+  background: rgba(255, 255, 255, .1);
+  transform: translateY(-2px);
+}
+.pie__libro {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 20px; padding: 10px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  background: rgba(255, 255, 255, .06);
+  transition: border-color .2s ease, background .2s ease, transform .2s ease;
+}
+.pie__libro:hover {
+  border-color: rgba(255, 255, 255, .65);
+  background: rgba(255, 255, 255, .12);
+  transform: translateY(-2px);
+}
+.pie__libro-imagen {
+  flex: 0 0 52px; display: grid; place-items: center;
+  width: 52px; height: 66px; overflow: hidden;
+  background: #fff;
+}
+.pie__libro-imagen img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.pie__libro-texto { display: grid; gap: 5px; min-width: 0; }
+.pie__libro-texto strong { color: #fff; font-size: .95rem; line-height: 1.25; }
+.pie__libro-texto small { color: rgba(255, 255, 255, .66); font-size: .82rem; line-height: 1.35; }
 .pie__legal {
   display: flex; justify-content: space-between; gap: 16px;
   padding-top: 22px; font-size: .9rem; color: rgba(255, 255, 255, .55);
@@ -258,7 +330,58 @@
   .navegacion a { font-size: .95rem; letter-spacing: .1em; }
 }
 @media (max-width: 640px) {
-  .pie__grid { grid-template-columns: 1fr; }
+  .pie {
+    padding: 42px 0 22px;
+  }
+  .pie__grid {
+    display: block;
+    padding-bottom: 26px;
+  }
+  .pie__marca { padding-bottom: 22px; }
+  .pie__texto { margin-top: 16px; }
+  .pie__grupo {
+    border-top: 1px solid rgba(255, 255, 255, .18);
+  }
+  .pie__grupo:last-child { border-bottom: 1px solid rgba(255, 255, 255, .18); }
+  .pie__grupo summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 58px;
+    color: #fff;
+    cursor: pointer;
+    font-size: .94rem;
+    font-weight: 500;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    list-style: none;
+  }
+  .pie__grupo summary::-webkit-details-marker { display: none; }
+  .pie__indicador {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+    flex: 0 0 auto;
+    border: 1px solid rgba(255, 255, 255, .34);
+    color: #fff;
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+  .pie__indicador::before { content: '+'; }
+  .pie__grupo[open] .pie__indicador::before { content: '-'; }
+  .pie__grupo-contenido { padding: 0 0 22px; }
+  .pie__grupo-contenido h5 { display: none; }
+  .pie__grupo-contenido ul { gap: 11px; }
+  .pie__grupo-contenido ul a { display: inline-block; padding: 3px 0; }
+  .pie__direccion { font-size: .96rem; }
+  .pie__mapa { margin: 14px 0; font-size: .78rem !important; }
+  .pie__libro { max-width: none; margin-top: 18px; }
+  .pie__libro-imagen { flex-basis: 48px; width: 48px; height: 60px; }
+  .pie__reservas { margin-top: 20px; }
+  .pie__reservas-enlaces { display: grid; grid-template-columns: 1fr 1fr; }
+  .pie__reservas-enlaces a { justify-content: center; min-width: 0; padding-inline: 5px; }
   .pie__legal { flex-direction: column; }
   .cabecera__acciones .btn { display: none; }
   .cuenta__nombre { display: none; }

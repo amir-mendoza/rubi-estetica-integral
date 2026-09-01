@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { LOCALES } from '../data/datos';
+import { HORARIO_ATENCION, LOCALES } from '../data/datos';
 import { MetodoPago } from '../data/modelos';
 
 export interface ConfiguracionNegocio {
@@ -64,8 +64,7 @@ const CLAVE_AGENDA = 'rubi.cfg.agenda';
 const CLAVE_PAGOS = 'rubi.cfg.pagos';
 const CLAVE_USUARIOS = 'rubi.cfg.usuarios';
 const CLAVE_SYNC = 'rubi.cfg.sync';
-const APERTURA_DEFECTO = '09:00';
-const CIERRE_DEFECTO = '19:00';
+const horarioComercial = (): HorarioConfigurado[] => HORARIO_ATENCION.map(horario => ({ ...horario }));
 
 const NEGOCIO_POR_DEFECTO: ConfiguracionNegocio = {
   nombreComercial: 'Rubí Estética Integral',
@@ -84,7 +83,7 @@ const AGENDA_POR_DEFECTO: ConfiguracionAgenda = {
   asignarAlLlegar: true,
   aceptarSinCita: true,
   horariosPorLocal: Object.fromEntries(
-    LOCALES.map(local => [local.id, [{ dias: 'Todos los días', apertura: APERTURA_DEFECTO, cierre: CIERRE_DEFECTO }]])
+    LOCALES.map(local => [local.id, horarioComercial()])
   ) as Record<number, HorarioConfigurado[]>
 };
 
@@ -162,20 +161,20 @@ export class ConfiguracionPanelService {
     });
   }
 
-  usarHorarioComercial(localId: number, apertura = APERTURA_DEFECTO, cierre = CIERRE_DEFECTO): void {
+  usarHorarioComercial(localId: number): void {
     const agenda = this.agenda();
     this.actualizarAgenda({
       atencion24h: false,
       horariosPorLocal: {
         ...agenda.horariosPorLocal,
-        [localId]: [{ dias: 'Todos los días', apertura, cierre }]
+        [localId]: horarioComercial()
       }
     });
   }
 
-  usarHorarioComercialEnTodasLasSedes(apertura = APERTURA_DEFECTO, cierre = CIERRE_DEFECTO): void {
+  usarHorarioComercialEnTodasLasSedes(): void {
     const horariosPorLocal = Object.fromEntries(
-      LOCALES.map(local => [local.id, [{ dias: 'Todos los días', apertura, cierre }]])
+      LOCALES.map(local => [local.id, horarioComercial()])
     ) as Record<number, HorarioConfigurado[]>;
     this.actualizarAgenda({ atencion24h: false, horariosPorLocal });
   }
@@ -224,7 +223,7 @@ export class ConfiguracionPanelService {
     if (this.agenda().atencion24h) {
       return [{ dias: 'Todos los días', apertura: '00:00', cierre: '24:00' }];
     }
-    return this.agenda().horariosPorLocal[localId]?.map(h => ({ ...h })) ?? [{ dias: 'Todos los días', apertura: APERTURA_DEFECTO, cierre: CIERRE_DEFECTO }];
+    return this.agenda().horariosPorLocal[localId]?.map(h => ({ ...h })) ?? horarioComercial();
   }
 
   combinarLocalesConHorarios<T extends { id: number; horario: HorarioConfigurado[] }>(locales: T[]): T[] {
@@ -270,10 +269,13 @@ export class ConfiguracionPanelService {
     let cambio = false;
     for (const local of LOCALES) {
       const horarios = horariosPorLocal[local.id] ?? [];
-      const eraHorarioAnterior = horarios.length === 1 && horarios[0].apertura === '09:00' && horarios[0].cierre === '22:00';
+      const eraHorarioAnterior = horarios.length === 1 && horarios[0].dias.toLowerCase().includes('todos') && (
+        (horarios[0].apertura === '09:00' && horarios[0].cierre === '19:00') ||
+        (horarios[0].apertura === '09:00' && horarios[0].cierre === '22:00')
+      );
       const eraHorario24h = agenda.atencion24h || (horarios.length === 1 && horarios[0].apertura === '00:00' && (horarios[0].cierre === '24:00' || horarios[0].cierre === '00:00'));
       if (!horarios.length || eraHorarioAnterior || eraHorario24h) {
-        horariosPorLocal[local.id] = [{ dias: 'Todos los días', apertura: APERTURA_DEFECTO, cierre: CIERRE_DEFECTO }];
+        horariosPorLocal[local.id] = horarioComercial();
         cambio = true;
       }
     }

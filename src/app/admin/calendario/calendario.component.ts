@@ -2,7 +2,7 @@ import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@a
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
-  DIAS_SEMANA, HORAS_SELECTOR, HOY_ISO, LOCALES, MESES, TRATAMIENTOS, aISO,
+  DIAS_SEMANA, HOY_ISO, LOCALES, MESES, TRATAMIENTOS, aISO,
   formatoHora12,
   formatoFechaLarga, localPorId, nombreCabina, nombreEspecialista,
   soles, tratamientoPorId
@@ -13,6 +13,7 @@ import { SesionService } from '../../compartido/sesion.service';
 import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
 import { PacientesService } from '../../compartido/pacientes.service';
 import { PlanesService } from '../../compartido/planes.service';
+import { Bloque, DisponibilidadService } from '../../compartido/disponibilidad.service';
 
 interface Celda {
   iso: string;
@@ -56,6 +57,7 @@ export class CalendarioComponent {
   private configPanel = inject(ConfiguracionPanelService);
   private pacientes = inject(PacientesService);
   private planes = inject(PlanesService);
+  private disponibilidad = inject(DisponibilidadService);
   private router = inject(Router);
 
   soles = soles;
@@ -66,7 +68,6 @@ export class CalendarioComponent {
   tratamientosCatalogo = TRATAMIENTOS;
   estadosCita = ESTADOS_CITA;
   metodosPago: MetodoPago[] = ['Efectivo', 'Yape', 'Plin', 'Tarjeta POS', 'Transferencia'];
-  horasSelector = HORAS_SELECTOR;
   formatoHora = formatoHora12;
 
   private hoy = new Date();
@@ -106,7 +107,7 @@ export class CalendarioComponent {
     multisesion: false,
     sesiones: [{
       fecha: HOY_ISO,
-      hora: '09:00',
+      hora: '',
       zona: '',
       observaciones: ''
     }]
@@ -289,15 +290,34 @@ export class CalendarioComponent {
   }
 
   actualizarSesionTratamiento(indiceTratamiento: number, indiceSesion: number, campo: keyof ManualSesionForm, valor: string): void {
-    this.manualSeguimientos.update(lista => lista.map((item, i) => i === indiceTratamiento ? {
-      ...item,
-      sesiones: item.sesiones.map((sesion, s) => s === indiceSesion ? { ...sesion, [campo]: valor } : sesion)
-    } : item));
+    this.manualSeguimientos.update(lista => lista.map((item, i) => {
+      if (i !== indiceTratamiento) { return item; }
+      return {
+        ...item,
+        sesiones: item.sesiones.map((sesion, s) => {
+          if (s !== indiceSesion) { return sesion; }
+          const actualizada = { ...sesion, [campo]: valor };
+          if (campo === 'fecha' && actualizada.hora && !this.horaManualDisponible(actualizada.fecha, actualizada.hora)) {
+            actualizada.hora = '';
+          }
+          return actualizada;
+        })
+      };
+    }));
   }
 
   seguimientoManualValido(): boolean {
-    return this.manualSeguimientos().length > 0 &&
-      this.manualSeguimientos().every(item => !!item.tratamientoId && !!item.sesiones[0]?.fecha && !!item.sesiones[0]?.hora);
+    const seguimientos = this.manualSeguimientos();
+    const sesiones = seguimientos.flatMap(item => item.sesiones);
+    const primeraSesionInvalida = seguimientos.some(item => !item.tratamientoId || !item.sesiones[0]?.fecha || !item.sesiones[0]?.hora);
+    const sesionIncompleta = sesiones.some(sesion => !!sesion.fecha !== !!sesion.hora);
+    const programadas = sesiones.filter(sesion => !!sesion.fecha && !!sesion.hora);
+
+    return seguimientos.length > 0
+      && !primeraSesionInvalida
+      && !sesionIncompleta
+      && programadas.every(sesion => this.horaManualDisponible(sesion.fecha, sesion.hora))
+      && this.cuposManualSuficientes(programadas);
   }
 
   recalcularManualDesdeSeguimientos(): void {
@@ -339,6 +359,30 @@ export class CalendarioComponent {
     this.registrarPlanMultisesion();
   }
 
+  cambiarLocalManual(localId: number): void {
+    this.manualLocalId = localId;
+    this.manualSeguimientos.update(lista => lista.map(item => ({
+      ...item,
+      sesiones: item.sesiones.map(sesion => ({
+        ...sesion,
+        hora: sesion.hora && this.horaManualDisponible(sesion.fecha, sesion.hora) ? sesion.hora : ''
+      }))
+    })));
+  }
+
+  bloquesManual(fecha: string): Bloque[] {
+    return this.bloquesPara(this.manualLocalId, fecha);
+  }
+
+  bloquesReprogramacion(cita: Cita, fecha: string): Bloque[] {
+    return this.bloquesPara(cita.localId, fecha).map(bloque => {
+      const esHorarioActual = fecha === cita.fecha && bloque.inicio === cita.horaInicio;
+      return esHorarioActual
+        ? { ...bloque, libres: Math.min(bloque.cupo, bloque.libres + 1), disponible: true, motivo: undefined }
+        : bloque;
+    });
+  }
+
   abrirReprogramacion(cita: Cita): void {
     const abierta = this.reprogramando() === cita.id ? null : cita.id;
     this.reprogramando.set(abierta);
@@ -350,6 +394,11 @@ export class CalendarioComponent {
 
   setEditFecha(id: number, fecha: string): void {
     this.editFecha.update(v => ({ ...v, [id]: fecha }));
+    const cita = this.agenda.citas().find(item => item.id === id);
+    const hora = this.editHora()[id];
+    if (cita && hora && !this.bloquesReprogramacion(cita, fecha).some(bloque => bloque.inicio === hora && bloque.disponible)) {
+      this.editHora.update(v => ({ ...v, [id]: '' }));
+    }
   }
 
   setEditHora(id: number, hora: string): void {
@@ -360,6 +409,9 @@ export class CalendarioComponent {
     const fecha = this.editFecha()[cita.id];
     const hora = this.editHora()[cita.id];
     if (!fecha || !hora) {
+      return;
+    }
+    if (!this.bloquesReprogramacion(cita, fecha).some(bloque => bloque.inicio === hora && bloque.disponible)) {
       return;
     }
     const duracion = this.minutosEntre(cita.horaInicio, cita.horaFin)
@@ -400,7 +452,7 @@ export class CalendarioComponent {
       .map((sesion) => ({ ...sesion, tratamientoId: item.tratamientoId, grupoTratamiento: grupoIndice + 1 }))
     );
     const faltaPrimeraSesion = seguimientos.some(item => !item.sesiones[0]?.fecha || !item.sesiones[0]?.hora);
-    if (!sesionesValidas.length || faltaPrimeraSesion) {
+    if (!sesionesValidas.length || faltaPrimeraSesion || !this.seguimientoManualValido()) {
       return;
     }
 
@@ -485,10 +537,33 @@ export class CalendarioComponent {
     return `${pago}${notas}`.trim();
   }
 
+  private bloquesPara(localId: number, fecha: string): Bloque[] {
+    const local = localPorId(localId);
+    return fecha && local ? this.disponibilidad.bloques(fecha, local) : [];
+  }
+
+  private horaManualDisponible(fecha: string, hora: string): boolean {
+    return this.bloquesManual(fecha).some(bloque => bloque.inicio === hora && bloque.disponible);
+  }
+
+  private cuposManualSuficientes(sesiones: ManualSesionForm[]): boolean {
+    const requeridos = new Map<string, number>();
+    sesiones.forEach(sesion => {
+      const clave = `${sesion.fecha}|${sesion.hora}`;
+      requeridos.set(clave, (requeridos.get(clave) ?? 0) + 1);
+    });
+
+    return [...requeridos.entries()].every(([clave, cantidad]) => {
+      const [fecha, hora] = clave.split('|');
+      const bloque = this.bloquesManual(fecha).find(item => item.inicio === hora);
+      return !!bloque && bloque.disponible && cantidad <= bloque.libres;
+    });
+  }
+
   private crearSesionManualVacia(esPrimera: boolean): ManualSesionForm {
     return {
       fecha: esPrimera ? HOY_ISO : '',
-      hora: esPrimera ? '09:00' : '',
+      hora: '',
       zona: '',
       observaciones: ''
     };

@@ -1,10 +1,11 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { HORAS_SELECTOR, LOCALES, formatoFechaLarga, formatoHora12, soles, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
+import { LOCALES, formatoFechaLarga, formatoHora12, soles, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
 import { ESTADOS_SESION, EstadoSesion, PlanSesiones, SesionPlan, MetodoPago, Paciente } from '../../data/modelos';
 import { PlanesService } from '../../compartido/planes.service';
 import { PacientesService } from '../../compartido/pacientes.service';
+import { Bloque, DisponibilidadService } from '../../compartido/disponibilidad.service';
 
 interface FormSesionPlan {
   fecha: string;
@@ -112,9 +113,8 @@ interface FormTratamientoPlan {
               <input type="email" [ngModel]="formCorreo()" (ngModelChange)="formCorreo.set($event)" name="formCorreo" placeholder="correo@ejemplo.com">
             </div>
             <div class="campo">
-              <label>Sede del plan (opcional)</label>
-              <select [ngModel]="formLocalId()" (ngModelChange)="formLocalId.set(Number($event))" name="formLocalId">
-                <option [value]="0">Por definir / se decide al reservar</option>
+              <label>Sede del plan</label>
+              <select [ngModel]="formLocalId()" (ngModelChange)="cambiarSedePlan(Number($event))" name="formLocalId">
                 @for (l of locales; track l.id) {
                   <option [value]="l.id">{{ l.nombre }}</option>
                 }
@@ -141,19 +141,6 @@ interface FormTratamientoPlan {
                   <option [value]="baseCargaEtiqueta('trat-' + t.id)"></option>
                 }
               </datalist>
-              <select [ngModel]="formBaseCarga()" (ngModelChange)="cargarBase($event)" name="formBaseCarga">
-                <option value="Personalizado">Personalizado (vacío)</option>
-                <optgroup label="Promociones">
-                  @for (p of promocionesLista; track p.id) {
-                    <option [value]="'promo-' + p.id">{{ p.titulo }} ({{ p.sesiones }} ses.)</option>
-                  }
-                </optgroup>
-                <optgroup label="Tratamientos">
-                  @for (t of tratamientosLista; track t.id) {
-                    <option [value]="'trat-' + t.id">{{ t.nombre }}</option>
-                  }
-                </optgroup>
-              </select>
             </div>
             <div class="campo">
               <label>Nombre del Plan</label>
@@ -213,11 +200,6 @@ interface FormTratamientoPlan {
                            (ngModelChange)="buscarTratamientoPlanForm(gi, $event)"
                            name="planTratamientoBusqueda_{{ gi }}"
                            placeholder="Escribe para buscar o abre la lista">
-                    <select [ngModel]="grupo.tratamientoId" (ngModelChange)="actualizarTratamientoPlanForm(gi, Number($event))" name="planTratamiento_{{ gi }}">
-                      @for (t of tratamientosLista; track t.id) {
-                        <option [value]="t.id">{{ t.nombre }} · {{ soles(t.precio) }}</option>
-                      }
-                    </select>
                   </div>
                   <div class="campo">
                     <label>¿Requiere más sesiones?</label>
@@ -242,9 +224,14 @@ interface FormTratamientoPlan {
                       </div>
                       <div class="campo">
                         <label>Hora {{ si === 0 ? '(obligatoria)' : '(opcional)' }}</label>
-                        <select [ngModel]="s.hora" (ngModelChange)="actualizarSesionPlanForm(gi, si, 'hora', $event)" name="planSesionHora_{{ gi }}_{{ si }}" [required]="si === 0">
+                        <select [ngModel]="s.hora" (ngModelChange)="actualizarSesionPlanForm(gi, si, 'hora', $event)" name="planSesionHora_{{ gi }}_{{ si }}" [required]="si === 0" [disabled]="!s.fecha">
+                          @if (si === 0 && !s.hora) { <option value="" disabled>Elige una hora disponible</option> }
                           @if (si > 0) { <option value="">Sin hora definida</option> }
-                          @for (h of horasSelector; track h.valor) { <option [value]="h.valor">{{ h.etiqueta }}</option> }
+                          @for (bloque of bloquesPlanFormulario(s.fecha); track bloque.inicio) {
+                            <option [value]="bloque.inicio" [disabled]="!bloque.disponible">
+                              {{ formatoHora(bloque.inicio) }} · {{ bloque.libres }} de {{ bloque.cupo }} disponibles
+                            </option>
+                          }
                         </select>
                       </div>
                       <div class="campo">
@@ -380,9 +367,13 @@ interface FormTratamientoPlan {
                     </div>
                     <div class="campo">
                       <label>Hora</label>
-                      <select [ngModel]="s.hora || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'hora', $event)" name="editarHora{{ plan.id }}{{ s.numero }}">
+                      <select [ngModel]="s.hora || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'hora', $event)" name="editarHora{{ plan.id }}{{ s.numero }}" [disabled]="!s.fecha">
                         <option value="">Sin hora definida</option>
-                        @for (h of horasSelector; track h.valor) { <option [value]="h.valor">{{ h.etiqueta }}</option> }
+                        @for (bloque of bloquesPlan(plan, s, s.fecha || ''); track bloque.inicio) {
+                          <option [value]="bloque.inicio" [disabled]="!bloque.disponible">
+                            {{ formatoHora(bloque.inicio) }} · {{ bloque.libres }} de {{ bloque.cupo }} disponibles
+                          </option>
+                        }
                       </select>
                     </div>
                     <div class="campo">
@@ -673,6 +664,7 @@ interface FormTratamientoPlan {
 })
 export class SesionesComponent {
   private pacientesService = inject(PacientesService);
+  private disponibilidad = inject(DisponibilidadService);
   private ruta = inject(ActivatedRoute);
   Number = Number;
   soles = soles;
@@ -691,7 +683,6 @@ export class SesionesComponent {
   // Catálogos base para el formulario
   promocionesLista = PROMOCIONES;
   tratamientosLista = TRATAMIENTOS;
-  horasSelector = HORAS_SELECTOR;
   formatoHora = formatoHora12;
 
   busqueda = signal('');
@@ -705,7 +696,7 @@ export class SesionesComponent {
   formApellido = signal('');
   formCelular = signal('');
   formCorreo = signal('');
-  formLocalId = signal(0);
+  formLocalId = signal(LOCALES[0]?.id ?? 1);
   formBaseCarga = signal('Personalizado');
   formBaseBusqueda = signal('Personalizado (vacío)');
   formNombrePlan = signal('');
@@ -803,7 +794,47 @@ export class SesionesComponent {
   }
 
   actualizarSesionPlan(planId: number, sesion: SesionPlan, campo: 'tratamientoId' | 'fecha' | 'hora' | 'zona' | 'observaciones', valor: string | number): void {
+    const plan = this.planes.porId(planId);
+    if (!plan) { return; }
+
+    if (campo === 'fecha') {
+      const fecha = String(valor);
+      this.planes.actualizarSesion(planId, sesion.numero, { fecha });
+      if (sesion.hora && !this.bloquesPlan(plan, sesion, fecha).some(bloque => bloque.inicio === sesion.hora && bloque.disponible)) {
+        this.planes.actualizarSesion(planId, sesion.numero, { hora: '' });
+      }
+      return;
+    }
+
+    if (campo === 'hora' && valor && !this.bloquesPlan(plan, sesion, sesion.fecha || '').some(bloque => bloque.inicio === valor && bloque.disponible)) {
+      return;
+    }
+
     this.planes.actualizarSesion(planId, sesion.numero, { [campo]: campo === 'tratamientoId' ? Number(valor) : String(valor) });
+  }
+
+  cambiarSedePlan(localId: number): void {
+    this.formLocalId.set(localId);
+    this.formTratamientosPlan.update(grupos => grupos.map(grupo => ({
+      ...grupo,
+      sesiones: grupo.sesiones.map(sesion => ({
+        ...sesion,
+        hora: sesion.hora && this.horaFormularioDisponible(sesion.fecha, sesion.hora) ? sesion.hora : ''
+      }))
+    })));
+  }
+
+  bloquesPlanFormulario(fecha: string): Bloque[] {
+    return this.bloquesPara(this.formLocalId(), fecha);
+  }
+
+  bloquesPlan(plan: PlanSesiones, sesion: SesionPlan, fecha: string): Bloque[] {
+    return this.bloquesPara(plan.localId, fecha).map(bloque => {
+      const esHorarioActual = fecha === sesion.fecha && bloque.inicio === sesion.hora;
+      return esHorarioActual
+        ? { ...bloque, libres: Math.min(bloque.cupo, bloque.libres + 1), disponible: true, motivo: undefined }
+        : bloque;
+    });
   }
 
   agregarSesionAPlan(plan: PlanSesiones): void {
@@ -1017,19 +1048,39 @@ export class SesionesComponent {
   }
 
   actualizarSesionPlanForm(indexTratamiento: number, indexSesion: number, campo: keyof FormSesionPlan, valor: string): void {
-    this.formTratamientosPlan.update(list => list.map((grupo, i) => i === indexTratamiento ? {
-      ...grupo,
-      sesiones: grupo.sesiones.map((sesion, si) => si === indexSesion ? { ...sesion, [campo]: valor } : sesion)
-    } : grupo));
+    this.formTratamientosPlan.update(list => list.map((grupo, i) => {
+      if (i !== indexTratamiento) { return grupo; }
+      return {
+        ...grupo,
+        sesiones: grupo.sesiones.map((sesion, si) => {
+          if (si !== indexSesion) { return sesion; }
+          const actualizada = { ...sesion, [campo]: valor };
+          if (campo === 'fecha' && actualizada.hora && !this.horaFormularioDisponible(actualizada.fecha, actualizada.hora)) {
+            actualizada.hora = '';
+          }
+          return actualizada;
+        })
+      };
+    }));
   }
 
   planFormValido(): boolean {
+    const grupos = this.formTratamientosPlan();
+    const sesiones = grupos.flatMap(grupo => grupo.sesiones);
+    const primerasIncompletas = grupos.some(grupo => !grupo.tratamientoId || !grupo.sesiones[0]?.fecha || !grupo.sesiones[0]?.hora);
+    const sesionesIncompletas = sesiones.some(sesion => !!sesion.fecha !== !!sesion.hora);
+    const programadas = sesiones.filter(sesion => !!sesion.fecha && !!sesion.hora);
+
     return !!this.formNombrePlan() &&
       !!this.formDni() &&
       !!this.formNombre() &&
       !!this.formApellido() &&
-      this.formTratamientosPlan().length > 0 &&
-      this.formTratamientosPlan().every(grupo => !!grupo.tratamientoId && !!grupo.sesiones[0]?.fecha && !!grupo.sesiones[0]?.hora);
+      !!this.formLocalId() &&
+      grupos.length > 0 &&
+      !primerasIncompletas &&
+      !sesionesIncompletas &&
+      programadas.every(sesion => this.horaFormularioDisponible(sesion.fecha, sesion.hora)) &&
+      this.cuposFormularioSuficientes(programadas);
   }
 
   tratamientoNombre(id: number): string {
@@ -1116,10 +1167,33 @@ export class SesionesComponent {
   private crearSesionPlanForm(esPrimera: boolean): FormSesionPlan {
     return {
       fecha: esPrimera ? aISO(new Date()) : '',
-      hora: esPrimera ? '09:00' : '',
+      hora: '',
       zona: '',
       observaciones: ''
     };
+  }
+
+  private bloquesPara(localId: number, fecha: string): Bloque[] {
+    const local = LOCALES.find(item => item.id === localId);
+    return fecha && local ? this.disponibilidad.bloques(fecha, local) : [];
+  }
+
+  private horaFormularioDisponible(fecha: string, hora: string): boolean {
+    return this.bloquesPlanFormulario(fecha).some(bloque => bloque.inicio === hora && bloque.disponible);
+  }
+
+  private cuposFormularioSuficientes(sesiones: FormSesionPlan[]): boolean {
+    const requeridos = new Map<string, number>();
+    sesiones.forEach(sesion => {
+      const clave = `${sesion.fecha}|${sesion.hora}`;
+      requeridos.set(clave, (requeridos.get(clave) ?? 0) + 1);
+    });
+
+    return [...requeridos.entries()].every(([clave, cantidad]) => {
+      const [fecha, hora] = clave.split('|');
+      const bloque = this.bloquesPlanFormulario(fecha).find(item => item.inicio === hora);
+      return !!bloque && bloque.disponible && cantidad <= bloque.libres;
+    });
   }
 
   private recalcularPrecioNuevoPlan(): void {

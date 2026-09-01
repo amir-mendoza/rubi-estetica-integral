@@ -363,6 +363,15 @@
                   La reserva quedará pendiente de pago y recepción registrará el cobro al atender a la paciente.
                 }
               </div>
+              <label class="aceptacion-legal">
+                <input type="checkbox" [ngModel]="aceptoLegales()" (ngModelChange)="aceptoLegales.set($event)">
+                <span>
+                  Acepto los
+                  <a routerLink="/legal/terminos" target="_blank">términos y condiciones</a>
+                  y la
+                  <a routerLink="/legal/privacidad" target="_blank">política de privacidad</a>.
+                </span>
+              </label>
               @if (mensajePago()) {
                 <div class="aviso" [class.aviso--ok]="codigoOperacion()" style="margin-bottom:22px">
                   {{ mensajePago() }}
@@ -371,7 +380,7 @@
 
               <div class="acciones-paso">
                 <button class="btn btn--linea btn--sm" (click)="anterior()">Volver</button>
-                <button class="btn btn--primario" [disabled]="procesandoPago()" (click)="confirmar()">
+                <button class="btn btn--primario" [disabled]="procesandoPago() || !aceptoLegales()" (click)="confirmar()">
                   @if (procesandoPago()) {
                     Procesando pago...
                   } @else {
