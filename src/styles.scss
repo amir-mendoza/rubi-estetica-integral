@@ -314,7 +314,7 @@ input, select, textarea, button {
 .campo__ayuda { font-size: .86rem; color: var(--gris-claro); }
 
 /* ----------------------------------------------------------------- Tablas */
-.tabla-envoltura { overflow-x: auto; }
+.tabla-envoltura { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; }
 table.tabla {
   width: 100%;
   border-collapse: collapse;

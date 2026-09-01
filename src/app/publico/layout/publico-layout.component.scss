@@ -33,15 +33,15 @@
 .cabecera--compacta { box-shadow: 0 6px 20px rgba(42, 32, 40, .07); }
 .cabecera__interior {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 28px; min-height: var(--header-h);
+  gap: clamp(12px, 1.2vw, 24px); min-height: var(--header-h);
 }
 .cabecera__logo { display: inline-flex; flex: none; }
 
-.navegacion { display: flex; gap: 30px; flex: none; }
+.navegacion { display: flex; gap: clamp(15px, 1.3vw, 22px); flex: none; }
 .navegacion a {
   position: relative;
-  font-size: .9rem;
-  letter-spacing: .16em;
+  font-size: clamp(.82rem, .72vw, .86rem);
+  letter-spacing: .1em;
   text-transform: uppercase;
   color: var(--tinta);
   font-weight: 400;
@@ -293,8 +293,6 @@
 /* ------------------------------------------------------------- Responsive */
 @media (max-width: 1720px) {
   .cabecera__interior { gap: 18px; }
-  .navegacion { gap: 15px; }
-  .navegacion a { font-size: .84rem; letter-spacing: .09em; }
 }
 @media (max-width: 1400px) {
   .cabecera__interior { gap: 14px; }
@@ -387,18 +385,30 @@
   .cuenta__nombre { display: none; }
   .barra-superior__interior {
     min-height: 36px;
+    flex-wrap: wrap;
     justify-content: center;
+    gap: 4px 12px;
+    padding-block: 5px;
     text-align: center;
+  }
+  .barra-superior__datos {
+    display: none;
   }
   .barra-superior__telefono {
     display: none;
   }
   .barra-superior__acciones {
-    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 12px;
+    max-width: 100%;
+    min-width: 0;
   }
   .barra-superior__admin {
     padding: 4px 10px;
-    font-size: .78rem;
+    font-size: .74rem;
+    letter-spacing: .1em;
+    white-space: nowrap;
   }
   .barra-superior__admin--acceso {
     display: none;
