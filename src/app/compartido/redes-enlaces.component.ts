@@ -57,6 +57,7 @@ import { RedesService } from './redes.service';
       color: var(--vino);
       background: #fff;
       text-decoration: none;
+      font-size: 1em;
       transition: transform .3s ease, color .3s ease, border-color .3s ease, background .3s ease;
     }
     .redes a:hover {
@@ -64,7 +65,7 @@ import { RedesService } from './redes.service';
       color: var(--magenta);
       border-color: var(--magenta-300);
     }
-    .redes__texto { font-size: .88rem; letter-spacing: .04em; }
+    .redes__texto { font-size: .82em; letter-spacing: .03em; }
 
     .redes--claro a {
       border-color: rgba(255, 255, 255, .34);

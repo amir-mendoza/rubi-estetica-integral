@@ -115,13 +115,16 @@
 .pie {
   background: var(--vino-900);
   color: rgba(255, 255, 255, .7);
+  font-size: 16px;
   padding: 72px 0 28px;
   margin-top: 0;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 .pie__grid {
   display: grid;
-  grid-template-columns: 1.35fr .85fr 1fr 1.1fr 1.1fr;
-  gap: 44px;
+  grid-template-columns: minmax(240px, 1.25fr) minmax(140px, .75fr) minmax(210px, .95fr) minmax(220px, 1fr) minmax(220px, 1fr);
+  gap: clamp(26px, 2.7vw, 40px);
   padding-bottom: 48px;
   border-bottom: 1px solid rgba(255, 255, 255, .12);
 }
@@ -130,31 +133,34 @@
 .pie__grupo summary { display: none; }
 .pie h5 {
   color: #fff; font-family: 'Jost', sans-serif;
-  font-size: .86rem; letter-spacing: .2em; text-transform: uppercase;
+  font-size: .78em; letter-spacing: .18em; text-transform: uppercase;
   margin: 0 0 18px; font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
 }
-.pie ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
-.pie a { color: rgba(255, 255, 255, .7); font-size: 1rem; }
+.pie ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pie a { color: rgba(255, 255, 255, .7); font-size: .88em; }
 .pie a:hover { color: #fff; }
-.pie__texto { margin: 20px 0 18px; font-size: 1rem; color: rgba(255, 255, 255, .72); max-width: 40ch; }
+.pie__texto { margin: 18px 0 18px; font-size: .9em; line-height: 1.6; color: rgba(255, 255, 255, .72); max-width: 34ch; }
 .pie__redes { display: block; margin-top: 18px; }
-.pie__lista-datos li { font-size: 1rem; }
+.pie__lista-datos li { font-size: .88em; line-height: 1.55; }
 .pie__direccion {
   margin: 0;
   color: rgba(255, 255, 255, .7);
-  font-size: 1rem;
+  font-size: .88em;
   font-style: normal;
-  line-height: 1.65;
+  line-height: 1.58;
 }
 .pie__mapa {
   display: inline-flex;
   margin: 16px 0;
   color: #fff !important;
-  font-size: .86rem !important;
-  letter-spacing: .08em;
+  font-size: .78em !important;
+  letter-spacing: .07em;
   text-transform: uppercase;
   text-decoration: underline;
   text-underline-offset: 4px;
+  line-height: 1.35;
 }
 .pie__reservas {
   margin-top: 26px;
