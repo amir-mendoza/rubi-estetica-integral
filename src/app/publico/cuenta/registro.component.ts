@@ -88,7 +88,7 @@ import { SesionService } from '../../compartido/sesion.service';
       </div>
     </section>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .registro { display: grid; grid-template-columns: 1.35fr 1fr; gap: 36px; align-items: start; max-width: 1040px; }
     .panel--suave { background: var(--rosa-50); }

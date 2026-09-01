@@ -151,7 +151,7 @@ type PeriodoPago = 'hoy' | 'semana' | 'mes' | 'todo';
       </div>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .kpis-5 { grid-template-columns: repeat(5, 1fr); margin-bottom: 22px; }
     .cobro-inline {

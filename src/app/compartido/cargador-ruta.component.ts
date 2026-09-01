@@ -29,7 +29,7 @@ import { CargadorRuedaComponent } from './cargador-rueda.component';
       </div>
     }
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .velo {
       position: fixed; inset: 0; z-index: 120;

@@ -227,7 +227,7 @@ function cabinaVacia(localId: number): Habitacion {
       </section>
     }
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .panel-form { margin-bottom: 22px; }
     .local-form { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)) minmax(340px, .86fr); gap: 14px; padding: 20px 22px 24px; align-items: end; }

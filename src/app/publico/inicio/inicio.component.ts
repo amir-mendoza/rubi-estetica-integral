@@ -10,7 +10,7 @@ import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.
   standalone: true,
   imports: [RouterLink, PromoCarruselComponent, RedesEnlacesComponent],
   templateUrl: './inicio.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styleUrl: './inicio.component.scss'
 })
 export class InicioComponent {

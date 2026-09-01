@@ -48,7 +48,7 @@ interface ManualTratamientoSeguimiento {
   standalone: true,
   imports: [FormsModule],
   templateUrl: './calendario.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styleUrl: './calendario.component.scss'
 })
 export class CalendarioComponent {

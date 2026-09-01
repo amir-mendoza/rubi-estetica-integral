@@ -106,7 +106,7 @@
               <p>Selecciona el local donde deseas atenderte. Luego podrás elegir uno o varios tratamientos.</p>
               @if (promocion()) {
                 <div class="promo-reserva">
-                  <img [src]="$safeNavigationMigration(promocion()?.imagen)" [alt]="$safeNavigationMigration(promocion()?.titulo)">
+                  <img [src]="promocion()?.imagen" [alt]="promocion()?.titulo">
                   <div>
                     <span class="dato__label">Promoción seleccionada</span>
                     <strong>{{ promocion()?.titulo }}</strong>
@@ -418,7 +418,7 @@
               </div>
             }
             <div class="resumen__fila"><span>Fecha</span><strong>{{ bloque() ? formatoFechaLarga(fecha()) : '—' }}</strong></div>
-            <div class="resumen__fila"><span>Hora de llegada</span><strong>{{ formatoHora($safeNavigationMigration(bloque()?.inicio)) }}</strong></div>
+            <div class="resumen__fila"><span>Hora de llegada</span><strong>{{ formatoHora(bloque()?.inicio) }}</strong></div>
             <div class="resumen__fila"><span>Cabina</span><strong>Se asigna al llegar</strong></div>
             <div class="resumen__fila"><span>Especialista</span><strong>La disponible al llegar</strong></div>
             <div class="resumen__fila">

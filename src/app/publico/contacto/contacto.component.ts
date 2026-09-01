@@ -110,7 +110,7 @@ import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.
       </div>
     </section>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .contacto { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(280px, .75fr); gap: 28px; align-items: start; }
     .contacto__aside { display: grid; gap: 18px; }

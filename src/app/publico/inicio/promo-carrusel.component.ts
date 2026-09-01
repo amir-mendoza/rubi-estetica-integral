@@ -113,7 +113,7 @@ import { PromocionesService } from '../../compartido/promociones.service';
       </section>
     }
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .promociones {
       background: linear-gradient(180deg, #fff 0%, var(--rosa-50) 100%);

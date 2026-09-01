@@ -11,7 +11,7 @@ const LOGO_CLARO = 'img/marca-rubi-logo-blanco.png';
       <img [src]="logoSrc()" alt="Rubí Estética Integral">
     </span>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .logo {
       display: inline-flex;

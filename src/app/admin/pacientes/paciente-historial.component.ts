@@ -78,7 +78,7 @@ import { PacientesService } from '../../compartido/pacientes.service';
       <div class="panel texto-centro"><h3>Paciente no encontrado</h3></div>
     }
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .ficha { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 22px; }
     .ficha div { display: grid; gap: 4px; }

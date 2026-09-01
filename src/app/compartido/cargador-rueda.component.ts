@@ -49,7 +49,7 @@ import { CargadorService, EstiloCargador } from './cargador.service';
       }
     </span>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .rueda {
       position: relative; display: inline-block; flex: none;

@@ -35,7 +35,7 @@ import { FondoService } from './fondo.service';
       }
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .fondo {
       position: fixed;

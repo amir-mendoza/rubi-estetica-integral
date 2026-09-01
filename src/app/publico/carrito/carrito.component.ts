@@ -264,7 +264,7 @@ import { LOCALES, soles } from '../../data/datos';
       </div>
     </section>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .checkout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(320px, .95fr); gap: 32px; align-items: start; }
     .checkout > * { min-width: 0; }

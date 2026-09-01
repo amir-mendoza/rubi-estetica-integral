@@ -79,7 +79,7 @@ import { SesionService } from '../../compartido/sesion.service';
       </div>
     </section>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .acceso { display: grid; grid-template-columns: 1.1fr 1fr; gap: 36px; align-items: start; max-width: 940px; }
     .panel--suave { background: var(--rosa-50); }

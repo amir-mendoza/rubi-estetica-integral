@@ -117,7 +117,7 @@ import { RedesService } from '../../compartido/redes.service';
       </section>
     }
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .detalle-prod__redes {
       display: flex; align-items: center; flex-wrap: wrap; gap: 14px; min-width: 0;

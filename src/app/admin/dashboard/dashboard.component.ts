@@ -36,7 +36,7 @@ interface SeguimientoVista {
   standalone: true,
   imports: [RouterLink],
   templateUrl: './dashboard.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent {

@@ -29,7 +29,7 @@ const CATEGORIAS: (CategoriaTratamiento | 'Todos')[] = [
   standalone: true,
   imports: [RouterLink, FormsModule, RedesEnlacesComponent],
   templateUrl: './reservar.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styleUrl: './reservar.component.scss'
 })
 export class ReservarComponent implements OnDestroy {

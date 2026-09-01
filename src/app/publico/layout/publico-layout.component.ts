@@ -19,7 +19,7 @@ import { CookiesAvisoComponent } from '../../compartido/cookies-aviso.component'
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent, FondoWebComponent, RedesEnlacesComponent, CargadorRutaComponent, PetalosComponent, CookiesAvisoComponent],
   templateUrl: './publico-layout.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styleUrl: './publico-layout.component.scss'
 })
 export class PublicoLayoutComponent implements AfterViewInit, OnDestroy {

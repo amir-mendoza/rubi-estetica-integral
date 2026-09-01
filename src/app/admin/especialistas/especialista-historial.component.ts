@@ -81,7 +81,7 @@ type Periodo = 'hoy' | 'semana' | 'mes' | 'todo';
       <section class="panel texto-centro"><h3>Especialista no encontrada</h3></section>
     }
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .ficha-esp {
       display: grid;

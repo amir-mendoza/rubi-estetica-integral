@@ -279,7 +279,7 @@ function tratamientoVacio(): Tratamiento {
       </div>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .media-editor {
       min-width: 0; padding: 18px 4%; border: 1px solid var(--linea);

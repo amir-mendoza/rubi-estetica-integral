@@ -30,7 +30,7 @@ import { SubidasService } from './subidas.service';
       </div>
     }
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .subidas { display: grid; gap: 10px; min-width: 0; }
     .subidas--flotante {

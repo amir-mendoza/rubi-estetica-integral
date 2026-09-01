@@ -42,7 +42,7 @@ import { Local } from '../data/modelos';
       </div>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .mapa {
       border: 1px solid var(--linea); border-radius: var(--radio-lg);

@@ -200,7 +200,7 @@ interface IndicadorReporte { titulo: string; monto: string; nota: string; tono: 
       }
     </section>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .reportes-panel { margin-bottom: 20px; border: 1px solid var(--linea); border-radius: var(--radio-lg); background: #fff; overflow: hidden; }
     .panel-titulo { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 20px 22px; border-bottom: 1px solid var(--linea); }

@@ -119,7 +119,7 @@ import { Tratamiento } from '../../data/modelos';
       </div>
     </section>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .filtros {
       display: flex; align-items: center; justify-content: space-between;

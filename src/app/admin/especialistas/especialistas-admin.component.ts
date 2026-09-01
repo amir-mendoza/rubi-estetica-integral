@@ -110,7 +110,7 @@ function especialistaVacia(): Especialista {
       }
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .panel-form { margin-bottom: 22px; }
     .esp-form { display: grid; grid-template-columns: minmax(min(100%, 120px), 150px) repeat(4, minmax(min(100%, 150px), 1fr)); gap: 14px; padding: 20px 4% 24px; align-items: end; }

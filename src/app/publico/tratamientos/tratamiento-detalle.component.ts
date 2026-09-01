@@ -139,7 +139,7 @@ import { RedesService } from '../../compartido/redes.service';
       </section>
     }
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .detalle { padding: 56px 0 0; }
     .detalle__navegacion {

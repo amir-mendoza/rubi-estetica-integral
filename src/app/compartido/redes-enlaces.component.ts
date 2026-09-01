@@ -33,7 +33,7 @@ import { RedesService } from './redes.service';
       </ul>
     }
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .redes {
       display: flex;

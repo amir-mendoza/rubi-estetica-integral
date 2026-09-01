@@ -61,7 +61,7 @@ import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.
       </div>
     </section>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .sede {
       display: grid; grid-template-columns: 1fr 1.1fr; gap: 56px; align-items: center;

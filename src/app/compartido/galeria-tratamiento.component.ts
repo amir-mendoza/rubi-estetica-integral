@@ -88,7 +88,7 @@ interface Pieza {
       }
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .galeria { display: grid; gap: 14px; min-width: 0; }
     .galeria__escena {

@@ -590,7 +590,7 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
       </div>
     }
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .pestanas { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
     .pestanas button {

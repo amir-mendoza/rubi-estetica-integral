@@ -297,7 +297,7 @@ function enriquecerProducto(p: Producto): Producto {
       </div>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .kpis-4 { grid-template-columns: repeat(4, 1fr); margin-bottom: 22px; }
     .panel-form, .categorias-panel { margin-bottom: 22px; }

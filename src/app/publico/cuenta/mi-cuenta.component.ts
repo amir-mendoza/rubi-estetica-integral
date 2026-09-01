@@ -110,7 +110,7 @@ import { Cita, Pedido } from '../../data/modelos';
       </div>
     </section>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .cuenta { display: grid; grid-template-columns: minmax(min(100%, 260px), 28%) minmax(0, 1fr); gap: 32px; align-items: start; }
     .perfil { display: flex; gap: 14px; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--linea); }

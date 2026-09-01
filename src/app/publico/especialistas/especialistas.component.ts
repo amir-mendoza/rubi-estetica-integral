@@ -33,7 +33,7 @@ import { Especialista } from '../../data/modelos';
       </div>
     </section>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .ficha { background: #fff; border: 1px solid var(--linea); border-radius: var(--radio-lg); overflow: hidden; display: flex; flex-direction: column; }
     .ficha img { width: 100%; aspect-ratio: 4/4.4; object-fit: cover; }

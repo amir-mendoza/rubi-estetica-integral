@@ -16,7 +16,7 @@ interface Seccion {
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, LogoComponent, ProgresoSubidasComponent],
   templateUrl: './admin-layout.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styleUrl: './admin-layout.component.scss'
 })
 export class AdminLayoutComponent implements OnInit, OnDestroy {

@@ -83,7 +83,7 @@ import { RedesService } from '../../compartido/redes.service';
       </div>
     </section>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .redes-bloque {
       display: flex; align-items: center; justify-content: space-between;

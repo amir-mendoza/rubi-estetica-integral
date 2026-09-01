@@ -6,7 +6,7 @@ import { MarcaService } from './compartido/marca.service';
   selector: 'app-root',
   imports: [RouterOutlet],
   templateUrl: './app.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styleUrl: './app.component.scss'
 })
 export class AppComponent {

@@ -87,7 +87,7 @@ import { RouterLink } from '@angular/router';
       </div>
     </section>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
     .historia { display: grid; grid-template-columns: 1.05fr 1fr; gap: 72px; align-items: center; }
     .historia__imagen { margin: 0; border-radius: var(--radio-lg); overflow: hidden; }
