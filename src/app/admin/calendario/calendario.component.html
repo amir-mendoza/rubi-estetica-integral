@@ -56,15 +56,17 @@
           <option>WhatsApp</option>
         </select>
       </div>
-      <div class="campo cita-manual__ancho">
-        <label>Responsable que registra (obligatorio)</label>
-        <select required [(ngModel)]="manualResponsable" name="manualResponsable">
-          <option value="" disabled>Selecciona quién atiende o registra esta cita</option>
-          @for (r of responsablesRegistro(); track r.valor) {
-            <option [value]="r.valor">{{ r.etiqueta }}</option>
-          }
-        </select>
-      </div>
+      @if (requiereResponsableManual()) {
+        <div class="campo cita-manual__ancho">
+          <label>Responsable que registra (obligatorio)</label>
+          <select required [(ngModel)]="manualResponsable" name="manualResponsable">
+            <option value="" disabled>Selecciona quién atiende o registra esta cita</option>
+            @for (r of responsablesRegistro(); track r.valor) {
+              <option [value]="r.valor">{{ r.etiqueta }}</option>
+            }
+          </select>
+        </div>
+      }
       <div class="aviso aviso--ok">
         Registra aquí el tratamiento principal de la visita. Si solo es una atención, deja "requiere más sesiones" en No. Si necesita control o varias fechas, activa Sí y agrega las sesiones necesarias.
       </div>
@@ -211,7 +213,7 @@
 
       <button class="btn btn--vino btn--sm" type="submit"
               [disabled]="!datosManualValidos() || !seguimientoManualValido()">
-        Guardar cita / seguimiento
+        {{ requierePlanManual() ? 'Guardar cita / seguimiento' : 'Guardar cita simple' }}
       </button>
     </form>
   </div>

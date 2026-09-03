@@ -7,7 +7,7 @@ import {
   formatoFechaLarga, localPorId, nombreCabina, nombreEspecialista,
   soles, tratamientoPorId
 } from '../../data/datos';
-import { Cita, ESTADOS_CITA, EstadoCita, MetodoPago } from '../../data/modelos';
+import { Cita, ESTADOS_CITA, EstadoCita, EstadoPago, MetodoPago } from '../../data/modelos';
 import { AgendaService } from '../../compartido/agenda.service';
 import { SesionService } from '../../compartido/sesion.service';
 import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
@@ -374,12 +374,13 @@ export class CalendarioComponent implements OnDestroy {
   datosManualValidos(): boolean {
     const dni = this.manualDni.replace(/\D/g, '');
     const celular = this.manualCelular.replace(/\D/g, '');
+    const responsableValido = !this.requiereResponsableManual() || !!this.manualResponsable.trim();
     return !!(
       this.manualNombre.trim()
       && this.manualApellido.trim()
       && dni.length === 8
       && celular.length >= 9
-      && this.manualResponsable.trim()
+      && responsableValido
     );
   }
 
@@ -419,8 +420,12 @@ export class CalendarioComponent implements OnDestroy {
   }
 
   registrarCitaManual(): void {
-    if (!this.datosManualValidos()) { return; }
-    this.registrarPlanMultisesion();
+    if (!this.datosManualValidos() || !this.seguimientoManualValido()) { return; }
+    if (this.requierePlanManual()) {
+      this.registrarPlanMultisesion();
+      return;
+    }
+    this.registrarCitaSimpleManual();
   }
 
   cambiarLocalManual(localId: number): void {
@@ -518,14 +523,79 @@ export class CalendarioComponent implements OnDestroy {
     this.agenda.desvincularPlan(cita.id, this.responsable());
   }
 
+  requiereResponsableManual(): boolean {
+    return this.sesion.usuario()?.rol === 'Recepcionista';
+  }
+
+  requierePlanManual(): boolean {
+    return this.manualSeguimientos().length > 1 ||
+      this.manualSeguimientos().some(item => item.multisesion || item.sesiones.length > 1);
+  }
+
+  private registrarCitaSimpleManual(): void {
+    const seguimiento = this.manualSeguimientos()[0];
+    const sesion = seguimiento?.sesiones[0];
+    if (!seguimiento?.tratamientoId || !sesion?.fecha || !sesion.hora) {
+      return;
+    }
+
+    const paciente = this.pacientes.registrarOActualizar({
+      dni: this.manualDni,
+      nombre: this.manualNombre,
+      apellido: this.manualApellido,
+      celular: this.manualCelular,
+      correo: this.manualCorreo,
+      observaciones: this.manualNotas.trim()
+    });
+
+    const tratamiento = tratamientoPorId(seguimiento.tratamientoId);
+    const total = this.totalManualSeguro();
+    const pagado = this.pagadoManualSeguro();
+    const responsableRegistro = this.responsableRegistroManual();
+    const horaActual = new Date().toTimeString().slice(0, 5);
+    const codigoOperacion = pagado > 0
+      ? `${this.manualMetodo.toUpperCase().replace(/\s/g, '-')}-${Date.now().toString().slice(-6)}`
+      : undefined;
+    const estadoPago: EstadoPago = pagado >= total && total > 0
+      ? 'Pagado'
+      : (pagado > 0 ? 'Pago en local' : 'Pendiente');
+
+    const cita = this.agenda.crearCita({
+      fecha: sesion.fecha,
+      horaInicio: sesion.hora,
+      horaFin: this.sumarMinutos(sesion.hora, (tratamiento?.duracionMin ?? 60) + (tratamiento?.limpiezaMin ?? 0)),
+      pacienteId: paciente.id,
+      tratamientoId: seguimiento.tratamientoId,
+      tratamientosIncluidos: [seguimiento.tratamientoId],
+      localId: Number(this.manualLocalId),
+      estado: 'Programada',
+      estadoPago,
+      metodoPago: pagado > 0 ? this.manualMetodo : undefined,
+      montoTotal: total,
+      montoPagado: pagado,
+      registradaPor: responsableRegistro,
+      confirmadaPor: pagado > 0 ? responsableRegistro : undefined,
+      codigoOperacion,
+      pagadaEl: pagado >= total && total > 0 ? `${HOY_ISO} ${horaActual}` : undefined,
+      origen: this.manualOrigen,
+      zonaTratamiento: sesion.zona.trim() || undefined,
+      notas: this.notaCitaSimple(sesion.observaciones)
+    });
+
+    this.pacientes.registrarAtencion(paciente.id, sesion.fecha, pagado);
+    this.vouchers.imprimirCita(cita, paciente);
+    this.cerrarFormularioManual(sesion.fecha);
+    this.busqueda.set('');
+  }
+
   private registrarPlanMultisesion(): void {
     const seguimientos = this.manualSeguimientos();
-    const responsableRegistro = this.manualResponsable.trim();
+    const responsableRegistro = this.responsableRegistroManual();
     const sesionesValidas = seguimientos.flatMap((item, grupoIndice) => item.sesiones
       .map((sesion) => ({ ...sesion, tratamientoId: item.tratamientoId, grupoTratamiento: grupoIndice + 1 }))
     );
     const faltaPrimeraSesion = seguimientos.some(item => !item.sesiones[0]?.fecha || !item.sesiones[0]?.hora);
-    if (!responsableRegistro || !sesionesValidas.length || faltaPrimeraSesion || !this.seguimientoManualValido()) {
+    if (!sesionesValidas.length || faltaPrimeraSesion || !this.seguimientoManualValido()) {
       return;
     }
 
@@ -612,6 +682,11 @@ export class CalendarioComponent implements OnDestroy {
     return `${pago}${notas}`.trim();
   }
 
+  private notaCitaSimple(observacionSesion: string): string | undefined {
+    const notas = [this.manualNotas.trim(), observacionSesion.trim()].filter(Boolean);
+    return notas.length ? notas.join(' ') : undefined;
+  }
+
   private bloquesPara(localId: number, fecha: string): Bloque[] {
     this.disponibilidadTick();
     const local = localPorId(localId);
@@ -671,6 +746,10 @@ export class CalendarioComponent implements OnDestroy {
 
   private responsable(): string {
     return this.sesion.nombreCompleto() || 'Recepción';
+  }
+
+  private responsableRegistroManual(): string {
+    return this.manualResponsable.trim() || this.responsable() || 'Administración';
   }
 
   responsablesRegistro(): { valor: string; etiqueta: string }[] {
