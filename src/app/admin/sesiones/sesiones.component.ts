@@ -174,8 +174,12 @@ interface OpcionPlanSelector {
                   <div>
                     <strong>Tratamiento {{ gi + 1 }}</strong>
                     <span>
-                      {{ tratamientoNombre(grupo.tratamientoId) }} ·
-                      {{ grupo.incluidoEnBase ? 'Incluido en ' + (grupo.origen || 'combo') : soles(precioTratamiento(grupo.tratamientoId)) }}
+                      @if (grupo.tratamientoId) {
+                        {{ tratamientoNombre(grupo.tratamientoId) }} ·
+                        {{ grupo.incluidoEnBase ? 'Incluido en ' + (grupo.origen || 'combo') : soles(precioTratamiento(grupo.tratamientoId)) }}
+                      } @else {
+                        Selecciona un tratamiento para calcular el precio.
+                      }
                     </span>
                   </div>
                   <button type="button" class="boton-icono" (click)="eliminarTratamientoPlanForm(gi)" [disabled]="formTratamientosPlan().length === 1">Quitar tratamiento</button>
@@ -1007,12 +1011,7 @@ export class SesionesComponent implements OnDestroy {
   }
 
   agregarTratamientoPlanForm(): void {
-    this.formTratamientosPlan.update(list => [...list, this.crearTratamientoPlanForm(this.tratamientosLista[0]?.id ?? 1)]);
-    const indice = this.formTratamientosPlan().length - 1;
-    const tratamientoId = this.formTratamientosPlan()[indice]?.tratamientoId;
-    if (tratamientoId) {
-      this.formTratamientoBusqueda.update(v => ({ ...v, [indice]: this.tratamientoEtiqueta(tratamientoId) }));
-    }
+    this.formTratamientosPlan.update(list => [...list, this.crearTratamientoPlanForm(0)]);
     this.recalcularPrecioNuevoPlan();
   }
 
@@ -1031,13 +1030,21 @@ export class SesionesComponent implements OnDestroy {
   buscarTratamientoPlanForm(index: number, valor: string): void {
     this.formTratamientoBusqueda.update(v => ({ ...v, [index]: valor }));
     this.formTratamientoAbierto.set(index);
+    if (!valor.trim()) {
+      this.actualizarTratamientoPlanForm(index, 0);
+      return;
+    }
     const tratamiento = this.tratamientosLista.find(t =>
       this.normalizarTexto(this.tratamientoEtiqueta(t.id)) === this.normalizarTexto(valor) ||
       this.normalizarTexto(t.nombre) === this.normalizarTexto(valor)
     );
     if (tratamiento) {
       this.actualizarTratamientoPlanForm(index, tratamiento.id);
+      return;
     }
+    this.formTratamientosPlan.update(list => list.map((grupo, i) => i === index ? { ...grupo, tratamientoId: 0 } : grupo));
+    this.formPrecioBase.set(0);
+    this.recalcularPrecioNuevoPlan();
   }
 
   busquedaTratamientoPlanForm(index: number, tratamientoId: number): string {
@@ -1191,7 +1198,7 @@ export class SesionesComponent implements OnDestroy {
   }
 
   tratamientoNombre(id: number): string {
-    return TRATAMIENTOS.find(t => t.id === id)?.nombre ?? 'Tratamiento';
+    return TRATAMIENTOS.find(t => t.id === id)?.nombre ?? 'Sin tratamiento seleccionado';
   }
 
   precioTratamiento(id: number): number {

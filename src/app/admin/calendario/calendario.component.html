@@ -85,7 +85,13 @@
             <div class="seguimiento-row__cabecera">
               <div>
                 <strong>Tratamiento {{ ti + 1 }}</strong>
-                <span>Precio: {{ soles(tratamiento(seguimiento.tratamientoId)?.precio || 0) }}</span>
+                <span>
+                  @if (seguimiento.tratamientoId) {
+                    Precio: {{ soles(tratamiento(seguimiento.tratamientoId)?.precio || 0) }}
+                  } @else {
+                    Selecciona un tratamiento para calcular el precio.
+                  }
+                </span>
               </div>
               <button type="button" class="boton-icono" (click)="quitarSeguimientoManual(ti)" [disabled]="manualSeguimientos().length === 1">Quitar tratamiento</button>
             </div>

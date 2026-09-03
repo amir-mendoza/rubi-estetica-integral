@@ -103,14 +103,14 @@ export class CalendarioComponent implements OnDestroy {
   manualCorreo = '';
   manualLocalId = LOCALES[0]?.id ?? 1;
   manualNotas = '';
-  manualTotal = TRATAMIENTOS[0]?.precio ?? 0;
+  manualTotal = 0;
   manualPagado = 0;
   manualMetodo: MetodoPago = 'Efectivo';
   manualOrigen: 'Recepción' | 'WhatsApp' = 'Recepción';
   manualResponsable = '';
   manualPlanNombre = '';
   manualSeguimientos = signal<ManualTratamientoSeguimiento[]>([{
-    tratamientoId: TRATAMIENTOS[0]?.id ?? 1,
+    tratamientoId: 0,
     multisesion: false,
     sesiones: [{
       fecha: HOY_ISO,
@@ -275,13 +275,20 @@ export class CalendarioComponent implements OnDestroy {
   buscarTratamientoManual(indice: number, valor: string): void {
     this.manualTratamientoBusqueda.update(v => ({ ...v, [indice]: valor }));
     this.manualTratamientoAbierto.set(indice);
+    if (!valor.trim()) {
+      this.cambiarTratamientoSeguimiento(indice, 0);
+      return;
+    }
     const seleccionado = this.tratamientosCatalogo.find(t =>
       this.normalizarTexto(this.tratamientoEtiqueta(t.id)) === this.normalizarTexto(valor) ||
       this.normalizarTexto(t.nombre) === this.normalizarTexto(valor)
     );
     if (seleccionado) {
       this.cambiarTratamientoSeguimiento(indice, seleccionado.id);
+      return;
     }
+    this.manualSeguimientos.update(lista => lista.map((item, i) => i === indice ? { ...item, tratamientoId: 0 } : item));
+    this.recalcularManualDesdeSeguimientos();
   }
 
   busquedaTratamientoManual(indice: number, tratamientoId: number): string {
@@ -730,7 +737,7 @@ export class CalendarioComponent implements OnDestroy {
 
   private crearSeguimientoManualVacio(esPrimero: boolean): ManualTratamientoSeguimiento {
     return {
-      tratamientoId: this.tratamientosCatalogo[0]?.id ?? 1,
+      tratamientoId: 0,
       multisesion: false,
       sesiones: [this.crearSesionManualVacia(esPrimero)]
     };
