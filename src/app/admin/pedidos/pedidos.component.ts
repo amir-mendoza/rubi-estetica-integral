@@ -113,7 +113,7 @@ type MenuResponsable = 'nuevo' | number | null;
                              (click)="abrirProducto(i)"
                              (ngModelChange)="buscarProductoItem(i, $event)"
                              [name]="'prodBusqueda' + i"
-                             placeholder="Ej. crema, serum, bloqueador">
+                             placeholder="Buscar o seleccionar producto">
                       <button type="button" aria-label="Ver productos" (click)="alternarProducto(i)">⌄</button>
                     </div>
                     @if (productoAbierto() === i) {
@@ -388,6 +388,7 @@ type MenuResponsable = 'nuevo' | number | null;
       border: 0;
       border-radius: 0;
       min-height: 42px;
+      font-size: .98rem;
       background: transparent;
     }
     .selector-combo__control button {
@@ -403,11 +404,11 @@ type MenuResponsable = 'nuevo' | number | null;
       top: calc(100% + 6px);
       left: 0;
       right: 0;
-      max-height: 260px;
+      max-height: 360px;
       overflow: auto;
       display: grid;
       gap: 6px;
-      padding: 8px;
+      padding: 10px;
       border: 1px solid var(--linea);
       border-radius: var(--radio);
       background: #fff;
@@ -420,7 +421,8 @@ type MenuResponsable = 'nuevo' | number | null;
       justify-content: space-between;
       gap: 12px;
       width: 100%;
-      padding: 10px 12px;
+      min-height: 58px;
+      padding: 13px 16px;
       border: 0;
       border-radius: calc(var(--radio) - 2px);
       background: transparent;
@@ -430,10 +432,21 @@ type MenuResponsable = 'nuevo' | number | null;
       text-align: left;
     }
     .selector-combo__menu button:hover { background: var(--rosa-50); }
-    .selector-combo__menu span { display: grid; gap: 2px; }
-    .selector-combo__menu small { margin: 0; color: var(--gris-claro); font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
-    .selector-combo__menu strong { color: var(--vino); white-space: nowrap; }
-    .selector-combo__menu p { margin: 0; padding: 8px; color: var(--gris); font-size: .88rem; }
+    .selector-combo__menu span { display: grid; gap: 4px; }
+    .selector-combo__menu small { margin: 0; color: var(--gris-claro); font-size: .84rem; text-transform: uppercase; letter-spacing: .08em; }
+    .selector-combo__menu strong { color: var(--vino); white-space: nowrap; font-size: 1rem; }
+    .selector-combo__menu p { margin: 0; padding: 10px; color: var(--gris); font-size: .95rem; }
+    .selector-combo__menu--productos button {
+      min-height: 68px;
+      font-size: 1.08rem;
+      line-height: 1.35;
+    }
+    .selector-combo__menu--productos small {
+      font-size: .86rem;
+    }
+    .selector-combo__menu--productos span {
+      gap: 6px;
+    }
     .precio-local {
       grid-column: 1 / -1;
       display: grid;
@@ -655,7 +668,7 @@ export class PedidosComponent {
 
     this.nuevoItems.update(items => items.map((item, i) => i === index ? {
       ...item,
-      productoId: elegido?.id ?? item.productoId,
+      productoId: elegido?.id ?? 0,
       busqueda: valor
     } : item));
     this.recalcularTotal();
@@ -751,11 +764,10 @@ export class PedidosComponent {
   }
 
   private crearItemForm(): PedidoItemForm {
-    const producto = this.productos[0] ?? PRODUCTOS[0];
     return {
-      productoId: producto?.id ?? 1,
+      productoId: 0,
       cantidad: 1,
-      busqueda: producto ? this.productoEtiqueta(producto) : ''
+      busqueda: ''
     };
   }
 
