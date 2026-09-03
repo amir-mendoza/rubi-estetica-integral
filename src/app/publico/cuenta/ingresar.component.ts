@@ -64,6 +64,15 @@ import { SesionService } from '../../compartido/sesion.service';
           </div>
 
           <div class="demo">
+            <span class="eyebrow">Recepción</span>
+            <strong>recepcion&#64;rubiestetica.pe</strong>
+            <span>Contraseña: recepcion2026</span>
+            <button class="btn btn--linea btn--sm" (click)="usarDemo('recepcion@rubiestetica.pe', 'recepcion2026')">
+              Usar esta cuenta
+            </button>
+          </div>
+
+          <div class="demo">
             <span class="eyebrow">Paciente registrada</span>
             <strong>maria.lopez&#64;gmail.com</strong>
             <span>Contraseña: maria123</span>
@@ -122,9 +131,14 @@ export class IngresarComponent {
     this.error.set('');
     const volver = this.ruta.snapshot.queryParamMap.get('volver');
     if (volver && (usuario.rol !== 'Paciente' || !volver.startsWith('/admin'))) {
-      this.router.navigateByUrl(volver);
+      this.router.navigateByUrl(usuario.rol === 'Recepcionista' && volver.startsWith('/admin') ? '/admin/calendario' : volver);
       return;
     }
-    this.router.navigateByUrl(usuario.rol === 'Paciente' ? '/mi-cuenta' : '/admin/dashboard');
+    const destino = usuario.rol === 'Paciente'
+      ? '/mi-cuenta'
+      : usuario.rol === 'Recepcionista'
+        ? '/admin/calendario'
+        : '/admin/dashboard';
+    this.router.navigateByUrl(destino);
   }
 }

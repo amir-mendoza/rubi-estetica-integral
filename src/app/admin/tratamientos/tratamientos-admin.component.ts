@@ -93,47 +93,104 @@ function tratamientoVacio(): Tratamiento {
           <button class="boton-icono" (click)="cerrarFormulario()">Cancelar</button>
         </div>
         <form class="trat-form" (ngSubmit)="guardar()">
-          <div class="campo"><label>Nombre</label><input required [ngModel]="borrador().nombre" (ngModelChange)="editar('nombre', $event)" name="nombre"></div>
-          <div class="campo">
-            <label>Categoría</label>
-            <select [ngModel]="borrador().categoria" (ngModelChange)="editar('categoria', $event)" name="categoria">
-              @for (c of categoriasSinTodos(); track c) { <option [value]="c">{{ c }}</option> }
-            </select>
-          </div>
-          <div class="campo"><label>Precio (S/)</label><input type="number" min="0" [ngModel]="borrador().precio" (ngModelChange)="editar('precio', Number($event))" name="precio"></div>
-          <div class="campo"><label>Sesión (min)</label><input type="number" min="5" [ngModel]="borrador().duracionMin" (ngModelChange)="editar('duracionMin', Number($event))" name="duracion"></div>
-          <div class="campo"><label>Limpieza cabina (min)</label><input type="number" min="0" [ngModel]="borrador().limpiezaMin" (ngModelChange)="editar('limpiezaMin', Number($event))" name="limpieza"></div>
-          <div class="campo">
-            <label>Imagen</label>
-            <input [ngModel]="borrador().imagen" (ngModelChange)="editar('imagen', $event)" name="imagen" placeholder="img/trat-limpieza.jpg">
-            <input type="file" accept="image/*" (change)="cargarImagen($event)">
-          </div>
-          <div class="campo"><label>Nombre interno de imagen</label><input [ngModel]="borrador().nombreImagen" (ngModelChange)="editar('nombreImagen', $event)" name="nombreImagen" placeholder="Ej. Foto HIFU agosto"></div>
-          <div class="campo trat-form__ancho"><label>Resumen</label><input [ngModel]="borrador().resumen" (ngModelChange)="editar('resumen', $event)" name="resumen"></div>
-          <div class="campo trat-form__ancho"><label>Descripción</label><textarea rows="3" [ngModel]="borrador().descripcion" (ngModelChange)="editar('descripcion', $event)" name="descripcion"></textarea></div>
-          <div class="trat-form__preview">
-            <span class="dato__label">Vista previa pública</span>
-            <article class="preview-trat-card">
-              <div class="preview-trat-card__media">
-                <img [src]="borrador().imagen" [alt]="borrador().nombre || 'Tratamiento'">
-                <span>{{ borrador().categoria || 'Categoría' }}</span>
+          <div class="trat-form__campos">
+            <section class="form-bloque">
+              <div class="form-bloque__cabecera">
+                <span class="dato__label">Información principal</span>
+                <strong>Nombre, categoría, precio y tiempos</strong>
               </div>
-              <div class="preview-trat-card__body">
-                <h4>{{ borrador().nombre || 'Nombre del tratamiento' }}</h4>
-                <p>{{ borrador().resumen || 'Resumen breve que verá la paciente en la lista.' }}</p>
-                <div class="precio">
-                  <span class="precio__actual">{{ soles(borrador().precio || 0) }}</span>
+              <div class="trat-form__fila">
+                <div class="campo"><label>Nombre visible del tratamiento</label><input required [ngModel]="borrador().nombre" (ngModelChange)="editar('nombre', $event)" name="nombre" placeholder="Ej. Limpieza facial profunda"></div>
+                <div class="campo">
+                  <label>Categoría</label>
+                  <select [ngModel]="borrador().categoria" (ngModelChange)="editar('categoria', $event)" name="categoria">
+                    @for (c of categoriasSinTodos(); track c) { <option [value]="c">{{ c }}</option> }
+                  </select>
                 </div>
               </div>
-            </article>
-            <div class="preview-trat-detail">
-              <strong>Detalle al abrir</strong>
-              <p>{{ borrador().descripcion || 'Aquí se verá en qué consiste el tratamiento.' }}</p>
-              <ul>
-                @for (b of beneficiosPreview(); track $index) { <li>{{ b }}</li> }
-              </ul>
+              <div class="trat-form__fila trat-form__fila--tres">
+                <div class="campo"><label>Precio final (S/)</label><input type="number" min="0" [ngModel]="borrador().precio" (ngModelChange)="editar('precio', Number($event))" name="precio"></div>
+                <div class="campo"><label>Duración de sesión (min)</label><input type="number" min="5" [ngModel]="borrador().duracionMin" (ngModelChange)="editar('duracionMin', Number($event))" name="duracion"></div>
+                <div class="campo"><label>Limpieza/preparación de cabina (min)</label><input type="number" min="0" [ngModel]="borrador().limpiezaMin" (ngModelChange)="editar('limpiezaMin', Number($event))" name="limpieza"></div>
+              </div>
+            </section>
+
+            <section class="form-bloque">
+              <div class="form-bloque__cabecera">
+                <span class="dato__label">Texto para publicar</span>
+                <strong>Resumen corto y detalle completo</strong>
+              </div>
+              <div class="campo"><label>Resumen para tarjeta</label><input [ngModel]="borrador().resumen" (ngModelChange)="editar('resumen', $event)" name="resumen" placeholder="Una frase clara para el catálogo"></div>
+              <div class="campo"><label>Descripción del detalle</label><textarea rows="4" [ngModel]="borrador().descripcion" (ngModelChange)="editar('descripcion', $event)" name="descripcion" placeholder="Explica en qué consiste, para quién sirve y qué resultado se busca"></textarea></div>
+            </section>
+
+            <section class="form-bloque">
+              <div class="form-bloque__cabecera">
+                <span class="dato__label">Imagen principal</span>
+                <strong>Foto que verá el usuario en catálogo y detalle</strong>
+              </div>
+              <div class="trat-form__fila">
+                <div class="campo">
+                  <label>Ruta o URL de imagen</label>
+                  <input [ngModel]="borrador().imagen" (ngModelChange)="editar('imagen', $event)" name="imagen" placeholder="img/trat-limpieza.jpg">
+                  <input type="file" accept="image/*" (change)="cargarImagen($event)">
+                </div>
+                <div class="campo"><label>Nombre interno de imagen</label><input [ngModel]="borrador().nombreImagen" (ngModelChange)="editar('nombreImagen', $event)" name="nombreImagen" placeholder="Ej. Foto HIFU agosto"></div>
+              </div>
+            </section>
+
+            <div class="trat-form__preview">
+              <div class="preview-tabs">
+                <span class="dato__label">Vista previa pública</span>
+                <strong>Catálogo y detalle</strong>
+              </div>
+              <article class="preview-trat-card">
+                <div class="preview-trat-card__media">
+                  <img [src]="imagenPreview()" [alt]="nombrePreview()">
+                  <span>{{ borrador().categoria || 'Categoría' }}</span>
+                  @if (borrador().video) { <b>Con video</b> }
+                </div>
+                <div class="preview-trat-card__body">
+                  <h4>{{ nombrePreview() }}</h4>
+                  <p>{{ resumenPreview() }}</p>
+                  <div class="preview-trat-card__meta">
+                    <span>{{ borrador().duracionMin || 0 }} min de sesión</span>
+                    <span>+ {{ borrador().limpiezaMin || 0 }} min de cabina</span>
+                  </div>
+                  <div class="preview-trat-card__pie">
+                    <span class="precio__actual">{{ soles(borrador().precio || 0) }}</span>
+                    <strong>Ver detalle →</strong>
+                  </div>
+                </div>
+              </article>
+              <article class="preview-trat-screen">
+                <div class="preview-trat-screen__media">
+                  <img [src]="imagenPreview()" [alt]="nombrePreview()">
+                </div>
+                <div class="preview-trat-screen__body">
+                  <span class="dato__label">{{ borrador().categoria || 'Categoría' }}</span>
+                  <h4>{{ nombrePreview() }}</h4>
+                  <p>{{ descripcionPreview() }}</p>
+                  <div class="preview-trat-screen__stats">
+                    <span><small>Duración</small>{{ borrador().duracionMin || 0 }} min</span>
+                    <span><small>Cabina</small>{{ borrador().limpiezaMin || 0 }} min</span>
+                    <span><small>Total reservado</small>{{ tiempoTotalPreview() }} min</span>
+                  </div>
+                  <div class="preview-trat-detail">
+                    <strong>Beneficios</strong>
+                    <ul>
+                      @for (b of beneficiosPreview(); track $index) { <li>{{ b }}</li> }
+                    </ul>
+                  </div>
+                  <div class="preview-trat-detail">
+                    <strong>Recomendaciones</strong>
+                    <ul>
+                      @for (r of recomendacionesPreview(); track $index) { <li>{{ r }}</li> }
+                    </ul>
+                  </div>
+                </div>
+              </article>
             </div>
-          </div>
           <div class="lista-editor">
             <div class="lista-editor__cabecera">
               <div><span class="dato__label">Beneficios</span><strong>Qué gana la paciente</strong></div>
@@ -212,6 +269,7 @@ function tratamientoVacio(): Tratamiento {
           </div>
           <label class="check"><input type="checkbox" [ngModel]="borrador().activo" (ngModelChange)="editar('activo', $event)" name="activo"> Activo en la web</label>
           <button class="btn btn--vino btn--sm" type="submit" [disabled]="!borrador().nombre || !borrador().precio">Guardar tratamiento</button>
+          </div>
         </form>
       </div>
     }
@@ -322,12 +380,38 @@ function tratamientoVacio(): Tratamiento {
       padding: 20px 22px 24px;
       align-items: end;
     }
+    .trat-form__campos { display: contents; }
+    .form-bloque {
+      grid-column: 1 / 3;
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      background: #fff;
+    }
+    .form-bloque__cabecera {
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--linea);
+    }
+    .form-bloque__cabecera strong {
+      display: block;
+      color: var(--vino);
+      margin-top: 3px;
+    }
+    .trat-form__fila {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      align-items: end;
+    }
+    .trat-form__fila--tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .trat-form__ancho, .lista-editor { grid-column: 1 / 3; }
     .trat-form__preview {
       grid-column: 3;
-      grid-row: 1 / span 8;
+      grid-row: 1 / span 10;
       display: grid;
-      gap: 12px;
+      gap: 14px;
       align-items: start;
       align-self: start;
       position: sticky;
@@ -337,6 +421,7 @@ function tratamientoVacio(): Tratamiento {
       padding: 14px;
       background: #fff;
     }
+    .preview-tabs strong { display: block; color: var(--vino); margin-top: 3px; }
     .preview-trat-card { border: 1px solid var(--linea); border-radius: var(--radio-lg); overflow: hidden; background: #fff; }
     .preview-trat-card__media { position: relative; aspect-ratio: 4 / 3; background: var(--rosa-50); }
     .preview-trat-card__media img { width: 100%; height: 100%; object-fit: cover; }
@@ -344,9 +429,87 @@ function tratamientoVacio(): Tratamiento {
       position: absolute; top: 12px; left: 12px; background: rgba(255,255,255,.94); color: var(--vino);
       font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; padding: 5px 10px; border-radius: 2px;
     }
+    .preview-trat-card__media b {
+      position: absolute; left: 12px; bottom: 12px; padding: 7px 12px; border-radius: 999px;
+      background: rgba(42, 32, 40, .72); color: #fff; font-size: .75rem; letter-spacing: .08em; text-transform: uppercase;
+    }
     .preview-trat-card__body { padding: 16px; }
     .preview-trat-card__body h4 { margin-bottom: 6px; }
     .preview-trat-card__body p, .preview-trat-detail p { font-size: .9rem; margin-bottom: 8px; }
+    .preview-trat-card__meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      margin: 18px 0;
+      color: var(--gris-claro);
+      font-size: .82rem;
+    }
+    .preview-trat-card__pie {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding-top: 16px;
+      border-top: 1px solid var(--linea);
+    }
+    .preview-trat-card__pie strong {
+      color: var(--vino);
+      font-size: .78rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .preview-trat-screen {
+      display: grid;
+      gap: 0;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      background: #fff;
+      overflow: hidden;
+    }
+    .preview-trat-screen__media {
+      aspect-ratio: 16 / 9;
+      background: var(--rosa-50);
+    }
+    .preview-trat-screen__media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .preview-trat-screen__body {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+    }
+    .preview-trat-screen__body h4 {
+      margin: 0;
+      color: var(--vino);
+      font-size: 1.4rem;
+      line-height: 1.08;
+    }
+    .preview-trat-screen__body > p { margin: 0; color: var(--gris); font-size: .9rem; line-height: 1.55; }
+    .preview-trat-screen__stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      padding-block: 12px;
+      border-top: 1px solid var(--linea);
+      border-bottom: 1px solid var(--linea);
+    }
+    .preview-trat-screen__stats span {
+      display: grid;
+      gap: 3px;
+      color: var(--vino);
+      font-weight: 700;
+      font-size: .88rem;
+    }
+    .preview-trat-screen__stats small {
+      color: var(--gris-claro);
+      font-size: .66rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
     .preview-trat-detail {
       border: 1px dashed var(--linea);
       border-radius: var(--radio);
@@ -367,6 +530,8 @@ function tratamientoVacio(): Tratamiento {
     @media (max-width: 1000px) {
       .trat-form, .categorias-admin { grid-template-columns: 1fr; }
       .trat-form__ancho, .lista-editor, .trat-form__preview { grid-column: 1; grid-row: auto; position: static; }
+      .form-bloque { grid-column: 1; }
+      .trat-form__fila, .trat-form__fila--tres { grid-template-columns: 1fr; }
       .form-rapido, .lista-editor__fila, .categorias-admin__nuevo { display: grid; grid-template-columns: 1fr; }
     }
   `]
@@ -423,6 +588,31 @@ export class TratamientosAdminComponent {
   beneficiosPreview(): string[] {
     const lista = this.borrador().beneficios.map(b => b.trim()).filter(Boolean);
     return lista.length ? lista.slice(0, 3) : ['Beneficio principal del tratamiento'];
+  }
+
+  recomendacionesPreview(): string[] {
+    const lista = this.borrador().recomendaciones.map(r => r.trim()).filter(Boolean);
+    return lista.length ? lista.slice(0, 3) : ['Cuidado posterior recomendado para la paciente'];
+  }
+
+  nombrePreview(): string {
+    return this.borrador().nombre?.trim() || 'Nombre del tratamiento';
+  }
+
+  resumenPreview(): string {
+    return this.borrador().resumen?.trim() || 'Resumen breve que verá la paciente en la lista.';
+  }
+
+  descripcionPreview(): string {
+    return this.borrador().descripcion?.trim() || 'Aquí se verá en qué consiste el tratamiento, para quién es recomendable y qué resultado se busca.';
+  }
+
+  imagenPreview(): string {
+    return this.borrador().videoPoster || this.borrador().imagen || 'img/trat-limpieza.jpg';
+  }
+
+  tiempoTotalPreview(): number {
+    return Number(this.borrador().duracionMin || 0) + Number(this.borrador().limpiezaMin || 0);
   }
 
   sesiones(id: number): number {

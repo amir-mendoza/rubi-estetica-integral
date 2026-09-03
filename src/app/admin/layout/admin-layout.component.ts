@@ -1,5 +1,7 @@
-import { Component, OnDestroy, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, OnDestroy, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Subscription, filter } from 'rxjs';
+import { PRODUCTOS } from '../../data/datos';
 import { LogoComponent } from '../../compartido/logo.component';
 import { SesionService } from '../../compartido/sesion.service';
 import { ProgresoSubidasComponent } from '../../compartido/progreso-subidas.component';
@@ -24,9 +26,15 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   private router = inject(Router);
 
   colapsado = signal(false);
-  rol = signal<'Administrador' | 'Recepcionista' | 'Especialista'>('Administrador');
   ahora = signal(new Date());
   private reloj?: ReturnType<typeof setInterval>;
+  private navegacion?: Subscription;
+  private readonly rutasRecepcion = new Set([
+    '/admin/calendario',
+    '/admin/pacientes',
+    '/admin/sesiones',
+    '/admin/pedidos'
+  ]);
 
   secciones: Seccion[] = [
     { ruta: '/admin/dashboard', texto: 'Dashboard', icono: 'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z', grupo: 'Operación' },
@@ -45,17 +53,45 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   ];
 
   grupos: Seccion['grupo'][] = ['Operación', 'Catálogo', 'Finanzas', 'Sistema'];
+  rol = computed(() => {
+    const rol = this.sesion.usuario()?.rol;
+    return rol && rol !== 'Paciente' ? rol : 'Administrador';
+  });
+  rutaInicio = computed(() => this.rol() === 'Recepcionista' ? '/admin/calendario' : '/admin/dashboard');
+  gruposVisibles = computed(() => this.grupos.filter(g => this.seccionesDe(g).length > 0));
+  seccionesVisibles = computed(() => {
+    if (this.rol() !== 'Recepcionista') {
+      return this.secciones;
+    }
+    return this.secciones.filter(s => this.rutasRecepcion.has(s.ruta));
+  });
+
+  get alertasStock() {
+    return PRODUCTOS
+      .filter(p => p.stock <= 6)
+      .sort((a, b) => a.stock - b.stock)
+      .slice(0, 6);
+  }
+
+  get totalAlertasStock(): number {
+    return PRODUCTOS.filter(p => p.stock <= 6).length;
+  }
 
   seccionesDe(grupo: Seccion['grupo']): Seccion[] {
-    return this.secciones.filter(s => s.grupo === grupo);
+    return this.seccionesVisibles().filter(s => s.grupo === grupo);
   }
 
   ngOnInit(): void {
     this.reloj = setInterval(() => this.ahora.set(new Date()), 1000);
+    this.protegerRutaRecepcion();
+    this.navegacion = this.router.events
+      .pipe(filter((evento): evento is NavigationEnd => evento instanceof NavigationEnd))
+      .subscribe(() => this.protegerRutaRecepcion());
   }
 
   ngOnDestroy(): void {
     if (this.reloj) { clearInterval(this.reloj); }
+    this.navegacion?.unsubscribe();
   }
 
   fechaActual(): string {
@@ -79,5 +115,16 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   cerrarSesion(): void {
     this.sesion.salir();
     this.router.navigateByUrl('/ingresar');
+  }
+
+  private protegerRutaRecepcion(): void {
+    if (this.rol() !== 'Recepcionista') {
+      return;
+    }
+    const rutaActual = this.router.url.split('?')[0].split('#')[0];
+    const permitida = [...this.rutasRecepcion].some(ruta => rutaActual === ruta || rutaActual.startsWith(`${ruta}/`));
+    if (!permitida) {
+      this.router.navigateByUrl('/admin/calendario');
+    }
   }
 }

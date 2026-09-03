@@ -1,6 +1,89 @@
 import { Injectable, signal } from '@angular/core';
-import { CITAS, HOY_ISO } from '../data/datos';
-import { Cita, EstadoCita, MetodoPago } from '../data/modelos';
+import { CITAS, HOY_ISO, PLANES, TRATAMIENTOS, tratamientoPorId } from '../data/datos';
+import { Cita, EstadoCita, EstadoSesion, MetodoPago, PlanSesiones, SesionPlan } from '../data/modelos';
+
+function clonarCita(cita: Cita): Cita {
+  return {
+    ...cita,
+    tratamientosIncluidos: cita.tratamientosIncluidos ? [...cita.tratamientosIncluidos] : undefined,
+    pagosDetalle: cita.pagosDetalle ? cita.pagosDetalle.map(pago => ({ ...pago })) : undefined
+  };
+}
+
+function sumarMinutos(hora: string, minutos: number): string {
+  const [h, m] = hora.split(':').map(Number);
+  const total = h * 60 + m + minutos;
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+function estadoCitaDeSesion(estado: EstadoSesion): EstadoCita {
+  if (estado === 'Atendida') { return 'Atendida'; }
+  if (estado === 'En proceso') { return 'En proceso'; }
+  if (estado === 'Reprogramada') { return 'Reprogramada'; }
+  if (estado === 'No asistió') { return 'No asistió'; }
+  return 'Programada';
+}
+
+function citaDesdeSesionPlan(plan: PlanSesiones, sesion: SesionPlan, id: number): Cita {
+  const tratamiento = tratamientoPorId(sesion.tratamientoId) ?? TRATAMIENTOS[0];
+  const pago = plan.pagosDetalle?.at(-1);
+  const saldo = Math.max(plan.precioTotal - plan.pagado, 0);
+  return {
+    id,
+    codigo: `CT-${1000 + id}`,
+    fecha: sesion.fecha!,
+    horaInicio: sesion.hora!,
+    horaFin: sumarMinutos(sesion.hora!, tratamiento.duracionMin + tratamiento.limpiezaMin),
+    pacienteId: plan.pacienteId,
+    tratamientoId: sesion.tratamientoId,
+    tratamientosIncluidos: [sesion.tratamientoId],
+    localId: plan.localId || 1,
+    estado: estadoCitaDeSesion(sesion.estado),
+    estadoPago: saldo === 0 ? 'Pagado' : (plan.pagado > 0 ? 'Pago en local' : 'Pendiente'),
+    metodoPago: pago?.metodo,
+    montoTotal: plan.precioTotal,
+    montoPagado: plan.pagado,
+    pagosDetalle: plan.pagosDetalle ? plan.pagosDetalle.map(detalle => ({ ...detalle })) : undefined,
+    registradaPor: sesion.registradoPor || 'Recepción',
+    registradaEl: `${HOY_ISO} 08:00`,
+    confirmadaPor: plan.pagado > 0 ? (pago?.registradoPor || sesion.registradoPor || 'Recepción') : undefined,
+    codigoOperacion: pago?.codigoOperacion,
+    pagadaEl: plan.fechaLiquidacion,
+    planId: plan.id,
+    numeroSesionPlan: sesion.numero,
+    origen: 'Recepción',
+    zonaTratamiento: sesion.zona,
+    notas: sesion.observaciones
+  };
+}
+
+function citasConPlanesSincronizados(): Cita[] {
+  const citas = CITAS.map(clonarCita);
+  let siguienteId = citas.reduce((max, cita) => Math.max(max, cita.id), 0) + 1;
+
+  for (const plan of PLANES) {
+    for (const sesion of plan.sesiones.filter(item => item.fecha && item.hora)) {
+      const existente = citas.find(cita =>
+        (cita.planId === plan.id && cita.numeroSesionPlan === sesion.numero) ||
+        (!cita.planId &&
+          cita.pacienteId === plan.pacienteId &&
+          cita.fecha === sesion.fecha &&
+          cita.horaInicio === sesion.hora &&
+          cita.tratamientoId === sesion.tratamientoId)
+      );
+
+      if (existente) {
+        existente.planId = plan.id;
+        existente.numeroSesionPlan = sesion.numero;
+        existente.notas = existente.notas || sesion.observaciones || `Sesión ${sesion.numero} del plan ${plan.codigo}.`;
+      } else {
+        citas.push(citaDesdeSesionPlan(plan, sesion, siguienteId++));
+      }
+    }
+  }
+
+  return citas.sort((a, b) => `${a.fecha} ${a.horaInicio}`.localeCompare(`${b.fecha} ${b.horaInicio}`) || a.id - b.id);
+}
 
 /**
  * Estado mock de la agenda para el panel administrativo: recepcion cambia el
@@ -9,11 +92,7 @@ import { Cita, EstadoCita, MetodoPago } from '../data/modelos';
  */
 @Injectable({ providedIn: 'root' })
 export class AgendaService {
-  private lista = signal<Cita[]>(CITAS.map(c => ({
-    ...c,
-    tratamientosIncluidos: c.tratamientosIncluidos ? [...c.tratamientosIncluidos] : undefined,
-    pagosDetalle: c.pagosDetalle ? c.pagosDetalle.map(pago => ({ ...pago })) : undefined
-  })));
+  private lista = signal<Cita[]>(citasConPlanesSincronizados());
 
   readonly citas = this.lista.asReadonly();
 

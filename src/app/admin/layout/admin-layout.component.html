@@ -1,11 +1,11 @@
 <div class="admin" [class.admin--colapsado]="colapsado()">
   <aside class="lateral">
     <div class="lateral__logo">
-      <a routerLink="/admin/dashboard"><app-logo [compacto]="true" [panel]="true"></app-logo></a>
+      <a [routerLink]="rutaInicio()"><app-logo [compacto]="true" [panel]="true"></app-logo></a>
     </div>
 
     <nav class="lateral__nav">
-      @for (g of grupos; track g) {
+      @for (g of gruposVisibles(); track g) {
         <div class="lateral__grupo">
           <span class="lateral__grupo-titulo">{{ g }}</span>
           @for (s of seccionesDe(g); track s.ruta) {
@@ -42,13 +42,32 @@
           <span>{{ fechaActual() }}</span>
           <strong>{{ horaActual() }}</strong>
         </div>
+        @if (rol() !== 'Recepcionista') {
+          <div class="topbar__notificaciones">
+            <button type="button" class="topbar__campana" aria-label="Alertas de stock">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+                <path d="M10 21h4"></path>
+              </svg>
+              @if (totalAlertasStock > 0) { <span>{{ totalAlertasStock }}</span> }
+            </button>
+            <div class="topbar__bandeja">
+              <strong>Alertas de inventario</strong>
+              @for (p of alertasStock; track p.id) {
+                <a routerLink="/admin/productos">
+                  <span>{{ p.nombre }}</span>
+                  <small>{{ p.stock }} unidades disponibles</small>
+                </a>
+              } @empty {
+                <p>No hay productos en bajo stock.</p>
+              }
+              <a routerLink="/admin/productos" class="topbar__bandeja-todo">Ver productos</a>
+            </div>
+          </div>
+        }
         <div class="topbar__rol">
           <label>Rol</label>
-          <select [value]="rol()" (change)="rol.set($any($event.target).value)">
-            <option>Administrador</option>
-            <option>Recepcionista</option>
-            <option>Especialista</option>
-          </select>
+          <strong>{{ rol() === 'Recepcionista' ? 'Recepción' : rol() }}</strong>
         </div>
         <div class="topbar__usuario">
           <div class="topbar__avatar">{{ sesion.iniciales() }}</div>

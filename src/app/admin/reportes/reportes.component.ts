@@ -1,10 +1,11 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HOY_ISO, MESES, PEDIDOS, PRODUCTOS, TRATAMIENTOS, aISO, soles, tratamientoPorId } from '../../data/datos';
+import { HOY_ISO, MESES, PRODUCTOS, TRATAMIENTOS, aISO, soles, tratamientoPorId } from '../../data/datos';
 import { Cita, EstadoPago, MetodoPago, Pedido } from '../../data/modelos';
 import { AgendaService } from '../../compartido/agenda.service';
 import { PacientesService } from '../../compartido/pacientes.service';
 import { PlanesService } from '../../compartido/planes.service';
+import { PedidosService } from '../../compartido/pedidos.service';
 
 type PeriodoReporte = 'hoy' | 'ultimos7' | 'mesActual' | 'fecha' | 'semana' | 'mes' | 'rango';
 type EstadoPagoFiltro = 'Todos' | 'Pagados' | 'Con adelanto' | 'Pendientes';
@@ -241,6 +242,7 @@ export class ReportesComponent {
   private agenda = inject(AgendaService);
   private pacientes = inject(PacientesService);
   private planes = inject(PlanesService);
+  private pedidosService = inject(PedidosService);
   soles = soles;
   tratamientos = TRATAMIENTOS;
   periodo = signal<PeriodoReporte>('hoy');
@@ -347,7 +349,7 @@ export class ReportesComponent {
   }
   private filtrarProductos(): Pedido[] {
     const rango = this.rangoActivo(); const texto = this.busqueda().trim().toLowerCase();
-    return PEDIDOS.filter(p => p.fecha >= rango.desde && p.fecha <= rango.hasta)
+    return this.pedidosService.pedidos().filter(p => p.fecha >= rango.desde && p.fecha <= rango.hasta)
       .filter(p => this.coincideEstadoPago(this.estadoVisualPedido(p)))
       .filter(p => !texto || `${this.nombrePedido(p)} ${p.dni ?? ''} ${p.celular} ${p.codigo} ${this.productosPedido(p)} ${p.metodoPago ?? ''}`.toLowerCase().includes(texto))
       .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id - a.id);
@@ -363,7 +365,7 @@ export class ReportesComponent {
   }
   private resumenRango(etiqueta: string, rango: RangoFechas): ResumenDia & { etiqueta: string } {
     const citas = this.agenda.citas().filter(c => c.fecha >= rango.desde && c.fecha <= rango.hasta && this.esCitaContable(c));
-    const pedidos = PEDIDOS.filter(p => p.fecha >= rango.desde && p.fecha <= rango.hasta && this.esPedidoContable(p));
+    const pedidos = this.pedidosService.pedidos().filter(p => p.fecha >= rango.desde && p.fecha <= rango.hasta && this.esPedidoContable(p));
     const pagos = this.planes.planes().flatMap(plan => plan.pagosDetalle ?? []).filter(p => p.fecha >= rango.desde && p.fecha <= rango.hasta);
     return { etiqueta, fecha: rango.etiqueta, dia: etiqueta, generado: citas.reduce((t, c) => t + this.totalCita(c), 0) + pedidos.reduce((t, p) => t + this.totalPedido(p), 0), cobrado: citas.reduce((t, c) => t + this.pagadoCita(c), 0) + pedidos.reduce((t, p) => t + this.pagadoPedido(p), 0) + pagos.reduce((t, p) => t + p.monto, 0), pendiente: citas.reduce((t, c) => t + this.saldoCita(c), 0) + pedidos.reduce((t, p) => t + this.saldoPedido(p), 0) };
   }

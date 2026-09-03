@@ -1,17 +1,20 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
-  ESPECIALISTAS, LOCALES, PAGOS, PEDIDOS, PRODUCTOS, TRATAMIENTOS,
+  ESPECIALISTAS, LOCALES, PAGOS, PRODUCTOS, TRATAMIENTOS,
   aISO, formatoFechaLarga, HOY_ISO, nombreEspecialista, soles, tratamientoPorId
 } from '../../data/datos';
 import { Cita, DetallePago, MetodoPago } from '../../data/modelos';
 import { AgendaService } from '../../compartido/agenda.service';
 import { PacientesService } from '../../compartido/pacientes.service';
 import { PlanesService } from '../../compartido/planes.service';
+import { PedidosService } from '../../compartido/pedidos.service';
 
 interface Fila { etiqueta: string; monto: number; detalle: string; }
+interface EstadoGrafico { etiqueta: string; valor: number; color: string; }
 interface MovimientoVista {
   id: string;
+  fecha: string;
   hora: string;
   concepto: string;
   referencia: string;
@@ -43,6 +46,7 @@ export class DashboardComponent {
   private agenda = inject(AgendaService);
   private pacientes = inject(PacientesService);
   private planes = inject(PlanesService);
+  private pedidosService = inject(PedidosService);
 
   soles = soles;
   hoyTexto = formatoFechaLarga(HOY_ISO);
@@ -63,6 +67,7 @@ export class DashboardComponent {
     return this.agenda.citas().flatMap(cita =>
       (cita.pagosDetalle ?? []).map((pago, indice) => ({
         id: `${cita.id}-${indice}`,
+        fecha: pago.fecha,
         hora: pago.hora,
         concepto: `${this.tratamientosCita(cita)} · ${this.nombrePaciente(cita.pacienteId)}`,
         referencia: cita.codigo,
@@ -75,10 +80,12 @@ export class DashboardComponent {
   }
 
   get pagosProductos(): MovimientoVista[] {
-    return PAGOS
+    const referenciasRegistradas = new Set(PAGOS.map(p => p.referencia));
+    const pagosBase = PAGOS
       .filter(p => p.origen === 'Producto')
       .map(p => ({
         id: `pedido-${p.id}`,
+        fecha: p.fecha,
         hora: p.hora,
         concepto: p.concepto,
         referencia: p.referencia,
@@ -87,6 +94,20 @@ export class DashboardComponent {
         monto: p.monto,
         codigoOperacion: p.codigoOperacion
       }));
+    const pedidosPagados = this.pedidosService.pedidos()
+      .filter(p => p.estadoPago === 'Pagado' && p.pagado > 0 && !referenciasRegistradas.has(p.codigo))
+      .map(p => ({
+        id: `pedido-directo-${p.id}`,
+        fecha: p.fecha,
+        hora: p.entregadoEl?.slice(11, 16) || p.registradoEl?.slice(11, 16) || '12:00',
+        concepto: `Pedido ${p.codigo} · ${p.items.reduce((total, item) => total + item.cantidad, 0)} productos`,
+        referencia: p.codigo,
+        metodo: p.metodoPago || 'Efectivo',
+        canal: p.metodoPago === 'Izipay' ? 'Online' : 'Recepción',
+        monto: p.pagado,
+        codigoOperacion: p.codigoOperacion || '—'
+      }));
+    return [...pagosBase, ...pedidosPagados];
   }
 
   get pagosPlanes(): MovimientoVista[] {
@@ -95,6 +116,7 @@ export class DashboardComponent {
         .filter(pago => !pago.codigoOperacion || !this.codigoOperacionExisteEnCitas(pago.codigoOperacion))
         .map((pago, indice) => ({
           id: `plan-${plan.id}-${indice}`,
+          fecha: pago.fecha,
           hora: pago.hora,
           concepto: `${plan.nombre} · ${this.nombrePaciente(plan.pacienteId)}`,
           referencia: plan.codigo,
@@ -143,7 +165,7 @@ export class DashboardComponent {
   }
 
   get reembolsosHoy(): number {
-    return Math.abs(this.suma(this.pagosCitas.filter(p => this.esMovimientoDeHoy(p) && p.monto < 0), p => p.monto));
+    return Math.abs(this.suma([...this.pagosCitas, ...this.pagosPlanes, ...this.pagosProductos].filter(p => this.esMovimientoDeHoy(p) && p.monto < 0), p => p.monto));
   }
 
   get ingresoSemana(): number {
@@ -174,6 +196,36 @@ export class DashboardComponent {
 
   get canceladas(): number {
     return this.citasHoy.filter(c => c.estado === 'Cancelada' || c.estado === 'No asistió').length;
+  }
+
+  get totalCitasHoy(): number {
+    return this.citasHoy.length;
+  }
+
+  get atencionPorcentaje(): number {
+    const total = this.citasHoy.filter(c => c.estado !== 'Cancelada' && c.estado !== 'No asistió').length;
+    return total ? Math.round((this.atendidas / total) * 100) : 0;
+  }
+
+  get estadoCitas(): EstadoGrafico[] {
+    return [
+      { etiqueta: 'Atendidas', valor: this.atendidas, color: '#168a52' },
+      { etiqueta: 'En proceso', valor: this.enProceso, color: '#2b86b8' },
+      { etiqueta: 'Programadas', valor: this.programadas, color: '#c47a11' },
+      { etiqueta: 'Canceladas', valor: this.canceladas, color: '#bf2c4b' }
+    ];
+  }
+
+  get donutEstados(): string {
+    const total = Math.max(this.estadoCitas.reduce((suma, item) => suma + item.valor, 0), 1);
+    let acumulado = 0;
+    const segmentos = this.estadoCitas.map(item => {
+      const inicio = (acumulado / total) * 100;
+      acumulado += item.valor;
+      const fin = (acumulado / total) * 100;
+      return `${item.color} ${inicio}% ${fin}%`;
+    });
+    return `conic-gradient(${segmentos.join(', ')})`;
   }
 
   get porLocal(): Fila[] {
@@ -217,7 +269,7 @@ export class DashboardComponent {
   }
 
   get pedidosHoy() {
-    return PEDIDOS.filter(p => p.fecha === HOY_ISO);
+    return this.pedidosService.pedidos().filter(p => p.fecha === HOY_ISO);
   }
 
   get pagosRecientes(): MovimientoVista[] {
@@ -228,6 +280,14 @@ export class DashboardComponent {
 
   get stockBajo() {
     return PRODUCTOS.filter(p => p.stock <= 6).slice(0, 5);
+  }
+
+  get stockCritico(): number {
+    return PRODUCTOS.filter(p => p.stock <= 3).length;
+  }
+
+  get stockAlerta(): number {
+    return PRODUCTOS.filter(p => p.stock <= 6).length;
   }
 
   get seguimientosActivos(): SeguimientoVista[] {
@@ -269,6 +329,26 @@ export class DashboardComponent {
 
   get maxSerie(): number {
     return Math.max(...this.serie.map(s => s.monto), 1);
+  }
+
+  get puntosIngreso(): string {
+    return this.puntosSerie(this.serie.map(s => s.monto), this.maxSerie);
+  }
+
+  get areaIngreso(): string {
+    const puntos = this.puntosIngreso;
+    return puntos ? `M 0 170 L ${puntos.slice(2)} L 100 170 Z` : '';
+  }
+
+  get serieCitas() {
+    return this.ultimos(7).map(iso => {
+      const [, , d] = iso.split('-');
+      return { iso, dia: d, total: this.agenda.citas().filter(c => c.fecha === iso).length };
+    });
+  }
+
+  get maxSerieCitas(): number {
+    return Math.max(...this.serieCitas.map(s => s.total), 1);
   }
 
   nombrePaciente = (id: number) => {
@@ -318,19 +398,7 @@ export class DashboardComponent {
   }
 
   private fechaMovimiento(movimiento: MovimientoVista): string {
-    const cita = this.pagosCitas.find(item => item.id === movimiento.id);
-    if (cita) {
-      return this.buscarFechaPagoCita(movimiento);
-    }
-    const pedido = PAGOS.find(item => `pedido-${item.id}` === movimiento.id);
-    return pedido?.fecha ?? HOY_ISO;
-  }
-
-  private buscarFechaPagoCita(movimiento: MovimientoVista): string {
-    const [citaId, indice] = movimiento.id.split('-').map(Number);
-    const cita = this.agenda.citas().find(item => item.id === citaId);
-    const pago = cita?.pagosDetalle?.[indice];
-    return pago?.fecha ?? HOY_ISO;
+    return movimiento.fecha;
   }
 
   private codigoOperacionExisteEnCitas(codigo: string): boolean {
@@ -359,5 +427,20 @@ export class DashboardComponent {
 
   private enUltimos(iso: string, dias: number): boolean {
     return this.ultimos(dias).includes(iso);
+  }
+
+  private puntosSerie(valores: number[], maximo: number): string {
+    if (!valores.length) { return ''; }
+    const puntos = valores.map((valor, index) => {
+      const x = valores.length === 1 ? 50 : (index / (valores.length - 1)) * 100;
+      const y = 160 - (valor / Math.max(maximo, 1)) * 140;
+      return { x, y };
+    });
+    return puntos.reduce((path, punto, index) => {
+      if (index === 0) { return `M ${punto.x} ${punto.y}`; }
+      const previo = puntos[index - 1];
+      const controlX = (previo.x + punto.x) / 2;
+      return `${path} C ${controlX} ${previo.y}, ${controlX} ${punto.y}, ${punto.x} ${punto.y}`;
+    }, '');
   }
 }

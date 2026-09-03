@@ -32,12 +32,9 @@ import { LOCALES, soles } from '../../data/datos';
             <span class="chip chip--ok chip--punto">Pedido registrado</span>
             <h3 style="margin-top:16px">Pedido {{ codigo }} generado</h3>
             <p>
-              @if (codigoOperacion()) {
-                Pago online aprobado con código <strong>{{ codigoOperacion() }}</strong>. El pedido queda listo para aparecer
-                como pagado en el panel administrativo cuando Spring Boot registre la confirmación.
-              } @else {
-                El pedido queda pendiente de pago hasta que recepción cobre al momento del recojo.
-              }
+              Pago online aprobado con código <strong>{{ codigoOperacion() }}</strong>. Puedes recoger el pedido dentro de los
+              próximos 7 días hábiles, siempre dentro del horario de atención de la sede elegida. Si no se recoge dentro del plazo,
+              el pedido se cancela sin reembolso.
             </p>
             <div class="confirmacion__acciones">
               <a routerLink="/productos" class="btn btn--linea">Seguir comprando</a>
@@ -184,7 +181,7 @@ import { LOCALES, soles } from '../../data/datos';
                   </div>
 
                   <div class="aviso" style="margin-top:18px">
-                    Por ahora solo trabajamos con recojo en local. El pedido se entrega en recepción con tus datos y tu código de operación si pagaste online.
+                    El recojo se realiza dentro del horario de atención. Tienes 7 días hábiles para recoger tu compra con tu DNI y código de operación. Pasado ese plazo, el pedido se cancela sin reembolso.
                   </div>
 
                   <div class="acciones-paso">
@@ -197,20 +194,12 @@ import { LOCALES, soles } from '../../data/datos';
               @if (paso() === 4) {
                 <div class="panel bloque">
                   <h3>4. Método de pago</h3>
-                  <p>Elige si deseas pagar ahora con Izipay o dejar el pedido pendiente para pagarlo al recoger.</p>
+                  <p>Los pedidos web de productos se pagan completos en línea. No hay adelantos ni pago al recoger.</p>
 
                   <button class="opcion opcion--fila" [class.opcion--activa]="metodo === 'Pagar en línea con Izipay'" (click)="metodo = 'Pagar en línea con Izipay'">
                     <div class="opcion__texto">
                       <strong>Pagar en línea con Izipay</strong>
                       <span>Dejamos preparado el checkout para tarjeta y, según tu cuenta Izipay, también Yape, Plin, QR u otros medios habilitados.</span>
-                    </div>
-                    <div class="opcion__precio">{{ soles(carrito.subtotal()) }}</div>
-                  </button>
-
-                  <button class="opcion opcion--fila" [class.opcion--activa]="metodo === 'Pagar al recoger en el local'" (click)="metodo = 'Pagar al recoger en el local'">
-                    <div class="opcion__texto">
-                      <strong>Pagar al recoger en el local</strong>
-                      <span>El pedido quedará registrado como pendiente de pago para que recepción cobre al momento de la entrega.</span>
                     </div>
                     <div class="opcion__precio">{{ soles(carrito.subtotal()) }}</div>
                   </button>
@@ -227,7 +216,7 @@ import { LOCALES, soles } from '../../data/datos';
                       @if (procesandoPago()) {
                         Procesando pago...
                       } @else {
-                        {{ metodo === 'Pagar en línea con Izipay' ? 'Pagar pedido con Izipay' : 'Continuar sin pagar' }}
+                        Pagar pedido con Izipay
                       }
                     </button>
                   </div>
@@ -248,7 +237,8 @@ import { LOCALES, soles } from '../../data/datos';
               <div class="resumen__linea"><span>Recojo en local</span><strong>Sin costo</strong></div>
               <div class="resumen__linea"><span>Cliente</span><strong>{{ nombreCompleto() || 'Por completar' }}</strong></div>
               <div class="resumen__linea"><span>Sede de recojo</span><strong>{{ nombreLocalRecojo() }}</strong></div>
-              <div class="resumen__linea"><span>Pago</span><strong>{{ metodo === 'Pagar en línea con Izipay' ? 'Izipay' : 'Pago en local' }}</strong></div>
+              <div class="resumen__linea"><span>Pago</span><strong>Izipay online</strong></div>
+              <div class="resumen__linea"><span>Plazo de recojo</span><strong>7 días hábiles</strong></div>
               <div class="resumen__total"><span>Total</span><strong>{{ soles(carrito.subtotal()) }}</strong></div>
 
               <div class="panel panel--interno checkout__nota">
@@ -387,7 +377,12 @@ export class CarritoComponent {
   }
 
   datosCompletos(): boolean {
-    return !!(this.nombre.trim() && this.apellido.trim() && this.dni.trim() && this.celular.trim());
+    return !!(
+      this.nombre.trim()
+      && this.apellido.trim()
+      && this.dni.replace(/\D/g, '').length === 8
+      && this.celular.replace(/\D/g, '').length >= 9
+    );
   }
 
   nombreCompleto(): string {
@@ -400,13 +395,7 @@ export class CarritoComponent {
   }
 
   confirmar(): void {
-    if (this.metodo === 'Pagar en línea con Izipay') {
-      this.procesarPagoOnline();
-      return;
-    }
-    this.codigoOperacion.set(null);
-    this.confirmado.set(true);
-    this.carrito.vaciar();
+    this.procesarPagoOnline();
   }
 
   tiempoReservaTexto(): string {
@@ -458,7 +447,7 @@ export class CarritoComponent {
       },
       error: () => {
         this.procesandoPago.set(false);
-        this.mensajePago.set('No se pudo iniciar el pago online. Puedes intentar otra vez o pagar al recoger.');
+        this.mensajePago.set('No se pudo iniciar el pago online. Intenta otra vez para registrar el pedido.');
       }
     });
   }

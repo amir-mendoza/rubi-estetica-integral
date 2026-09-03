@@ -27,8 +27,8 @@
         Pregunta si la paciente ya tiene cuenta web. Si no la tiene, puedes decirle:
         "Señora/señor, en nuestro sistema no aparece una cuenta web con su DNI. Si desea, podemos ayudarle a crearla para guardar su historial completo de tratamientos, recibir avisos de campañas, eventos y futuros descuentos por correo. Si hoy se atiende sin cuenta, registraremos esta atención como temporal y solo se conservarán como referencia sus 2 últimas visitas."
       </div>
-      <div class="campo"><label>DNI</label><input required maxlength="8" [ngModel]="manualDni" (ngModelChange)="buscarPacienteManual($event)" name="manualDni" placeholder="Busca y autocompleta"></div>
-      <div class="campo"><label>Celular</label><input required [(ngModel)]="manualCelular" name="manualCelular"></div>
+      <div class="campo"><label>DNI</label><input required maxlength="8" minlength="8" inputmode="numeric" pattern="[0-9]{8}" [ngModel]="manualDni" (ngModelChange)="buscarPacienteManual($event)" name="manualDni" placeholder="Busca y autocompleta"></div>
+      <div class="campo"><label>Celular</label><input required minlength="9" inputmode="tel" [(ngModel)]="manualCelular" name="manualCelular"></div>
       <div class="campo"><label>Nombre</label><input required [(ngModel)]="manualNombre" name="manualNombre" placeholder="Ej. Maria"></div>
       <div class="campo"><label>Apellido</label><input required [(ngModel)]="manualApellido" name="manualApellido" placeholder="Ej. Lopez Rivera"></div>
       <div class="campo cita-manual__ancho"><label>Correo (opcional)</label><input type="email" [(ngModel)]="manualCorreo" name="manualCorreo" placeholder="correo@ejemplo.com"></div>
@@ -56,6 +56,15 @@
           <option>WhatsApp</option>
         </select>
       </div>
+      <div class="campo cita-manual__ancho">
+        <label>Responsable que registra (obligatorio)</label>
+        <select required [(ngModel)]="manualResponsable" name="manualResponsable">
+          <option value="" disabled>Selecciona quién atiende o registra esta cita</option>
+          @for (r of responsablesRegistro(); track r.valor) {
+            <option [value]="r.valor">{{ r.etiqueta }}</option>
+          }
+        </select>
+      </div>
       <div class="aviso aviso--ok">
         Registra aquí el tratamiento principal de la visita. Si solo es una atención, deja "requiere más sesiones" en No. Si necesita control o varias fechas, activa Sí y agrega las sesiones necesarias.
       </div>
@@ -69,9 +78,6 @@
           <span class="dato__label">Tratamientos con seguimiento</span>
           <button type="button" class="btn btn--linea btn--sm" (click)="agregarSeguimientoManual()">Agregar otro tratamiento</button>
         </div>
-        <datalist id="tratamientos-manual-list">
-          @for (t of tratamientosCatalogo; track t.id) { <option [value]="tratamientoEtiqueta(t.id)"></option> }
-        </datalist>
         @for (seguimiento of manualSeguimientos(); track $index; let ti = $index) {
           <div class="seguimiento-row">
             <div class="seguimiento-row__cabecera">
@@ -85,11 +91,35 @@
             <div class="seguimiento-row__grid">
               <div class="campo">
                 <label>Tratamiento</label>
-                <input list="tratamientos-manual-list"
-                       [ngModel]="busquedaTratamientoManual(ti, seguimiento.tratamientoId)"
-                       (ngModelChange)="buscarTratamientoManual(ti, $event)"
-                       [name]="'seguimientoBusqueda' + ti"
-                       placeholder="Escribe para buscar o abre la lista">
+                <div class="selector-tratamiento" [class.selector-tratamiento--abierto]="manualTratamientoAbierto() === ti">
+                  <div class="selector-tratamiento__control">
+                    <input type="search"
+                           autocomplete="off"
+                           [ngModel]="busquedaTratamientoManual(ti, seguimiento.tratamientoId)"
+                           (focus)="abrirSelectorTratamientoManual(ti)"
+                           (click)="abrirSelectorTratamientoManual(ti)"
+                           (ngModelChange)="buscarTratamientoManual(ti, $event)"
+                           [name]="'seguimientoBusqueda' + ti"
+                           placeholder="Buscar o seleccionar tratamiento">
+                    <button type="button" aria-label="Ver tratamientos" (click)="alternarSelectorTratamientoManual(ti)">⌄</button>
+                  </div>
+                  @if (manualTratamientoAbierto() === ti) {
+                    <div class="selector-tratamiento__menu">
+                      @for (t of opcionesTratamientoManual(ti); track t.id) {
+                        <button type="button" (mousedown)="$event.preventDefault()" (click)="seleccionarTratamientoManual(ti, t.id)">
+                          <span>
+                            <small>Tratamiento</small>
+                            {{ t.nombre }}
+                            <em>{{ t.categoria }} · {{ t.duracionMin }} min</em>
+                          </span>
+                          <strong>{{ soles(t.precio) }}</strong>
+                        </button>
+                      } @empty {
+                        <p>No encontramos tratamientos con esa búsqueda.</p>
+                      }
+                    </div>
+                  }
+                </div>
               </div>
               <div class="campo seguimiento-row__toggle">
                 <label>¿Requiere más sesiones?</label>
@@ -123,11 +153,11 @@
                       <select [ngModel]="sesion.hora" (ngModelChange)="actualizarSesionTratamiento(ti, si, 'hora', $event)" [name]="'sesionHora' + ti + '_' + si" [required]="si === 0" [disabled]="!sesion.fecha">
                         @if (si === 0 && !sesion.hora) { <option value="" disabled>Elige una hora disponible</option> }
                         @if (si > 0) { <option value="">Sin hora definida</option> }
-                        @for (bloque of bloquesManual(sesion.fecha); track bloque.inicio) {
-                          <option [value]="bloque.inicio" [disabled]="!bloque.disponible">
-                            {{ formatoHora(bloque.inicio) }} · {{ bloque.libres }} de {{ bloque.cupo }} disponibles
-                          </option>
-                        }
+                      @for (bloque of bloquesManual(sesion.fecha); track bloque.inicio) {
+                        <option [value]="bloque.inicio" [disabled]="!bloque.disponible">
+                          {{ etiquetaBloque(bloque) }}
+                        </option>
+                      }
                       </select>
                     </div>
                     <div class="campo">
@@ -180,7 +210,7 @@
       </div>
 
       <button class="btn btn--vino btn--sm" type="submit"
-              [disabled]="!manualDni || !manualCelular || !manualNombre || !manualApellido || !seguimientoManualValido()">
+              [disabled]="!datosManualValidos() || !seguimientoManualValido()">
         Guardar cita / seguimiento
       </button>
     </form>
@@ -361,7 +391,7 @@
                       <option value="" disabled>Elige una hora disponible</option>
                       @for (bloque of bloquesReprogramacion(f.cita, editFecha()[f.cita.id]); track bloque.inicio) {
                         <option [value]="bloque.inicio" [disabled]="!bloque.disponible">
-                          {{ formatoHora(bloque.inicio) }} · {{ bloque.libres }} de {{ bloque.cupo }} disponibles
+                          {{ etiquetaBloque(bloque) }}
                         </option>
                       }
                     </select>
@@ -403,6 +433,15 @@
             <button class="boton-icono" (click)="citaAbierta.set(citaAbierta() === f.cita.id ? null : f.cita.id)">
               {{ citaAbierta() === f.cita.id ? 'Ocultar trazabilidad' : 'Ver trazabilidad' }}
             </button>
+            <div class="voucher-acciones">
+              <button class="boton-icono" type="button" (click)="imprimirVoucherCita(f.cita)">Imprimir voucher</button>
+              @if (enlaceWhatsappCita(f.cita)) {
+                <a class="boton-icono" [href]="enlaceWhatsappCita(f.cita)" target="_blank" rel="noopener">WhatsApp</a>
+              }
+              @if (enlaceCorreoCita(f.cita)) {
+                <a class="boton-icono" [href]="enlaceCorreoCita(f.cita)">E-mail</a>
+              }
+            </div>
           </div>
 
           @if (citaAbierta() === f.cita.id) {

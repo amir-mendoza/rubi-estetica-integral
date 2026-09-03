@@ -7,6 +7,20 @@ import { SubidasService } from '../../compartido/subidas.service';
 
 type Categoria = CategoriaTratamiento | 'General';
 
+interface GrupoSesionPromo {
+  clave: string;
+  tratamientoId?: number;
+  titulo: string;
+  sesiones: { index: number; titulo: string; descripcion: string }[];
+}
+
+interface SesionPublicacionPromo {
+  numero: number;
+  titulo: string;
+  descripcion: string;
+  tratamientoId?: number;
+}
+
 /** Formulario en blanco para registrar una promoción nueva. */
 function promocionVacia(): Promocion {
   return {
@@ -146,9 +160,9 @@ function promocionVacia(): Promocion {
                      [ngModel]="borrador().precioAntes" (ngModelChange)="editar('precioAntes', $event)" name="precioAntes">
             </div>
             <div class="campo">
-              <label>Sesiones</label>
-              <input type="number" min="1"
-                     [ngModel]="borrador().sesiones" (ngModelChange)="actualizarCantidadSesiones($event)" name="sesiones">
+              <label>Total de sesiones</label>
+              <input type="number" min="1" [value]="sesionesConteo()" readonly>
+              <span class="campo__ayuda">Se calcula según las sesiones agregadas dentro de cada tratamiento.</span>
             </div>
           </div>
 
@@ -156,37 +170,57 @@ function promocionVacia(): Promocion {
             <div class="sesiones-editor__cabecera">
               <div>
                 <span class="dato__label">Detalle de sesiones</span>
-                <h4>Qué incluye cada sesión</h4>
+                <h4>Tratamientos incluidos en la promoción</h4>
               </div>
-              <button type="button" class="btn btn--linea btn--sm" (click)="agregarSesion()">Agregar sesión</button>
+              <button type="button" class="btn btn--linea btn--sm" (click)="agregarTratamientoPromo()">Agregar tratamiento</button>
             </div>
 
-            @for (s of sesionesDetalle(); track $index; let i = $index) {
-              <div class="sesion-edit">
-                <div class="sesion-edit__numero">{{ i + 1 }}</div>
-                <div class="campo">
-                  <label>Título de la sesión</label>
-                  <input [ngModel]="s.titulo" (ngModelChange)="editarSesion(i, 'titulo', $event)"
-                         name="sesionTitulo_{{ i }}" placeholder="Sesión 1 · Hidrolipoclasia">
+            @for (grupo of sesionesAgrupadas(); track grupo.clave; let gi = $index) {
+              <article class="tratamiento-promo">
+                <header class="tratamiento-promo__cabecera">
+                  <div>
+                    <span class="dato__label">Tratamiento {{ gi + 1 }}</span>
+                    <strong>{{ grupo.titulo }}</strong>
+                    <small>{{ grupo.sesiones.length }} {{ grupo.sesiones.length === 1 ? 'sesión' : 'sesiones' }}</small>
+                  </div>
+                  <button type="button" class="boton-icono boton-icono--peligro" (click)="eliminarGrupoTratamiento(grupo)">Eliminar tratamiento</button>
+                </header>
+
+                <div class="promo-form__fila">
+                  <div class="campo">
+                    <label>Tratamiento relacionado</label>
+                    <select [ngModel]="grupo.tratamientoId || 0" (ngModelChange)="cambiarTratamientoGrupo(grupo, $event)"
+                            name="grupoTratamiento_{{ gi }}">
+                      <option [value]="0">Sin tratamiento específico</option>
+                      @for (t of tratamientos; track t.id) { <option [value]="t.id">{{ t.nombre }}</option> }
+                    </select>
+                  </div>
                 </div>
-                <div class="campo">
-                  <label>Tratamiento relacionado</label>
-                  <select [ngModel]="s.tratamientoId || 0" (ngModelChange)="editarSesionTratamiento(i, $event)"
-                          name="sesionTratamiento_{{ i }}">
-                    <option [value]="0">Sin tratamiento específico</option>
-                    @for (t of tratamientos; track t.id) { <option [value]="t.id">{{ t.nombre }}</option> }
-                  </select>
+
+                <div class="tratamiento-promo__sesiones">
+                  @for (s of grupo.sesiones; track s.index; let si = $index) {
+                    <div class="sesion-edit">
+                      <div class="sesion-edit__numero">{{ si + 1 }}</div>
+                      <div class="campo">
+                        <label>Título de la sesión</label>
+                        <input [ngModel]="s.titulo" (ngModelChange)="editarSesion(s.index, 'titulo', $event)"
+                               name="sesionTitulo_{{ s.index }}" placeholder="Sesión 1 · Hidrolipoclasia">
+                      </div>
+                      <div class="campo sesion-edit__descripcion">
+                        <label>Breve descripción</label>
+                        <textarea rows="2" [ngModel]="s.descripcion" (ngModelChange)="editarSesion(s.index, 'descripcion', $event)"
+                                  name="sesionDescripcion_{{ s.index }}" placeholder="Qué se realiza y para qué sirve"></textarea>
+                      </div>
+                      <button type="button" class="boton-icono boton-icono--peligro" (click)="eliminarSesion(s.index)">Eliminar</button>
+                    </div>
+                  }
                 </div>
-                <div class="campo sesion-edit__descripcion">
-                  <label>Breve descripción</label>
-                  <textarea rows="2" [ngModel]="s.descripcion" (ngModelChange)="editarSesion(i, 'descripcion', $event)"
-                            name="sesionDescripcion_{{ i }}" placeholder="Qué se realiza y para qué sirve"></textarea>
-                </div>
-                <button type="button" class="boton-icono boton-icono--peligro" (click)="eliminarSesion(i)">Eliminar</button>
-              </div>
+
+                <button type="button" class="btn btn--linea btn--sm" (click)="agregarSesionATratamiento(grupo)">Agregar sesión a este tratamiento</button>
+              </article>
             } @empty {
               <div class="sesiones-editor__vacio">
-                Agrega al menos una sesión si la promoción incluye pasos o tratamientos diferentes.
+                Agrega al menos un tratamiento para detallar qué incluye la promoción.
               </div>
             }
           </div>
@@ -281,11 +315,11 @@ function promocionVacia(): Promocion {
 
                 <div class="preview-incluye">
                   <span class="dato__label">Incluye</span>
-                  @for (s of sesionesPreview(); track $index; let i = $index) {
+                  @for (s of sesionesPublicacion(); track $index) {
                     <div class="preview-incluye__item">
-                      <span>{{ i + 1 }}</span>
+                      <span>{{ s.numero }}</span>
                       <div>
-                        <strong>{{ s.titulo || ('Sesión ' + (i + 1)) }}</strong>
+                        <strong>Sesión {{ s.numero }} · {{ s.titulo }}</strong>
                         @if (s.tratamientoId) { <small>{{ tratamientoNombre(s.tratamientoId) }}</small> }
                         @if (s.descripcion) { <p>{{ s.descripcion }}</p> }
                       </div>
@@ -328,8 +362,8 @@ function promocionVacia(): Promocion {
                 <h4>{{ tituloPreview() }}</h4>
                 <p>{{ subtituloPreview() }}</p>
                 <ul>
-                  @for (s of sesionesPreview(); track $index) {
-                    <li>{{ s.titulo || 'Sesión' }}</li>
+                  @for (s of sesionesPublicacion(); track $index) {
+                    <li>Sesión {{ s.numero }} · {{ s.titulo }}</li>
                   }
                 </ul>
                 <div class="preview-card__pie">
@@ -442,20 +476,43 @@ function promocionVacia(): Promocion {
       margin-bottom: 14px;
     }
     .sesiones-editor__cabecera h4 { margin: 2px 0 0; }
+    .tratamiento-promo {
+      display: grid;
+      gap: 14px;
+      margin-top: 14px;
+      padding: 16px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio-lg);
+      background: #fff;
+    }
+    .tratamiento-promo__cabecera {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed var(--linea);
+    }
+    .tratamiento-promo__cabecera div { display: grid; gap: 4px; min-width: 0; }
+    .tratamiento-promo__cabecera strong { color: var(--vino); font-size: 1.08rem; overflow-wrap: anywhere; }
+    .tratamiento-promo__cabecera small { color: var(--gris); font-size: .88rem; }
+    .tratamiento-promo__sesiones { display: grid; gap: 10px; }
     .sesion-edit {
       display: grid;
-      grid-template-columns: 34px minmax(170px, 1fr) minmax(170px, .8fr) 72px;
+      grid-template-columns: 34px minmax(170px, .75fr) minmax(220px, 1fr) 72px;
       gap: 12px;
       align-items: end;
-      padding: 14px 0;
-      border-top: 1px dashed var(--linea);
+      padding: 12px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio);
+      background: var(--rosa-50);
     }
     .sesion-edit__numero {
       width: 30px; height: 30px; border-radius: 50%;
       display: grid; place-items: center; align-self: center;
       background: var(--magenta); color: #fff; font-size: .9rem; font-weight: 700;
     }
-    .sesion-edit__descripcion { grid-column: 2 / 4; }
+    .sesion-edit__descripcion { grid-column: auto; }
     .sesiones-editor__vacio {
       border: 1px dashed var(--linea);
       border-radius: var(--radio);
@@ -659,6 +716,7 @@ function promocionVacia(): Promocion {
     }
     @media (max-width: 760px) {
       .sesiones-editor__cabecera { align-items: flex-start; flex-direction: column; }
+      .tratamiento-promo__cabecera { flex-direction: column; }
       .sesion-edit { grid-template-columns: 34px 1fr; }
       .sesion-edit__descripcion { grid-column: 2; }
     }
@@ -734,6 +792,26 @@ export class PromocionesAdminComponent {
     return this.borrador().sesionesDetalle ?? [];
   }
 
+  sesionesAgrupadas(): GrupoSesionPromo[] {
+    const grupos = new Map<string, GrupoSesionPromo>();
+    this.sesionesDetalle().forEach((sesion, index) => {
+      const clave = `${sesion.tratamientoId ?? 'sin-tratamiento'}`;
+      const grupo = grupos.get(clave) ?? {
+        clave,
+        tratamientoId: sesion.tratamientoId,
+        titulo: this.tratamientoNombre(sesion.tratamientoId) || 'Sin tratamiento específico',
+        sesiones: []
+      };
+      grupo.sesiones.push({
+        index,
+        titulo: sesion.titulo,
+        descripcion: sesion.descripcion
+      });
+      grupos.set(clave, grupo);
+    });
+    return Array.from(grupos.values());
+  }
+
   tituloPreview(): string {
     return this.borrador().titulo?.trim() || 'Título de la promoción';
   }
@@ -751,7 +829,7 @@ export class PromocionesAdminComponent {
   }
 
   sesionesConteo(): number {
-    return Math.max(Number(this.borrador().sesiones || this.sesionesPreview().length || 1), 1);
+    return Math.max(this.sesionesPublicacion().length || Number(this.borrador().sesiones || 1), 1);
   }
 
   sesionesTexto(): string {
@@ -770,30 +848,52 @@ export class PromocionesAdminComponent {
     }));
   }
 
+  sesionesPublicacion(): SesionPublicacionPromo[] {
+    const detalle = this.sesionesDetalle().filter(s => s.titulo?.trim() || s.descripcion?.trim() || s.tratamientoId);
+    const base = detalle.length
+      ? this.sesionesAgrupadas().flatMap(grupo => grupo.sesiones.map(sesion => ({
+          titulo: sesion.titulo,
+          descripcion: sesion.descripcion,
+          tratamientoId: grupo.tratamientoId
+        })))
+      : this.sesionesPreview();
+
+    return base.map((sesion, index) => {
+      const tratamiento = this.tratamientoNombre(sesion.tratamientoId);
+      return {
+        numero: index + 1,
+        titulo: this.tituloSesionLimpio(sesion.titulo) || tratamiento || 'Atención incluida',
+        descripcion: sesion.descripcion,
+        tratamientoId: sesion.tratamientoId
+      };
+    });
+  }
+
   tratamientoNombre(id?: number): string {
     if (!id) { return ''; }
     return this.tratamientos.find(t => t.id === Number(id))?.nombre ?? '';
   }
 
-  actualizarCantidadSesiones(valor: string | number): void {
-    const cantidad = Math.max(1, Number(valor) || 1);
+  agregarTratamientoPromo(): void {
     this.borrador.update(p => {
-      const actuales = p.sesionesDetalle ?? [];
-      const sesionesDetalle = Array.from({ length: cantidad }, (_, i) => actuales[i] ?? {
-        titulo: `Sesión ${i + 1}`,
+      const tratamientoId = this.tratamientoDisponibleParaPromo();
+      const tratamiento = this.tratamientoNombre(tratamientoId);
+      const sesionesDetalle = [...(p.sesionesDetalle ?? []), {
+        titulo: tratamiento ? `Sesión 1 · ${tratamiento}` : `Sesión ${(p.sesionesDetalle?.length ?? 0) + 1}`,
         descripcion: '',
-        tratamientoId: undefined
-      });
-      return { ...p, sesiones: cantidad, sesionesDetalle };
+        tratamientoId
+      }];
+      return { ...p, sesiones: sesionesDetalle.length, sesionesDetalle };
     });
   }
 
-  agregarSesion(): void {
+  agregarSesionATratamiento(grupo: GrupoSesionPromo): void {
     this.borrador.update(p => {
+      const numero = grupo.sesiones.length + 1;
       const sesionesDetalle = [...(p.sesionesDetalle ?? []), {
-        titulo: `Sesión ${(p.sesionesDetalle?.length ?? 0) + 1}`,
+        titulo: `Sesión ${numero}${grupo.titulo ? ` · ${grupo.titulo}` : ''}`,
         descripcion: '',
-        tratamientoId: undefined
+        tratamientoId: grupo.tratamientoId
       }];
       return { ...p, sesiones: sesionesDetalle.length, sesionesDetalle };
     });
@@ -806,6 +906,14 @@ export class PromocionesAdminComponent {
     });
   }
 
+  eliminarGrupoTratamiento(grupo: GrupoSesionPromo): void {
+    const indices = new Set(grupo.sesiones.map(s => s.index));
+    this.borrador.update(p => {
+      const sesionesDetalle = (p.sesionesDetalle ?? []).filter((_, i) => !indices.has(i));
+      return { ...p, sesiones: Math.max(1, sesionesDetalle.length || 1), sesionesDetalle };
+    });
+  }
+
   editarSesion(index: number, campo: 'titulo' | 'descripcion', valor: string): void {
     this.borrador.update(p => ({
       ...p,
@@ -813,11 +921,12 @@ export class PromocionesAdminComponent {
     }));
   }
 
-  editarSesionTratamiento(index: number, valor: string | number): void {
+  cambiarTratamientoGrupo(grupo: GrupoSesionPromo, valor: string | number): void {
     const tratamientoId = Number(valor) || undefined;
+    const indices = new Set(grupo.sesiones.map(s => s.index));
     this.borrador.update(p => ({
       ...p,
-      sesionesDetalle: (p.sesionesDetalle ?? []).map((s, i) => i === index ? { ...s, tratamientoId } : s)
+      sesionesDetalle: (p.sesionesDetalle ?? []).map((s, i) => indices.has(i) ? { ...s, tratamientoId } : s)
     }));
   }
 
@@ -863,7 +972,12 @@ export class PromocionesAdminComponent {
   guardar(): void {
     const p = this.borrador();
     if (!p.titulo.trim()) { return; }
-    this.promociones.guardar(p);
+    const sesionesDetalle = this.sesionesPublicacion().map(sesion => ({
+      titulo: `Sesión ${sesion.numero} · ${sesion.titulo}`,
+      descripcion: sesion.descripcion,
+      tratamientoId: sesion.tratamientoId
+    }));
+    this.promociones.guardar({ ...p, sesiones: Math.max(1, sesionesDetalle.length || 1), sesionesDetalle });
     this.aviso.set(p.id ? 'Promoción actualizada.' : 'Promoción registrada y publicada en el inicio.');
     this.borrador.set(promocionVacia());
     this.imagenPersonalizada.set('');
@@ -874,5 +988,14 @@ export class PromocionesAdminComponent {
     this.promociones.eliminar(p.id);
     if (this.borrador().id === p.id) { this.nueva(); }
     this.aviso.set('Promoción eliminada.');
+  }
+
+  private tratamientoDisponibleParaPromo(): number | undefined {
+    const usados = new Set(this.sesionesDetalle().map(s => s.tratamientoId).filter((id): id is number => !!id));
+    return this.tratamientos.find(t => !usados.has(t.id))?.id ?? this.tratamientos[0]?.id;
+  }
+
+  private tituloSesionLimpio(titulo?: string): string {
+    return (titulo ?? '').replace(/^sesi[oó]n\s+\d+\s*[·.\-:]\s*/i, '').trim();
   }
 }

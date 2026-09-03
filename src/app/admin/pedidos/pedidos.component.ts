@@ -1,13 +1,18 @@
-import { Component, computed, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HOY_ISO, PEDIDOS, PRODUCTOS, aISO, productoPorId, soles } from '../../data/datos';
+import { HOY_ISO, PRODUCTOS, aISO, productoPorId, soles } from '../../data/datos';
 import { EntregaPedido, EstadoPedido, MetodoPago, Pedido, Producto } from '../../data/modelos';
+import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
+import { PedidosService } from '../../compartido/pedidos.service';
+import { EspecialistasService } from '../../compartido/especialistas.service';
 
 interface PedidoItemForm {
   productoId: number;
   cantidad: number;
   busqueda: string;
 }
+
+type MenuResponsable = 'nuevo' | number | null;
 
 @Component({
   selector: 'app-pedidos',
@@ -60,8 +65,31 @@ interface PedidoItemForm {
             </select>
           </div>
           <div class="campo pedido-form__doble">
-            <label>Responsable de entrega (opcional)</label>
-            <input [(ngModel)]="nuevoResponsable" name="nuevoResponsable" placeholder="Ej. Recepción · Milagros">
+            <label>Responsable de entrega (obligatorio)</label>
+            <div class="selector-combo" [class.selector-combo--abierto]="responsableAbierto() === 'nuevo'">
+              <div class="selector-combo__control">
+                <input required
+                       type="search"
+                       autocomplete="off"
+                       [(ngModel)]="nuevoResponsable"
+                       name="nuevoResponsable"
+                       (focus)="abrirResponsable('nuevo')"
+                       (click)="abrirResponsable('nuevo')"
+                       placeholder="Buscar responsable o escribir nombre completo">
+                <button type="button" aria-label="Ver responsables" (click)="alternarResponsable('nuevo')">⌄</button>
+              </div>
+              @if (responsableAbierto() === 'nuevo') {
+                <div class="selector-combo__menu">
+                  @for (r of responsablesEntrega(nuevoResponsable); track r) {
+                    <button type="button" (mousedown)="$event.preventDefault()" (click)="seleccionarResponsableNuevo(r)">
+                      {{ r }}
+                    </button>
+                  } @empty {
+                    <p>Escribe el nombre completo y se guardará en este pedido.</p>
+                  }
+                </div>
+              }
+            </div>
           </div>
 
           <div class="productos-form">
@@ -72,20 +100,38 @@ interface PedidoItemForm {
               </div>
               <button type="button" class="btn btn--linea btn--sm" (click)="agregarItem()">Agregar producto</button>
             </div>
-            <datalist id="productos-pedido-list">
-              @for (p of productos; track p.id) {
-                <option [value]="productoEtiqueta(p)"></option>
-              }
-            </datalist>
             @for (item of nuevoItems(); track $index; let i = $index) {
               <div class="item-row">
                 <div class="campo">
                   <label>Producto {{ i + 1 }}</label>
-                  <input list="productos-pedido-list"
-                         [ngModel]="item.busqueda"
-                         (ngModelChange)="buscarProductoItem(i, $event)"
-                         [name]="'prodBusqueda' + i"
-                         placeholder="Ej. crema, serum, bloqueador">
+                  <div class="selector-combo" [class.selector-combo--abierto]="productoAbierto() === i">
+                    <div class="selector-combo__control">
+                      <input type="search"
+                             autocomplete="off"
+                             [ngModel]="item.busqueda"
+                             (focus)="abrirProducto(i)"
+                             (click)="abrirProducto(i)"
+                             (ngModelChange)="buscarProductoItem(i, $event)"
+                             [name]="'prodBusqueda' + i"
+                             placeholder="Ej. crema, serum, bloqueador">
+                      <button type="button" aria-label="Ver productos" (click)="alternarProducto(i)">⌄</button>
+                    </div>
+                    @if (productoAbierto() === i) {
+                      <div class="selector-combo__menu selector-combo__menu--productos">
+                        @for (p of opcionesProductoItem(i); track p.id) {
+                          <button type="button" (mousedown)="$event.preventDefault()" (click)="seleccionarProductoItem(i, p.id)">
+                            <span>
+                              <small>{{ p.marca }} · Stock {{ p.stock }}</small>
+                              {{ p.nombre }}
+                            </span>
+                            <strong>{{ soles(p.precio) }}</strong>
+                          </button>
+                        } @empty {
+                          <p>No encontramos productos con esa búsqueda.</p>
+                        }
+                      </div>
+                    }
+                  </div>
                   <small>{{ productoResumen(item.productoId) }}</small>
                 </div>
                 <div class="campo">
@@ -97,13 +143,38 @@ interface PedidoItemForm {
             }
           </div>
 
-          <div class="campo">
-            <label>Total del pedido</label>
-            <input [value]="soles(nuevoTotal)" readonly>
-          </div>
-          <div class="campo">
-            <label>Pagado</label>
-            <input [value]="soles(nuevoTotal)" readonly>
+          <div class="precio-local">
+            <div class="precio-local__cabecera">
+              <div>
+                <span class="dato__label">Precio de venta local</span>
+                <p>Usa editar precio solo cuando recepción autorice una rebaja presencial.</p>
+              </div>
+              <button type="button" class="boton-icono" (click)="alternarEdicionPrecio()">
+                {{ editandoPrecio() ? 'Cancelar edición' : 'Editar precio' }}
+              </button>
+            </div>
+            <div class="campo">
+              <label>Precio original</label>
+              <input [value]="soles(precioOriginalNuevo())" readonly>
+            </div>
+            <div class="campo">
+              <label>Precio final</label>
+              <input type="number"
+                     min="1"
+                     [max]="precioOriginalNuevo()"
+                     [readonly]="!editandoPrecio()"
+                     [ngModel]="nuevoTotal"
+                     (ngModelChange)="cambiarTotalManual($event)"
+                     name="nuevoTotal">
+            </div>
+            <div class="campo">
+              <label>Rebaja aplicada</label>
+              <input [value]="soles(descuentoNuevo())" readonly>
+            </div>
+            <div class="campo precio-local__motivo">
+              <label>Justificación de rebaja (opcional)</label>
+              <input [(ngModel)]="motivoDescuento" name="motivoDescuento" [readonly]="!editandoPrecio()" placeholder="Ej. descuento autorizado por compra adicional">
+            </div>
           </div>
           <div class="campo">
             <label>Método de pago</label>
@@ -188,7 +259,12 @@ interface PedidoItemForm {
                   </span>
                   <br><small>{{ p.metodoPago || '—' }} · {{ p.codigoOperacion || 'sin operación' }}</small>
                 </td>
-                <td class="num">{{ soles(p.total) }}</td>
+                <td class="num">
+                  <strong>{{ soles(p.total) }}</strong>
+                  @if ((p.descuentoMonto || 0) > 0) {
+                    <br><small class="rebaja">Rebaja {{ soles(p.descuentoMonto || 0) }}</small>
+                  }
+                </td>
                 <td class="num"><button class="boton-icono" (click)="gestionando.set(gestionando() === p.id ? null : p.id)">Gestionar</button></td>
               </tr>
               @if (gestionando() === p.id) {
@@ -203,7 +279,29 @@ interface PedidoItemForm {
                       </div>
                       <div class="campo">
                         <label>Responsable de entrega</label>
-                        <input [ngModel]="p.responsableEntrega || ''" (ngModelChange)="actualizarPedido(p.id, 'responsableEntrega', $event)" placeholder="Nombre de quien entrega">
+                        <div class="selector-combo" [class.selector-combo--abierto]="responsableAbierto() === p.id">
+                          <div class="selector-combo__control">
+                            <input type="search"
+                                   autocomplete="off"
+                                   [ngModel]="p.responsableEntrega || ''"
+                                   (focus)="abrirResponsable(p.id)"
+                                   (click)="abrirResponsable(p.id)"
+                                   (ngModelChange)="actualizarPedido(p.id, 'responsableEntrega', $event)"
+                                   placeholder="Nombre completo de quien entrega">
+                            <button type="button" aria-label="Ver responsables" (click)="alternarResponsable(p.id)">⌄</button>
+                          </div>
+                          @if (responsableAbierto() === p.id) {
+                            <div class="selector-combo__menu">
+                              @for (r of responsablesEntrega(p.responsableEntrega || ''); track r) {
+                                <button type="button" (mousedown)="$event.preventDefault()" (click)="seleccionarResponsablePedido(p.id, r)">
+                                  {{ r }}
+                                </button>
+                              } @empty {
+                                <p>Escribe el nombre completo y se guardará en este pedido.</p>
+                              }
+                            </div>
+                          }
+                        </div>
                       </div>
                       <div class="campo">
                         <label>Método de pago</label>
@@ -216,7 +314,7 @@ interface PedidoItemForm {
                         <input [value]="p.entregadoEl || 'Pendiente de entrega'" readonly>
                       </div>
                       <button class="btn btn--linea btn--sm" (click)="actualizarPedido(p.id, 'estado', 'Listo para entregar')">Listo para entregar</button>
-                      <button class="btn btn--vino btn--sm" (click)="marcarEntregado(p)">Marcar entregado</button>
+                      <button class="btn btn--vino btn--sm" [disabled]="!p.responsableEntrega?.trim()" (click)="marcarEntregado(p)">Marcar entregado</button>
                     </div>
                   </td>
                 </tr>
@@ -273,6 +371,89 @@ interface PedidoItemForm {
     }
     .item-row small { display: block; color: var(--gris); margin-top: 6px; line-height: 1.35; }
     .item-row__quitar { min-height: 44px; }
+    .selector-combo { position: relative; }
+    .selector-combo__control {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 42px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio);
+      background: #fff;
+      overflow: hidden;
+    }
+    .selector-combo--abierto .selector-combo__control {
+      border-color: var(--magenta);
+      box-shadow: 0 0 0 3px rgba(182, 33, 116, .08);
+    }
+    .selector-combo__control input {
+      border: 0;
+      border-radius: 0;
+      min-height: 42px;
+      background: transparent;
+    }
+    .selector-combo__control button {
+      border: 0;
+      border-left: 1px solid var(--linea);
+      background: var(--rosa-50);
+      color: var(--vino);
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .selector-combo__menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      max-height: 260px;
+      overflow: auto;
+      display: grid;
+      gap: 6px;
+      padding: 8px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio);
+      background: #fff;
+      box-shadow: 0 18px 38px rgba(42, 32, 40, .14);
+      z-index: 30;
+    }
+    .selector-combo__menu button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 12px;
+      border: 0;
+      border-radius: calc(var(--radio) - 2px);
+      background: transparent;
+      color: var(--tinta);
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+    }
+    .selector-combo__menu button:hover { background: var(--rosa-50); }
+    .selector-combo__menu span { display: grid; gap: 2px; }
+    .selector-combo__menu small { margin: 0; color: var(--gris-claro); font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
+    .selector-combo__menu strong { color: var(--vino); white-space: nowrap; }
+    .selector-combo__menu p { margin: 0; padding: 8px; color: var(--gris); font-size: .88rem; }
+    .precio-local {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(260px, 1.3fr);
+      gap: 14px;
+      padding: 14px;
+      border: 1px dashed var(--linea);
+      border-radius: var(--radio);
+      background: #fff;
+    }
+    .precio-local__cabecera {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .precio-local__cabecera p { margin: 4px 0 0; color: var(--gris); font-size: .9rem; }
+    .rebaja { color: var(--alerta); }
     .fila-detalle td { background: var(--rosa-50); }
     .gestion {
       display: grid;
@@ -286,9 +467,10 @@ interface PedidoItemForm {
       .kpis-4 { grid-template-columns: repeat(2, 1fr); }
       .pedido-form__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .gestion { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .precio-local { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 760px) {
-      .pedido-form__grid, .gestion, .item-row { grid-template-columns: 1fr; }
+      .pedido-form__grid, .gestion, .item-row, .precio-local { grid-template-columns: 1fr; }
       .pedido-form__doble { grid-column: auto; }
       .pedido-form__grid { padding: 16px 14px 18px; }
       .productos-form { padding: 12px; }
@@ -298,24 +480,31 @@ interface PedidoItemForm {
   `]
 })
 export class PedidosComponent {
+  private configPanel = inject(ConfiguracionPanelService);
+  private pedidosService = inject(PedidosService);
+  private especialistasService = inject(EspecialistasService);
   Number = Number;
   soles = soles;
   productos = PRODUCTOS.filter(p => p.activo);
   metodos: MetodoPago[] = ['Efectivo', 'Yape', 'Plin', 'Tarjeta POS', 'Transferencia', 'Izipay'];
   estadosPedido: EstadoPedido[] = ['Nuevo pedido', 'En preparación', 'Listo para entregar', 'Entregado', 'Cancelado'];
-  pedidos = signal(PEDIDOS.map(p => ({ ...p, items: p.items.map(i => ({ ...i })) })));
+  pedidos = this.pedidosService.pedidos;
   busqueda = signal('');
   periodo = signal<'hoy' | 'semana' | 'mes' | 'todo'>('hoy');
   estado = signal('Todos');
   entrega = signal('Todas');
   gestionando = signal<number | null>(null);
   mostrarRegistro = signal(false);
+  productoAbierto = signal<number | null>(null);
+  responsableAbierto = signal<MenuResponsable>(null);
+  editandoPrecio = signal(false);
 
   nuevoDni = '';
   nuevoNombre = '';
   nuevoApellido = '';
   nuevoCelular = '';
   nuevoResponsable = '';
+  motivoDescuento = '';
   nuevaEntrega: EntregaPedido = 'Recojo en Sede Las Flores 1522';
   nuevoEstado: EstadoPedido = 'Nuevo pedido';
   nuevoItems = signal<PedidoItemForm[]>([this.crearItemForm()]);
@@ -357,6 +546,82 @@ export class PedidosComponent {
     return producto ? `${producto.marca} · ${producto.categoria} · ${soles(producto.precio)}` : 'Selecciona un producto registrado';
   }
 
+  precioOriginalNuevo(): number {
+    return this.nuevoItems().reduce((total, item) => total + (productoPorId(item.productoId)?.precio ?? 0) * Math.max(Number(item.cantidad || 1), 1), 0);
+  }
+
+  descuentoNuevo(): number {
+    return Math.max(this.precioOriginalNuevo() - Number(this.nuevoTotal || 0), 0);
+  }
+
+  alternarEdicionPrecio(): void {
+    const editando = !this.editandoPrecio();
+    this.editandoPrecio.set(editando);
+    if (!editando) {
+      this.motivoDescuento = '';
+      this.nuevoTotal = this.precioOriginalNuevo();
+    }
+  }
+
+  cambiarTotalManual(valor: number | string): void {
+    if (!this.editandoPrecio()) { return; }
+    const original = this.precioOriginalNuevo();
+    const total = Math.max(Number(valor || 0), 0);
+    this.nuevoTotal = Math.min(total, original);
+  }
+
+  abrirProducto(index: number): void {
+    this.productoAbierto.set(index);
+  }
+
+  alternarProducto(index: number): void {
+    this.productoAbierto.set(this.productoAbierto() === index ? null : index);
+  }
+
+  seleccionarProductoItem(index: number, productoId: number): void {
+    this.editarItem(index, 'productoId', productoId);
+    this.productoAbierto.set(null);
+  }
+
+  opcionesProductoItem(index: number): Producto[] {
+    const texto = this.normalizar(this.nuevoItems()[index]?.busqueda ?? '');
+    if (!texto) { return this.productos; }
+    return this.productos.filter(p =>
+      this.normalizar(`${p.nombre} ${p.marca} ${p.categoria} ${this.productoEtiqueta(p)}`).includes(texto)
+    );
+  }
+
+  abrirResponsable(menu: Exclude<MenuResponsable, null>): void {
+    this.responsableAbierto.set(menu);
+  }
+
+  alternarResponsable(menu: Exclude<MenuResponsable, null>): void {
+    this.responsableAbierto.set(this.responsableAbierto() === menu ? null : menu);
+  }
+
+  seleccionarResponsableNuevo(responsable: string): void {
+    this.nuevoResponsable = responsable;
+    this.responsableAbierto.set(null);
+  }
+
+  seleccionarResponsablePedido(id: number, responsable: string): void {
+    this.actualizarPedido(id, 'responsableEntrega', responsable);
+    this.responsableAbierto.set(null);
+  }
+
+  responsablesEntrega(busqueda = ''): string[] {
+    const texto = this.normalizar(busqueda);
+    const recepcionistas = this.configPanel.usuarios()
+      .filter(u => u.activo && u.rol === 'Recepcionista')
+      .map(u => `Recepción · ${u.nombre}`);
+    const especialistas = this.especialistasService.especialistas()
+      .filter(e => e.activa && e.atiendeRecepcion)
+      .map(e => `Especialista · ${e.nombre} ${e.apellido}`);
+    return [...recepcionistas, ...especialistas]
+      .filter((valor, indice, lista) => lista.indexOf(valor) === indice)
+      .filter(valor => !texto || this.normalizar(valor).includes(texto));
+  }
+
   agregarItem(): void {
     this.nuevoItems.update(items => [...items, this.crearItemForm()]);
     this.recalcularTotal();
@@ -381,6 +646,7 @@ export class PedidosComponent {
   }
 
   buscarProductoItem(index: number, valor: string): void {
+    this.productoAbierto.set(index);
     const texto = valor.trim();
     const elegido = this.productos.find(p =>
       this.normalizar(this.productoEtiqueta(p)) === this.normalizar(texto) ||
@@ -399,12 +665,15 @@ export class PedidosComponent {
     if (!this.pedidoValido()) { return; }
     const id = this.pedidos().reduce((max, p) => Math.max(max, p.id), 0) + 1;
     const total = Number(this.nuevoTotal);
+    const precioOriginal = this.precioOriginalNuevo();
+    const descuento = this.descuentoNuevo();
     const nombre = this.nuevoNombre.trim();
     const apellido = this.nuevoApellido.trim();
     const pedido: Pedido = {
       id,
       codigo: `PD-${2040 + id}`,
       fecha: HOY_ISO,
+      registradoEl: this.fechaHoraActual(),
       dni: this.nuevoDni.trim(),
       nombre,
       apellido,
@@ -415,38 +684,42 @@ export class PedidosComponent {
       estado: this.nuevoEstado,
       estadoPago: 'Pagado',
       metodoPago: this.nuevoMetodo,
+      precioOriginal,
+      descuentoMonto: descuento || undefined,
+      motivoDescuento: descuento ? this.motivoDescuento.trim() || undefined : undefined,
       total,
       pagado: total,
       codigoOperacion: `${this.nuevoMetodo.toUpperCase().replace(/\s/g, '-')}-${Date.now().toString().slice(-5)}`,
-      responsableEntrega: this.nuevoResponsable.trim() || undefined,
+      responsableEntrega: this.nuevoResponsable.trim(),
       entregadoEl: this.nuevoEstado === 'Entregado' ? this.fechaHoraActual() : undefined
     };
-    this.pedidos.update(lista => [pedido, ...lista]);
+    this.pedidosService.agregar(pedido);
     this.mostrarRegistro.set(false);
     this.limpiarRegistro();
   }
 
   actualizarPedido<K extends keyof Pedido>(id: number, campo: K, valor: Pedido[K]): void {
-    this.pedidos.update(lista => lista.map(p => {
-      if (p.id !== id) { return p; }
+    this.pedidosService.actualizarCon(id, p => {
       const actualizado = { ...p, [campo]: valor };
       if (campo === 'estado' && valor === 'Entregado' && !p.entregadoEl) {
         return { ...actualizado, entregadoEl: this.fechaHoraActual() };
       }
       return actualizado;
-    }));
+    });
   }
 
   marcarEntregado(p: Pedido): void {
-    this.pedidos.update(lista => lista.map(item => item.id === p.id ? {
+    const responsable = p.responsableEntrega?.trim();
+    if (!responsable) { return; }
+    this.pedidosService.actualizarCon(p.id, item => ({
       ...item,
       estado: 'Entregado',
       estadoPago: 'Pagado',
       pagado: item.total,
       metodoPago: item.metodoPago || 'Efectivo',
-      responsableEntrega: item.responsableEntrega || this.nuevoResponsable.trim() || 'Recepción',
+      responsableEntrega: responsable,
       entregadoEl: item.entregadoEl || this.fechaHoraActual()
-    } : item));
+    }));
   }
 
   pedidoValido(): boolean {
@@ -454,9 +727,11 @@ export class PedidosComponent {
       this.nuevoNombre.trim().length >= 2 &&
       this.nuevoApellido.trim().length >= 2 &&
       this.nuevoCelular.trim().length >= 6 &&
+      this.nuevoResponsable.trim().length >= 3 &&
       this.nuevoItems().length > 0 &&
       this.nuevoItems().every(item => item.productoId && item.cantidad > 0) &&
-      this.nuevoTotal > 0;
+      this.nuevoTotal > 0 &&
+      this.nuevoTotal <= this.precioOriginalNuevo();
   }
 
   claseEstado(estado: string): string {
@@ -467,7 +742,12 @@ export class PedidosComponent {
   }
 
   private recalcularTotal(): void {
-    this.nuevoTotal = this.nuevoItems().reduce((total, item) => total + (productoPorId(item.productoId)?.precio ?? 0) * Math.max(Number(item.cantidad || 1), 1), 0);
+    const original = this.precioOriginalNuevo();
+    if (this.editandoPrecio()) {
+      this.nuevoTotal = Math.min(Math.max(Number(this.nuevoTotal || 0), 0), original);
+      return;
+    }
+    this.nuevoTotal = original;
   }
 
   private crearItemForm(): PedidoItemForm {
@@ -485,9 +765,13 @@ export class PedidosComponent {
     this.nuevoApellido = '';
     this.nuevoCelular = '';
     this.nuevoResponsable = '';
+    this.motivoDescuento = '';
     this.nuevaEntrega = 'Recojo en Sede Las Flores 1522';
     this.nuevoEstado = 'Nuevo pedido';
     this.nuevoMetodo = 'Efectivo';
+    this.editandoPrecio.set(false);
+    this.productoAbierto.set(null);
+    this.responsableAbierto.set(null);
     this.nuevoItems.set([this.crearItemForm()]);
     this.recalcularTotal();
   }

@@ -59,11 +59,34 @@ export interface ConfiguracionSincronizacion {
   mantenerTimestamps: boolean;
 }
 
+export type ModoImpresion = 'navegador' | 'agente-local';
+export type PapelVoucher = '58mm' | '80mm';
+
+export interface ConfiguracionImpresionEquipo {
+  localId: number;
+  equipo: string;
+  modo: ModoImpresion;
+  agenteUrl: string;
+  impresoraPrincipal: string;
+  impresoraRespaldo: string;
+  papel: PapelVoucher;
+  copias: number;
+  imprimirAutomaticamente: boolean;
+  usarRespaldoSiFalla: boolean;
+  fallbackNavegador: boolean;
+  activo: boolean;
+}
+
+export interface ConfiguracionImpresion {
+  equipos: ConfiguracionImpresionEquipo[];
+}
+
 const CLAVE_NEGOCIO = 'rubi.cfg.negocio';
 const CLAVE_AGENDA = 'rubi.cfg.agenda';
 const CLAVE_PAGOS = 'rubi.cfg.pagos';
 const CLAVE_USUARIOS = 'rubi.cfg.usuarios';
 const CLAVE_SYNC = 'rubi.cfg.sync';
+const CLAVE_IMPRESION = 'rubi.cfg.impresion';
 const horarioComercial = (): HorarioConfigurado[] => HORARIO_ATENCION.map(horario => ({ ...horario }));
 
 const NEGOCIO_POR_DEFECTO: ConfiguracionNegocio = {
@@ -122,6 +145,23 @@ const SYNC_POR_DEFECTO: ConfiguracionSincronizacion = {
   mantenerTimestamps: true
 };
 
+const IMPRESION_POR_DEFECTO: ConfiguracionImpresion = {
+  equipos: LOCALES.map((local, indice) => ({
+    localId: local.id,
+    equipo: indice === 0 ? 'Recepcion principal' : `Recepcion ${local.nombre}`,
+    modo: 'navegador',
+    agenteUrl: 'http://127.0.0.1:48531',
+    impresoraPrincipal: '',
+    impresoraRespaldo: '',
+    papel: '80mm',
+    copias: 1,
+    imprimirAutomaticamente: true,
+    usarRespaldoSiFalla: true,
+    fallbackNavegador: true,
+    activo: true
+  }))
+};
+
 @Injectable({ providedIn: 'root' })
 export class ConfiguracionPanelService {
   readonly negocio = signal<ConfiguracionNegocio>(this.leer(CLAVE_NEGOCIO, NEGOCIO_POR_DEFECTO));
@@ -129,6 +169,7 @@ export class ConfiguracionPanelService {
   readonly pagos = signal<ConfiguracionPagos>(this.leer(CLAVE_PAGOS, PAGOS_POR_DEFECTO));
   readonly usuarios = signal<UsuarioSistemaConfig[]>(this.leer(CLAVE_USUARIOS, USUARIOS_POR_DEFECTO));
   readonly sincronizacion = signal<ConfiguracionSincronizacion>(this.leer(CLAVE_SYNC, SYNC_POR_DEFECTO));
+  readonly impresion = signal<ConfiguracionImpresion>(this.normalizarImpresion(this.leer(CLAVE_IMPRESION, IMPRESION_POR_DEFECTO)));
   readonly ultimaActualizacion = signal<string>('');
 
   readonly adelantoReservaPorcentaje = computed(() => {
@@ -194,6 +235,23 @@ export class ConfiguracionPanelService {
     this.persistirSignal(this.sincronizacion, CLAVE_SYNC, cambios);
   }
 
+  actualizarImpresion(cambios: Partial<ConfiguracionImpresion>): void {
+    this.persistirSignal(this.impresion, CLAVE_IMPRESION, cambios);
+  }
+
+  actualizarEquipoImpresion(localId: number, cambios: Partial<ConfiguracionImpresionEquipo>): void {
+    const equipos = this.impresion().equipos.map(equipo =>
+      equipo.localId === localId
+        ? {
+            ...equipo,
+            ...cambios,
+            copias: cambios.copias !== undefined ? Math.max(1, Math.min(Number(cambios.copias), 3)) : equipo.copias
+          }
+        : equipo
+    );
+    this.actualizarImpresion({ equipos });
+  }
+
   agregarUsuario(usuario: UsuarioSistemaConfig): void {
     const lista = [...this.usuarios(), usuario];
     this.usuarios.set(lista);
@@ -236,6 +294,7 @@ export class ConfiguracionPanelService {
     this.guardar(CLAVE_PAGOS, this.pagos());
     this.guardar(CLAVE_USUARIOS, this.usuarios());
     this.guardar(CLAVE_SYNC, this.sincronizacion());
+    this.guardar(CLAVE_IMPRESION, this.impresion());
     this.marcarActualizacion();
   }
 
@@ -257,6 +316,12 @@ export class ConfiguracionPanelService {
     this.marcarActualizacion();
   }
 
+  restablecerImpresion(): void {
+    this.impresion.set(this.clonar(IMPRESION_POR_DEFECTO));
+    this.guardar(CLAVE_IMPRESION, this.impresion());
+    this.marcarActualizacion();
+  }
+
   private persistirSignal<T extends object>(state: { (): T; set(value: T): void }, clave: string, cambios: Partial<T>): void {
     const nuevo = { ...state(), ...cambios };
     state.set(nuevo);
@@ -273,13 +338,27 @@ export class ConfiguracionPanelService {
         (horarios[0].apertura === '09:00' && horarios[0].cierre === '19:00') ||
         (horarios[0].apertura === '09:00' && horarios[0].cierre === '22:00')
       );
+      const eraHorarioSegmentadoAnterior = horarios.length === 3 &&
+        horarios.some(h => h.dias.toLowerCase().includes('lunes') && h.apertura === '08:00' && h.cierre === '20:00') &&
+        horarios.some(h => h.dias.toLowerCase().includes('sab') && h.apertura === '08:00' && h.cierre === '16:00') &&
+        horarios.some(h => h.dias.toLowerCase().includes('domingo') && h.apertura === '10:00' && h.cierre === '13:00');
       const eraHorario24h = agenda.atencion24h || (horarios.length === 1 && horarios[0].apertura === '00:00' && (horarios[0].cierre === '24:00' || horarios[0].cierre === '00:00'));
-      if (!horarios.length || eraHorarioAnterior || eraHorario24h) {
+      if (!horarios.length || eraHorarioAnterior || eraHorarioSegmentadoAnterior || eraHorario24h) {
         horariosPorLocal[local.id] = horarioComercial();
         cambio = true;
       }
     }
     return cambio ? { ...agenda, atencion24h: false, horariosPorLocal } : agenda;
+  }
+
+  private normalizarImpresion(config: ConfiguracionImpresion): ConfiguracionImpresion {
+    const existentes = new Map((config.equipos ?? []).map(equipo => [equipo.localId, equipo]));
+    return {
+      equipos: IMPRESION_POR_DEFECTO.equipos.map(defecto => ({
+        ...defecto,
+        ...(existentes.get(defecto.localId) ?? {})
+      }))
+    };
   }
 
   private marcarActualizacion(): void {

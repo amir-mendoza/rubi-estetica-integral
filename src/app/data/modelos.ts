@@ -105,6 +105,7 @@ export interface Especialista {
   tratamientos: number[];
   horario: string;
   activa: boolean;
+  atiendeRecepcion?: boolean;
 }
 
 export interface Tratamiento {
@@ -203,6 +204,7 @@ export interface Pedido {
   id: number;
   codigo: string;
   fecha: string;
+  registradoEl?: string;
   dni?: string;
   nombre?: string;
   apellido?: string;
@@ -213,6 +215,9 @@ export interface Pedido {
   estado: EstadoPedido;
   estadoPago: EstadoPago;
   metodoPago?: MetodoPago;
+  precioOriginal?: number;
+  descuentoMonto?: number;
+  motivoDescuento?: string;
   total: number;
   pagado: number;
   codigoOperacion?: string;

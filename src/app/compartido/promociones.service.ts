@@ -8,7 +8,8 @@ import { Promocion } from '../data/modelos';
  */
 @Injectable({ providedIn: 'root' })
 export class PromocionesService {
-  private lista = signal<Promocion[]>(PROMOCIONES.map(p => ({ ...p })));
+  private readonly clave = 'rubi.promociones';
+  private lista = signal<Promocion[]>(this.cargarInicial());
 
   readonly promociones = this.lista.asReadonly();
 
@@ -21,28 +22,60 @@ export class PromocionesService {
   }
 
   guardar(promocion: Promocion): void {
-    this.lista.update(lista => promocion.id
+    this.actualizar(lista => promocion.id
       ? lista.map(p => (p.id === promocion.id ? { ...promocion } : p))
       : [...lista, { ...promocion, id: this.siguienteId() }]);
   }
 
   eliminar(id: number): void {
-    this.lista.update(lista => lista.filter(p => p.id !== id));
+    this.actualizar(lista => lista.filter(p => p.id !== id));
   }
 
   alternarActiva(id: number): void {
-    this.lista.update(lista => lista.map(p => (p.id === id ? { ...p, activa: !p.activa } : p)));
+    this.actualizar(lista => lista.map(p => (p.id === id ? { ...p, activa: !p.activa } : p)));
   }
 
   alternarDestacada(id: number): void {
-    this.lista.update(lista => lista.map(p => (p.id === id ? { ...p, destacada: !p.destacada } : p)));
+    this.actualizar(lista => lista.map(p => (p.id === id ? { ...p, destacada: !p.destacada } : p)));
   }
 
   reasignarCategoria(categoria: Promocion['categoria'], reemplazo: Promocion['categoria']): void {
-    this.lista.update(lista => lista.map(p => p.categoria === categoria ? { ...p, categoria: reemplazo } : p));
+    this.actualizar(lista => lista.map(p => p.categoria === categoria ? { ...p, categoria: reemplazo } : p));
   }
 
   private siguienteId(): number {
     return this.lista().reduce((max, p) => Math.max(max, p.id), 0) + 1;
+  }
+
+  private actualizar(mutador: (lista: Promocion[]) => Promocion[]): void {
+    const actualizada = mutador(this.lista()).map(p => ({ ...p, sesionesDetalle: p.sesionesDetalle?.map(s => ({ ...s })) }));
+    this.lista.set(actualizada);
+    this.persistir(actualizada);
+  }
+
+  private cargarInicial(): Promocion[] {
+    if (typeof localStorage === 'undefined') {
+      return this.copiarBase();
+    }
+    try {
+      const guardado = localStorage.getItem(this.clave);
+      if (!guardado) { return this.copiarBase(); }
+      const promociones = JSON.parse(guardado) as Promocion[];
+      return Array.isArray(promociones) && promociones.length ? promociones.map(p => ({
+        ...p,
+        sesionesDetalle: p.sesionesDetalle?.map(s => ({ ...s }))
+      })) : this.copiarBase();
+    } catch {
+      return this.copiarBase();
+    }
+  }
+
+  private persistir(lista: Promocion[]): void {
+    if (typeof localStorage === 'undefined') { return; }
+    localStorage.setItem(this.clave, JSON.stringify(lista));
+  }
+
+  private copiarBase(): Promocion[] {
+    return PROMOCIONES.map(p => ({ ...p, sesionesDetalle: p.sesionesDetalle?.map(s => ({ ...s })) }));
   }
 }

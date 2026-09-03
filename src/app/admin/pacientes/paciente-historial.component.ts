@@ -1,8 +1,9 @@
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, ActivatedRoute } from '@angular/router';
-import { PEDIDOS, PRODUCTOS, localPorId, soles, tratamientoPorId } from '../../data/datos';
+import { PRODUCTOS, localPorId, soles, tratamientoPorId } from '../../data/datos';
 import { AgendaService } from '../../compartido/agenda.service';
 import { PacientesService } from '../../compartido/pacientes.service';
+import { PedidosService } from '../../compartido/pedidos.service';
 
 @Component({
   selector: 'app-paciente-historial',
@@ -92,6 +93,7 @@ export class PacienteHistorialComponent {
   private ruta = inject(ActivatedRoute);
   private agenda = inject(AgendaService);
   private pacientesService = inject(PacientesService);
+  private pedidosService = inject(PedidosService);
   soles = soles;
   id = Number(this.ruta.snapshot.paramMap.get('id'));
   paciente = computed(() => this.pacientesService.porId(this.id));
@@ -100,7 +102,7 @@ export class PacienteHistorialComponent {
     const p = this.paciente();
     if (!p) { return []; }
     const nombre = `${p.nombre} ${p.apellido}`.toLowerCase();
-    return PEDIDOS.filter(o => (o.dni && o.dni === p.dni) || o.cliente.toLowerCase() === nombre || o.celular === p.celular)
+    return this.pedidosService.pedidos().filter(o => (o.dni && o.dni === p.dni) || o.cliente.toLowerCase() === nombre || o.celular === p.celular)
       .sort((a, b) => b.fecha.localeCompare(a.fecha));
   });
   total = computed(() => this.citas().reduce((t, c) => t + c.montoPagado, 0) + this.pedidos().reduce((t, p) => t + p.pagado, 0));

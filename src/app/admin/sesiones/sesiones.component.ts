@@ -1,11 +1,13 @@
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { LOCALES, formatoFechaLarga, formatoHora12, soles, TRATAMIENTOS, PROMOCIONES, aISO } from '../../data/datos';
+import { LOCALES, formatoFechaLarga, formatoHora12, soles, TRATAMIENTOS, aISO } from '../../data/datos';
 import { ESTADOS_SESION, EstadoSesion, PlanSesiones, SesionPlan, MetodoPago, Paciente } from '../../data/modelos';
 import { PlanesService } from '../../compartido/planes.service';
 import { PacientesService } from '../../compartido/pacientes.service';
 import { Bloque, DisponibilidadService } from '../../compartido/disponibilidad.service';
+import { VoucherService } from '../../compartido/voucher.service';
+import { PromocionesService } from '../../compartido/promociones.service';
 
 interface FormSesionPlan {
   fecha: string;
@@ -20,6 +22,15 @@ interface FormTratamientoPlan {
   incluidoEnBase?: boolean;
   origen?: string;
   sesiones: FormSesionPlan[];
+}
+
+interface OpcionPlanSelector {
+  tipo: 'Tratamiento' | 'Promoción';
+  id: number;
+  titulo: string;
+  detalle: string;
+  precio: number;
+  precioAntes?: number;
 }
 
 @Component({
@@ -37,7 +48,7 @@ interface FormTratamientoPlan {
         </p>
       </div>
       <div class="cabecera-admin__acciones">
-        <button class="btn btn--vino btn--sm" (click)="mostrarFormulario.set(!mostrarFormulario())">
+        <button class="btn btn--vino btn--sm" (click)="alternarFormularioPlan()">
           {{ mostrarFormulario() ? 'Cerrar Formulario' : 'Nuevo plan' }}
         </button>
       </div>
@@ -124,24 +135,7 @@ interface FormTratamientoPlan {
 
           <hr style="margin: 15px 0; border: none; border-top: 1px solid var(--linea);">
 
-          <div class="promo-form__fila">
-            <div class="campo">
-              <label>Cargar base (Preconfiguración)</label>
-              <input list="bases-plan-list"
-                     [ngModel]="formBaseBusqueda()"
-                     (ngModelChange)="buscarBaseCarga($event)"
-                     name="formBaseBusqueda"
-                     placeholder="Escribe promoción o tratamiento">
-              <datalist id="bases-plan-list">
-                <option value="Personalizado (vacío)"></option>
-                @for (p of promocionesLista; track p.id) {
-                  <option [value]="baseCargaEtiqueta('promo-' + p.id)"></option>
-                }
-                @for (t of tratamientosLista; track t.id) {
-                  <option [value]="baseCargaEtiqueta('trat-' + t.id)"></option>
-                }
-              </datalist>
-            </div>
+          <div class="promo-form__fila promo-form__fila--nombre-plan">
             <div class="campo">
               <label>Nombre del Plan</label>
               <input type="text" [ngModel]="formNombrePlan()" (ngModelChange)="formNombrePlan.set($event)" name="formNombrePlan" required placeholder="Ej. Plan facial luminosidad">
@@ -174,11 +168,6 @@ interface FormTratamientoPlan {
           </div>
 
           <div class="plan-builder">
-            <datalist id="tratamientos-plan-list">
-              @for (t of tratamientosLista; track t.id) {
-                <option [value]="tratamientoEtiqueta(t.id)"></option>
-              }
-            </datalist>
             @for (grupo of formTratamientosPlan(); track $index; let gi = $index) {
               <article class="plan-tratamiento">
                 <div class="plan-tratamiento__cabecera">
@@ -195,11 +184,38 @@ interface FormTratamientoPlan {
                 <div class="plan-tratamiento__grid">
                   <div class="campo">
                     <label>Tratamiento</label>
-                    <input list="tratamientos-plan-list"
-                           [ngModel]="busquedaTratamientoPlanForm(gi, grupo.tratamientoId)"
-                           (ngModelChange)="buscarTratamientoPlanForm(gi, $event)"
-                           name="planTratamientoBusqueda_{{ gi }}"
-                           placeholder="Escribe para buscar o abre la lista">
+                    <div class="selector-tratamiento" [class.selector-tratamiento--abierto]="formTratamientoAbierto() === gi">
+                      <div class="selector-tratamiento__control">
+                        <input type="search"
+                               autocomplete="off"
+                               [ngModel]="busquedaTratamientoPlanForm(gi, grupo.tratamientoId)"
+                               (focus)="abrirSelectorTratamientoPlan(gi)"
+                               (click)="abrirSelectorTratamientoPlan(gi)"
+                               (ngModelChange)="buscarTratamientoPlanForm(gi, $event)"
+                               name="planTratamientoBusqueda_{{ gi }}"
+                               placeholder="Buscar o seleccionar tratamiento">
+                        <button type="button" aria-label="Ver tratamientos" (click)="alternarSelectorTratamientoPlan(gi)">⌄</button>
+                      </div>
+                      @if (formTratamientoAbierto() === gi) {
+                        <div class="selector-tratamiento__menu">
+                          @for (opcion of opcionesTratamientoPlan(gi); track opcion.tipo + '-' + opcion.id) {
+                            <button type="button" (mousedown)="$event.preventDefault()" (click)="seleccionarOpcionPlanForm(gi, opcion)">
+                              <span>
+                                <small>{{ opcion.tipo }}</small>
+                                {{ opcion.titulo }}
+                                <em>{{ opcion.detalle }}</em>
+                              </span>
+                              <strong>
+                                @if (opcion.precioAntes) { <del>{{ soles(opcion.precioAntes) }}</del> }
+                                {{ soles(opcion.precio) }}
+                              </strong>
+                            </button>
+                          } @empty {
+                            <p>No encontramos tratamientos ni promociones con esa búsqueda.</p>
+                          }
+                        </div>
+                      }
+                    </div>
                   </div>
                   <div class="campo">
                     <label>¿Requiere más sesiones?</label>
@@ -229,7 +245,7 @@ interface FormTratamientoPlan {
                           @if (si > 0) { <option value="">Sin hora definida</option> }
                           @for (bloque of bloquesPlanFormulario(s.fecha); track bloque.inicio) {
                             <option [value]="bloque.inicio" [disabled]="!bloque.disponible">
-                              {{ formatoHora(bloque.inicio) }} · {{ bloque.libres }} de {{ bloque.cupo }} disponibles
+                              {{ etiquetaBloque(bloque) }}
                             </option>
                           }
                         </select>
@@ -371,7 +387,7 @@ interface FormTratamientoPlan {
                         <option value="">Sin hora definida</option>
                         @for (bloque of bloquesPlan(plan, s, s.fecha || ''); track bloque.inicio) {
                           <option [value]="bloque.inicio" [disabled]="!bloque.disponible">
-                            {{ formatoHora(bloque.inicio) }} · {{ bloque.libres }} de {{ bloque.cupo }} disponibles
+                            {{ etiquetaBloque(bloque) }}
                           </option>
                         }
                       </select>
@@ -384,6 +400,16 @@ interface FormTratamientoPlan {
                       <label>Observación</label>
                       <input type="text" [ngModel]="s.observaciones || ''" (ngModelChange)="actualizarSesionPlan(plan.id, s, 'observaciones', $event)" name="editarObs{{ plan.id }}{{ s.numero }}" placeholder="Nota de recepción o especialista">
                     </div>
+                    <div class="sesion-editor__guardar">
+                      <button type="button" class="btn btn--vino btn--sm" (click)="guardarConfiguracionSesion(plan.id, s.numero)">
+                        Guardar configuración
+                      </button>
+                      @if (mensajeGuardadoSesion(plan.id, s.numero)) {
+                        <span>{{ mensajeGuardadoSesion(plan.id, s.numero) }}</span>
+                      } @else {
+                        <small>Los cambios se conservan en este prototipo y quedarán listos para la base de datos.</small>
+                      }
+                    </div>
                   </div>
                 }
               </div>
@@ -394,6 +420,15 @@ interface FormTratamientoPlan {
         <footer class="plan__pie">
           @if (plan.notas) { <p class="plan__notas">{{ plan.notas }}</p> }
           <div class="plan__acciones">
+            <div class="voucher-plan">
+              <button class="btn btn--vino btn--sm" type="button" (click)="imprimirVoucherPlan(plan)">Imprimir voucher</button>
+              @if (enlaceWhatsappPlan(plan)) {
+                <a class="btn btn--linea btn--sm" [href]="enlaceWhatsappPlan(plan)" target="_blank" rel="noopener">WhatsApp</a>
+              }
+              @if (enlaceCorreoPlan(plan)) {
+                <a class="btn btn--linea btn--sm" [href]="enlaceCorreoPlan(plan)">E-mail</a>
+              }
+            </div>
             @if (saldoPlan(plan) > 0) {
               <div class="cobro-plan">
                 <div class="campo"><label>Monto recibido</label><input type="number" min="1" [placeholder]="saldoPlan(plan)" [ngModel]="montoPlan()[plan.id] || saldoPlan(plan)" (ngModelChange)="setMontoPlan(plan.id, Number($event))"></div>
@@ -467,6 +502,17 @@ interface FormTratamientoPlan {
       background: #fff;
     }
     .sesion-editor__nota { grid-column: 1 / -1; }
+    .sesion-editor__guardar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding-top: 4px;
+    }
+    .sesion-editor__guardar span { color: var(--ok); font-weight: 700; font-size: .9rem; }
+    .sesion-editor__guardar small { color: var(--gris-claro); font-size: .86rem; }
     .accion {
       border: 1px solid var(--linea); border-radius: 999px; background: #fff;
       min-width: 94px; padding: 6px 14px; font-family: inherit; font-size: .86rem; color: var(--gris); cursor: pointer;
@@ -496,6 +542,8 @@ interface FormTratamientoPlan {
     .plan__pie > * { min-width: 0; max-width: 100%; }
     .plan__notas { margin: 0; font-size: .9rem; font-style: italic; }
     .plan__acciones { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; width: 100%; min-width: 0; }
+    .voucher-plan { display: flex; gap: 10px; flex-wrap: wrap; width: 100%; }
+    .voucher-plan .btn { flex: 0 1 auto; }
     .cobro-plan small { color: var(--gris); font-size: .86rem; line-height: 1.4; }
     .cobro-plan {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; align-items: end; min-width: 0; max-width: 100%;
@@ -525,6 +573,7 @@ interface FormTratamientoPlan {
     .promo-form, .promo-form * { box-sizing: border-box; }
     .promo-form input, .promo-form select, .promo-form textarea, .promo-form button { max-width: 100%; min-width: 0; }
     .promo-form__fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 14px; }
+    .promo-form__fila--nombre-plan { grid-template-columns: minmax(0, 760px); }
     .promo-form__acciones { display: flex; align-items: center; gap: 14px; }
     .aviso-cuenta {
       margin-bottom: 16px;
@@ -662,10 +711,12 @@ interface FormTratamientoPlan {
     }
   `]
 })
-export class SesionesComponent {
+export class SesionesComponent implements OnDestroy {
   private pacientesService = inject(PacientesService);
   private disponibilidad = inject(DisponibilidadService);
   private ruta = inject(ActivatedRoute);
+  private vouchers = inject(VoucherService);
+  private promocionesService = inject(PromocionesService);
   Number = Number;
   soles = soles;
   fechaLarga = formatoFechaLarga;
@@ -681,9 +732,12 @@ export class SesionesComponent {
   tratamientoNuevoPlan = signal<Record<number, number>>({});
 
   // Catálogos base para el formulario
-  promocionesLista = PROMOCIONES;
   tratamientosLista = TRATAMIENTOS;
   formatoHora = formatoHora12;
+
+  get promocionesLista() {
+    return this.promocionesService.promociones();
+  }
 
   busqueda = signal('');
   estado = signal('Todos');
@@ -697,8 +751,6 @@ export class SesionesComponent {
   formCelular = signal('');
   formCorreo = signal('');
   formLocalId = signal(LOCALES[0]?.id ?? 1);
-  formBaseCarga = signal('Personalizado');
-  formBaseBusqueda = signal('Personalizado (vacío)');
   formNombrePlan = signal('');
   formPrecioTotal = signal<number>(0);
   formPrecioBase = signal<number>(0);
@@ -706,8 +758,13 @@ export class SesionesComponent {
   formNotas = signal('');
   formTratamientosPlan = signal<FormTratamientoPlan[]>([]);
   formTratamientoBusqueda = signal<Record<number, string>>({});
+  formTratamientoAbierto = signal<number | null>(null);
   editoresSesionAbiertos = signal<Record<string, boolean>>({});
+  guardadoSesion = signal<Record<string, string>>({});
+  disponibilidadTick = signal(0);
   pacientePlanEncontrado = signal<Paciente | null>(null);
+  private temporizadorDisponibilidad?: ReturnType<typeof setInterval>;
+  private readonly refrescarDisponibilidad = () => this.disponibilidadTick.update(v => v + 1);
 
   lista = computed<PlanSesiones[]>(() => this.planes.buscar(this.busqueda()).filter(p =>
     (this.estado() === 'Todos' || p.estado === this.estado()) &&
@@ -725,6 +782,13 @@ export class SesionesComponent {
     if (buscar) {
       this.busqueda.set(buscar);
     }
+    this.temporizadorDisponibilidad = setInterval(this.refrescarDisponibilidad, 5000);
+    window.addEventListener('storage', this.refrescarDisponibilidad);
+  }
+
+  ngOnDestroy(): void {
+    clearInterval(this.temporizadorDisponibilidad);
+    window.removeEventListener('storage', this.refrescarDisponibilidad);
   }
 
   sede(id: number): string {
@@ -733,6 +797,18 @@ export class SesionesComponent {
 
   dni(pacienteId: number): string {
     return this.pacientesService.porId(pacienteId)?.dni ?? '—';
+  }
+
+  alternarFormularioPlan(): void {
+    const abierto = !this.mostrarFormulario();
+    this.mostrarFormulario.set(abierto);
+    if (abierto && !this.formTratamientosPlan().length) {
+      this.agregarTratamientoPlanForm();
+    }
+  }
+
+  pacienteEntidad(pacienteId: number): Paciente | undefined {
+    return this.pacientesService.porId(pacienteId);
   }
 
   precioPlan(plan: PlanSesiones): number {
@@ -771,6 +847,27 @@ export class SesionesComponent {
     this.editoresSesionAbiertos.update(v => ({ ...v, [clave]: !v[clave] }));
   }
 
+  mensajeGuardadoSesion(planId: number, numeroSesion: number): string {
+    return this.guardadoSesion()[this.claveEditorSesion(planId, numeroSesion)] ?? '';
+  }
+
+  guardarConfiguracionSesion(planId: number, numeroSesion: number): void {
+    const plan = this.planes.porId(planId);
+    if (!plan?.sesiones.some(sesion => sesion.numero === numeroSesion)) { return; }
+    const clave = this.claveEditorSesion(planId, numeroSesion);
+    this.guardadoSesion.update(v => ({
+      ...v,
+      [clave]: `Configuración guardada ${new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`
+    }));
+    window.setTimeout(() => {
+      this.guardadoSesion.update(v => {
+        const copia = { ...v };
+        delete copia[clave];
+        return copia;
+      });
+    }, 3500);
+  }
+
   eliminarSesion(plan: PlanSesiones, sesion: SesionPlan): void {
     if (plan.sesiones.length === 1) { return; }
     const seguro = confirm(`¿Seguro que quieres eliminar la sesión ${sesion.numero}? Se borrará del registro.`);
@@ -791,6 +888,18 @@ export class SesionesComponent {
     const saldo = this.saldoPlan(plan);
     if (saldo <= 0) { return; }
     this.planes.registrarPago(plan.id, saldo, this.metodoPlan()[plan.id] || 'Efectivo');
+  }
+
+  imprimirVoucherPlan(plan: PlanSesiones): void {
+    this.vouchers.imprimirPlan(plan, this.pacienteEntidad(plan.pacienteId));
+  }
+
+  enlaceWhatsappPlan(plan: PlanSesiones): string {
+    return this.vouchers.enlaceWhatsappPlan(plan, this.pacienteEntidad(plan.pacienteId));
+  }
+
+  enlaceCorreoPlan(plan: PlanSesiones): string {
+    return this.vouchers.enlaceCorreoPlan(plan, this.pacienteEntidad(plan.pacienteId));
   }
 
   actualizarSesionPlan(planId: number, sesion: SesionPlan, campo: 'tratamientoId' | 'fecha' | 'hora' | 'zona' | 'observaciones', valor: string | number): void {
@@ -832,7 +941,7 @@ export class SesionesComponent {
     return this.bloquesPara(plan.localId, fecha).map(bloque => {
       const esHorarioActual = fecha === sesion.fecha && bloque.inicio === sesion.hora;
       return esHorarioActual
-        ? { ...bloque, libres: Math.min(bloque.cupo, bloque.libres + 1), disponible: true, motivo: undefined }
+        ? { ...bloque, disponible: true, motivo: undefined }
         : bloque;
     });
   }
@@ -852,6 +961,14 @@ export class SesionesComponent {
 
   tratamientoSugerido(plan: PlanSesiones): number {
     return plan.sesiones[0]?.tratamientoId || this.tratamientosLista[0]?.id || 1;
+  }
+
+  etiquetaBloque(bloque: Bloque): string {
+    const ocupados = Math.max(bloque.reservados + bloque.retenidos, 0);
+    const detalle = ocupados > 0
+      ? ` · ${ocupados} ${ocupados === 1 ? 'ocupado' : 'ocupados'}${bloque.retenidos ? ` (${bloque.retenidos} temporal)` : ''}`
+      : '';
+    return `${this.formatoHora(bloque.inicio)} · ${bloque.libres} de ${bloque.cupo} disponibles${detalle}`;
   }
 
   claseEstadoPlan(estado: string): string {
@@ -889,56 +1006,6 @@ export class SesionesComponent {
     }
   }
 
-  cargarBase(val: string): void {
-    this.formBaseCarga.set(val);
-    this.formBaseBusqueda.set(this.baseCargaEtiqueta(val));
-    this.formTratamientoBusqueda.set({});
-    if (val === 'Personalizado') {
-      this.formNombrePlan.set('');
-      this.formPrecioBase.set(0);
-      this.formPrecioTotal.set(0);
-      this.formTratamientosPlan.set([]);
-      return;
-    }
-
-    if (val.startsWith('promo-')) {
-      const id = Number(val.replace('promo-', ''));
-      const promo = PROMOCIONES.find(p => p.id === id);
-      if (promo) {
-        this.formNombrePlan.set(promo.titulo);
-        this.formPrecioBase.set(promo.precio || 0);
-
-        if (promo.sesionesDetalle?.length) {
-          const grupos = new Map<number, FormTratamientoPlan>();
-          for (const detalle of promo.sesionesDetalle) {
-            const tratamientoId = detalle.tratamientoId ?? this.tratamientosLista[0]?.id ?? 1;
-            const actual = grupos.get(tratamientoId) ?? this.crearTratamientoPlanForm(tratamientoId, true, promo.titulo);
-            const sesion = this.crearSesionPlanForm(actual.sesiones.length === 0);
-            sesion.observaciones = `${detalle.titulo}: ${detalle.descripcion}`.trim();
-            actual.sesiones = actual.sesiones.length === 1 && !actual.sesiones[0].observaciones
-              ? [sesion]
-              : [...actual.sesiones, sesion];
-            actual.multisesion = actual.sesiones.length > 1;
-            grupos.set(tratamientoId, actual);
-          }
-          this.formTratamientosPlan.set(Array.from(grupos.values()));
-        } else {
-          this.formTratamientosPlan.set([this.crearTratamientoPlanForm(this.tratamientosLista[0]?.id ?? 1, true, promo.titulo)]);
-        }
-        this.recalcularPrecioNuevoPlan();
-      }
-    } else if (val.startsWith('trat-')) {
-      const id = Number(val.replace('trat-', ''));
-      const trat = TRATAMIENTOS.find(t => t.id === id);
-      if (trat) {
-        this.formNombrePlan.set(trat.nombre);
-        this.formPrecioBase.set(0);
-        this.formTratamientosPlan.set([this.crearTratamientoPlanForm(trat.id)]);
-        this.recalcularPrecioNuevoPlan();
-      }
-    }
-  }
-
   agregarTratamientoPlanForm(): void {
     this.formTratamientosPlan.update(list => [...list, this.crearTratamientoPlanForm(this.tratamientosLista[0]?.id ?? 1)]);
     const indice = this.formTratamientosPlan().length - 1;
@@ -957,37 +1024,13 @@ export class SesionesComponent {
   actualizarTratamientoPlanForm(index: number, tratamientoId: number): void {
     this.formTratamientosPlan.update(list => list.map((grupo, i) => i === index ? { ...grupo, tratamientoId } : grupo));
     this.formTratamientoBusqueda.update(v => ({ ...v, [index]: this.tratamientoEtiqueta(tratamientoId) }));
+    this.formPrecioBase.set(0);
     this.recalcularPrecioNuevoPlan();
-  }
-
-  buscarBaseCarga(valor: string): void {
-    this.formBaseBusqueda.set(valor);
-    const normalizado = this.normalizarTexto(valor);
-    if (this.normalizarTexto('Personalizado (vacío)') === normalizado || this.normalizarTexto('Personalizado') === normalizado) {
-      this.cargarBase('Personalizado');
-      return;
-    }
-
-    const promo = this.promocionesLista.find(p =>
-      this.normalizarTexto(this.baseCargaEtiqueta(`promo-${p.id}`)) === normalizado ||
-      this.normalizarTexto(p.titulo) === normalizado
-    );
-    if (promo) {
-      this.cargarBase(`promo-${promo.id}`);
-      return;
-    }
-
-    const tratamiento = this.tratamientosLista.find(t =>
-      this.normalizarTexto(this.baseCargaEtiqueta(`trat-${t.id}`)) === normalizado ||
-      this.normalizarTexto(t.nombre) === normalizado
-    );
-    if (tratamiento) {
-      this.cargarBase(`trat-${tratamiento.id}`);
-    }
   }
 
   buscarTratamientoPlanForm(index: number, valor: string): void {
     this.formTratamientoBusqueda.update(v => ({ ...v, [index]: valor }));
+    this.formTratamientoAbierto.set(index);
     const tratamiento = this.tratamientosLista.find(t =>
       this.normalizarTexto(this.tratamientoEtiqueta(t.id)) === this.normalizarTexto(valor) ||
       this.normalizarTexto(t.nombre) === this.normalizarTexto(valor)
@@ -1001,19 +1044,83 @@ export class SesionesComponent {
     return this.formTratamientoBusqueda()[index] ?? this.tratamientoEtiqueta(tratamientoId);
   }
 
-  baseCargaEtiqueta(valor: string): string {
-    if (valor === 'Personalizado') { return 'Personalizado (vacío)'; }
-    if (valor.startsWith('promo-')) {
-      const id = Number(valor.replace('promo-', ''));
-      const promo = this.promocionesLista.find(p => p.id === id);
-      return promo ? `Promoción · ${promo.titulo} (${promo.sesiones} ses.)` : 'Promoción';
+  abrirSelectorTratamientoPlan(index: number): void {
+    this.formTratamientoAbierto.set(index);
+  }
+
+  alternarSelectorTratamientoPlan(index: number): void {
+    this.formTratamientoAbierto.set(this.formTratamientoAbierto() === index ? null : index);
+  }
+
+  seleccionarOpcionPlanForm(index: number, opcion: OpcionPlanSelector): void {
+    if (opcion.tipo === 'Promoción') {
+      this.cargarPromocionPlan(opcion.id);
+      this.formTratamientoAbierto.set(null);
+      return;
     }
-    if (valor.startsWith('trat-')) {
-      const id = Number(valor.replace('trat-', ''));
-      const tratamiento = this.tratamientosLista.find(t => t.id === id);
-      return tratamiento ? `Tratamiento · ${tratamiento.nombre}` : 'Tratamiento';
+    this.actualizarTratamientoPlanForm(index, opcion.id);
+    this.formTratamientoAbierto.set(null);
+  }
+
+  opcionesTratamientoPlan(index: number): OpcionPlanSelector[] {
+    const texto = this.normalizarTexto(this.formTratamientoBusqueda()[index] ?? '');
+    const promociones = this.promocionesVigentes().map(promo => ({
+      tipo: 'Promoción' as const,
+      id: promo.id,
+      titulo: promo.titulo,
+      detalle: `${promo.etiqueta} · vigente hasta ${promo.vigenciaHasta}`,
+      precio: promo.precio ?? 0,
+      precioAntes: promo.precioAntes
+    }));
+    const tratamientos = this.tratamientosLista.filter(t => t.activo).map(t => ({
+      tipo: 'Tratamiento' as const,
+      id: t.id,
+      titulo: t.nombre,
+      detalle: `${t.categoria} · ${t.duracionMin} min`,
+      precio: t.precio,
+      precioAntes: t.precioAntes
+    }));
+    const opciones = [...promociones, ...tratamientos];
+    if (!texto) { return opciones; }
+    return opciones.filter(opcion =>
+      this.normalizarTexto(`${opcion.tipo} ${opcion.titulo} ${opcion.detalle} ${opcion.precio}`).includes(texto)
+    );
+  }
+
+  private cargarPromocionPlan(promocionId: number): void {
+    const promo = this.promocionesLista.find(p => p.id === promocionId);
+    if (!promo) { return; }
+
+    this.formNombrePlan.set(promo.titulo);
+    this.formPrecioBase.set(promo.precio ?? 0);
+    this.formTratamientoBusqueda.set({});
+
+    if (promo.sesionesDetalle?.length) {
+      const grupos = new Map<number, FormTratamientoPlan>();
+      for (const detalle of promo.sesionesDetalle) {
+        const tratamientoId = detalle.tratamientoId ?? this.tratamientosLista[0]?.id ?? 1;
+        const actual = grupos.get(tratamientoId) ?? this.crearTratamientoPlanForm(tratamientoId, true, promo.titulo);
+        const sesion = this.crearSesionPlanForm(actual.sesiones.length === 0);
+        sesion.observaciones = `${detalle.titulo}: ${detalle.descripcion}`.trim();
+        actual.sesiones = actual.sesiones.length === 1 && !actual.sesiones[0].observaciones
+          ? [sesion]
+          : [...actual.sesiones, sesion];
+        actual.multisesion = actual.sesiones.length > 1;
+        grupos.set(tratamientoId, actual);
+      }
+      this.formTratamientosPlan.set(Array.from(grupos.values()));
+    } else {
+      this.formTratamientosPlan.set([this.crearTratamientoPlanForm(this.tratamientosLista[0]?.id ?? 1, true, promo.titulo)]);
     }
-    return valor;
+
+    this.recalcularPrecioNuevoPlan();
+  }
+
+  private promocionesVigentes() {
+    const hoy = aISO(new Date());
+    return this.promocionesLista.filter(promo =>
+      promo.activa && promo.vigenciaDesde <= hoy && promo.vigenciaHasta >= hoy
+    );
   }
 
   tratamientoEtiqueta(tratamientoId: number): string {
@@ -1134,7 +1241,8 @@ export class SesionesComponent {
       notas: this.formNotas() || undefined
     };
 
-    this.planes.crearPlan(planData);
+    const plan = this.planes.crearPlan(planData);
+    this.vouchers.imprimirPlan(plan, paciente);
 
     this.mostrarFormulario.set(false);
     this.formDni.set('');
@@ -1143,14 +1251,12 @@ export class SesionesComponent {
     this.formCelular.set('');
     this.formCorreo.set('');
     this.formNombrePlan.set('');
-    this.formPrecioBase.set(0);
     this.formPrecioTotal.set(0);
     this.formPagado.set(0);
     this.formNotas.set('');
     this.formTratamientosPlan.set([]);
-    this.formBaseCarga.set('Personalizado');
-    this.formBaseBusqueda.set('Personalizado (vacío)');
     this.formTratamientoBusqueda.set({});
+    this.formTratamientoAbierto.set(null);
     this.pacientePlanEncontrado.set(null);
   }
 
@@ -1174,6 +1280,7 @@ export class SesionesComponent {
   }
 
   private bloquesPara(localId: number, fecha: string): Bloque[] {
+    this.disponibilidadTick();
     const local = LOCALES.find(item => item.id === localId);
     return fecha && local ? this.disponibilidad.bloques(fecha, local) : [];
   }
@@ -1199,7 +1306,7 @@ export class SesionesComponent {
   private recalcularPrecioNuevoPlan(): void {
     const extras = this.formTratamientosPlan()
       .filter(grupo => !grupo.incluidoEnBase)
-      .reduce((total, grupo) => total + this.precioTratamiento(grupo.tratamientoId), 0);
+      .reduce((acumulado, grupo) => acumulado + this.precioTratamiento(grupo.tratamientoId), 0);
     const total = Math.max(Number(this.formPrecioBase() || 0), 0) + extras;
     this.formPrecioTotal.set(total);
     this.formPagado.set(Math.min(Math.max(Number(this.formPagado() || 0), 0), total));

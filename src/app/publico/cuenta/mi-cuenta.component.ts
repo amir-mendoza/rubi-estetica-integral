@@ -2,9 +2,10 @@ import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/c
 import { Router, RouterLink } from '@angular/router';
 import { SesionService } from '../../compartido/sesion.service';
 import {
-  CITAS, formatoFechaLarga, localPorId, nombreEspecialista, PEDIDOS, tratamientoPorId
+  CITAS, formatoFechaLarga, localPorId, nombreEspecialista, tratamientoPorId
 } from '../../data/datos';
 import { Cita, Pedido } from '../../data/modelos';
+import { PedidosService } from '../../compartido/pedidos.service';
 
 @Component({
   selector: 'app-mi-cuenta',
@@ -136,6 +137,7 @@ import { Cita, Pedido } from '../../data/modelos';
 export class MiCuentaComponent {
   readonly sesion = inject(SesionService);
   private router = inject(Router);
+  private pedidosService = inject(PedidosService);
 
   readonly usuario = this.sesion.usuario;
 
@@ -154,7 +156,7 @@ export class MiCuentaComponent {
       return [];
     }
     const nombre = `${u.nombre} ${u.apellido}`.toLowerCase();
-    return PEDIDOS.filter(p => (p.dni && p.dni === u.dni) || p.cliente.toLowerCase() === nombre);
+    return this.pedidosService.pedidos().filter(p => (p.dni && p.dni === u.dni) || p.cliente.toLowerCase() === nombre);
   });
 
   formatoFecha(iso: string): string {

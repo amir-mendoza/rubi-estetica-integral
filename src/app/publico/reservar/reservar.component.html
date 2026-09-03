@@ -83,6 +83,22 @@
           {{ mensajeSeguimiento() }}
         </div>
 
+        <div class="voucher-reserva">
+          <div>
+            <strong>Comprobante de reserva</strong>
+            <span>Guarda tu voucher para recepción, seguimiento de pagos o reclamos.</span>
+          </div>
+          <div class="voucher-reserva__acciones">
+            <button class="btn btn--primario btn--sm" type="button" (click)="imprimirVoucherReserva()">Imprimir voucher</button>
+            @if (enlaceWhatsappVoucherReserva()) {
+              <a class="btn btn--linea btn--sm" [href]="enlaceWhatsappVoucherReserva()" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+            }
+            @if (enlaceCorreoReserva()) {
+              <a class="btn btn--linea btn--sm" [href]="enlaceCorreoReserva()">Enviar por e-mail</a>
+            }
+          </div>
+        </div>
+
         <div class="confirmacion__acciones">
           <a routerLink="/" class="btn btn--linea">Volver al inicio</a>
           <button class="btn btn--primario" (click)="reiniciar()">Reservar otra cita</button>
@@ -243,7 +259,7 @@
                       @if (b.retenidoPorMi) {
                         Reservado para ti
                       } @else {
-                        {{ b.disponible ? b.libres + ' de ' + b.cupo + ' cupos' : b.motivo }}
+                        {{ b.disponible ? etiquetaBloqueCupos(b) : b.motivo }}
                       }
                     </small>
                   </button>
@@ -280,10 +296,10 @@
                 </div>
               }
               <div class="grid grid-2" style="gap:0 20px">
-                <div class="campo"><label>Nombre</label><input type="text" [(ngModel)]="nombre" placeholder="María"></div>
-                <div class="campo"><label>Apellidos</label><input type="text" [(ngModel)]="apellido" placeholder="López Rivera"></div>
-                <div class="campo"><label>DNI</label><input type="text" [(ngModel)]="dni" maxlength="8" placeholder="74859632"></div>
-                <div class="campo"><label>Celular</label><input type="tel" [(ngModel)]="celular" placeholder="987 654 321"></div>
+                <div class="campo"><label>Nombre</label><input required type="text" [(ngModel)]="nombre" placeholder="María"></div>
+                <div class="campo"><label>Apellidos</label><input required type="text" [(ngModel)]="apellido" placeholder="López Rivera"></div>
+                <div class="campo"><label>DNI</label><input required type="text" [(ngModel)]="dni" maxlength="8" minlength="8" inputmode="numeric" pattern="[0-9]{8}" placeholder="74859632"></div>
+                <div class="campo"><label>Celular</label><input required type="tel" [(ngModel)]="celular" minlength="9" inputmode="tel" placeholder="987 654 321"></div>
               </div>
               <div class="campo"><label>Correo electrónico (opcional)</label><input type="email" [(ngModel)]="correo" placeholder="correo@ejemplo.com"></div>
               <div class="campo">

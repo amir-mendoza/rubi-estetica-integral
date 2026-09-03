@@ -7,9 +7,7 @@ import {
 /* ============================================================== LOCALES === */
 
 export const HORARIO_ATENCION = [
-  { dias: 'Lunes a viernes', apertura: '08:00', cierre: '20:00' },
-  { dias: 'Sábados', apertura: '08:00', cierre: '16:00' },
-  { dias: 'Domingos', apertura: '10:00', cierre: '13:00' }
+  { dias: 'Todos los días', apertura: '08:00', cierre: '20:00' }
 ];
 
 export const LOCALES: Local[] = [
@@ -390,7 +388,7 @@ export const ESPECIALISTAS: Especialista[] = [
     colegiatura: 'CCT 18402',
     bio: 'Fundadora de Rubí Estética Integral. Especialista en protocolos faciales no invasivos y aparatología de última generación.',
     foto: 'img/esp-1.jpg', locales: [1, 2], tratamientos: [1, 2, 4, 7, 9, 10],
-    horario: 'Lunes a sábado · 09:00 a 18:00', activa: true
+    horario: 'Lunes a sábado · 09:00 a 18:00', activa: true, atiendeRecepcion: true
   },
   {
     id: 2, nombre: 'Ana', apellido: 'Torres', especialidad: 'Cosmiatra facial',
@@ -425,7 +423,7 @@ export const ESPECIALISTAS: Especialista[] = [
     colegiatura: 'CCT 24390',
     bio: 'Especialista en limpieza facial profunda y protocolos de hidratación para piel sensible.',
     foto: 'img/esp-6.jpg', locales: [2], tratamientos: [1, 6, 7],
-    horario: 'Lunes a viernes · 12:00 a 20:00', activa: true
+    horario: 'Lunes a viernes · 12:00 a 20:00', activa: true, atiendeRecepcion: true
   }
 ];
 
@@ -512,11 +510,15 @@ export const USUARIOS: Usuario[] = [
     correo: 'admin@rubiestetica.pe', clave: 'rubi2026', rol: 'Administrador', localId: 1
   },
   {
-    id: 2, nombre: 'María', apellido: 'López Rivera', dni: '74859632', celular: '987 654 321',
+    id: 2, nombre: 'Milagros', apellido: 'Ríos', dni: '70112233', celular: '981 440 225',
+    correo: 'recepcion@rubiestetica.pe', clave: 'recepcion2026', rol: 'Recepcionista', localId: 1
+  },
+  {
+    id: 3, nombre: 'María', apellido: 'López Rivera', dni: '74859632', celular: '987 654 321',
     correo: 'maria.lopez@gmail.com', clave: 'maria123', rol: 'Paciente', pacienteId: 1
   },
   {
-    id: 3, nombre: 'Rosa', apellido: 'Huamán Ríos', dni: '09823471', celular: '975 118 430',
+    id: 4, nombre: 'Rosa', apellido: 'Huamán Ríos', dni: '09823471', celular: '975 118 430',
     correo: 'rosa.huaman@gmail.com', clave: 'rosa123', rol: 'Paciente', pacienteId: 5
   }
 ];
@@ -555,7 +557,19 @@ interface SemillaCita {
  * Las citas se agendan por bloque horario y cada sede limita la atención a diez
  * pacientes por hora de forma predeterminada.
  */
-const SEMILLAS: SemillaCita[] = [];
+const SEMILLAS: SemillaCita[] = [
+  { d: 0, hora: '08:00', pac: 1, trat: 1, loc: 1, esp: 2, hab: 2, estado: 'Atendida', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web Rubí' },
+  { d: 0, hora: '09:00', pac: 5, trat: 2, loc: 1, esp: 5, hab: 1, estado: 'En proceso', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web Rubí' },
+  { d: 0, hora: '10:00', pac: 2, trat: 7, loc: 1, esp: 6, hab: 3, estado: 'Programada', pago: 'Pendiente', metodo: 'Efectivo', origen: 'Recepción', por: 'Recepción · Milagros Ríos', notas: 'Pendiente de pago al llegar.' },
+  { d: 0, hora: '11:00', pac: 10, trat: 3, loc: 1, esp: 5, hab: 14, estado: 'Programada', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web Rubí' },
+  { d: 0, hora: '13:00', pac: 7, trat: 9, loc: 2, esp: 3, hab: 10, estado: 'Atendida', pago: 'Pagado', metodo: 'Efectivo', origen: 'Recepción', por: 'Recepción · Jazmín Cabrera' },
+  { d: 0, hora: '15:00', pac: 6, trat: 1, loc: 2, esp: 6, hab: 9, estado: 'Cancelada', pago: 'Reembolsado', metodo: 'Izipay', origen: 'Web', por: 'Administración', notas: 'Reembolso solicitado por la paciente.' },
+  { d: -1, hora: '09:00', pac: 8, trat: 1, loc: 1, esp: 2, hab: 4, estado: 'Atendida', pago: 'Pagado', metodo: 'Izipay', origen: 'Web', por: 'Web Rubí' },
+  { d: -1, hora: '11:00', pac: 3, trat: 10, loc: 1, esp: 4, hab: 8, estado: 'Atendida', pago: 'Pagado', metodo: 'Efectivo', origen: 'Recepción', por: 'Recepción · Milagros Ríos' },
+  { d: -2, hora: '16:00', pac: 4, trat: 5, loc: 2, esp: 4, hab: 13, estado: 'Atendida', pago: 'Pago en local', metodo: 'Yape', pagadoParcial: 150, origen: 'WhatsApp', por: 'Recepción · Jazmín Cabrera' },
+  { d: -3, hora: '12:00', pac: 9, trat: 6, loc: 2, esp: 4, hab: 7, estado: 'Atendida', pago: 'Pagado', metodo: 'Efectivo', origen: 'Recepción', por: 'Recepción · Jazmín Cabrera' },
+  { d: -5, hora: '18:00', pac: 1, trat: 8, loc: 1, esp: 3, hab: 3, estado: 'Atendida', pago: 'Pagado', metodo: 'Tarjeta POS', origen: 'Recepción', por: 'Recepción · Milagros Ríos' }
+];
 
 function nombreTratamiento(id: number): Tratamiento {
   return TRATAMIENTOS.find(t => t.id === id)!;
@@ -582,6 +596,23 @@ export const CITAS: Cita[] = SEMILLAS.map((s, i) => {
     metodoPago: s.metodo,
     montoTotal: trat.precio,
     montoPagado: pagado,
+    pagosDetalle: s.pago === 'Reembolsado' && s.metodo ? [{
+      metodo: s.metodo,
+      monto: -trat.precio,
+      fecha: conDias(s.d),
+      hora: s.hora,
+      canal: s.origen === 'Web' ? 'Online' : s.origen,
+      registradoPor: s.por,
+      codigoOperacion: `RB-${480000 + i * 137}`
+    }] : pagado > 0 && s.metodo ? [{
+      metodo: s.metodo,
+      monto: pagado,
+      fecha: conDias(s.d),
+      hora: s.hora,
+      canal: s.origen === 'Web' ? 'Online' : s.origen,
+      registradoPor: s.pago === 'Pagado' && s.metodo === 'Izipay' ? 'Izipay (automático)' : s.por,
+      codigoOperacion: s.pago === 'Pagado' ? `OP-${480000 + i * 137}` : `${s.metodo.toUpperCase().replace(/\s/g, '-')}-${480000 + i * 137}`
+    }] : undefined,
     registradaPor: s.por,
     registradaEl: `${conDias(s.d - 3)} 18:42`,
     confirmadaPor: s.pago === 'Pagado' ? (s.metodo === 'Izipay' ? 'Izipay (automático)' : s.por) : undefined,
@@ -596,11 +627,12 @@ export const CITAS: Cita[] = SEMILLAS.map((s, i) => {
 
 export const PEDIDOS: Pedido[] = [
   { id: 1, codigo: 'PD-2041', fecha: conDias(0), dni: '74859632', nombre: 'María', apellido: 'López Rivera', cliente: 'María López Rivera', celular: '987 654 321', items: [{ productoId: 1, cantidad: 1 }, { productoId: 2, cantidad: 1 }], entrega: 'Recojo en Sede Las Flores 1522', estado: 'Nuevo pedido', estadoPago: 'Pagado', metodoPago: 'Izipay', total: 164, pagado: 164, codigoOperacion: 'OP-512340' },
-  { id: 2, codigo: 'PD-2040', fecha: conDias(0), dni: '70231458', nombre: 'Sandra', apellido: 'Delgado Pinto', cliente: 'Sandra Delgado Pinto', celular: '981 230 664', items: [{ productoId: 5, cantidad: 3 }], entrega: 'Recojo en Sede Las Flores 1544', estado: 'En preparación', estadoPago: 'Pagado', metodoPago: 'Izipay', total: 135, pagado: 135, codigoOperacion: 'OP-512299', responsableEntrega: 'Recepción · Milagros' },
-  { id: 3, codigo: 'PD-2039', fecha: conDias(-1), dni: '45190672', nombre: 'Fiorella', apellido: 'Castro Vera', cliente: 'Fiorella Castro Vera', celular: '918 662 054', items: [{ productoId: 3, cantidad: 1 }], entrega: 'Recojo en Sede Las Flores 1544', estado: 'Listo para entregar', estadoPago: 'Pagado', metodoPago: 'Efectivo', total: 135, pagado: 135, codigoOperacion: 'OP-512210', responsableEntrega: 'Recepción · Jazmín' },
-  { id: 4, codigo: 'PD-2038', fecha: conDias(-1), dni: '74810022', nombre: 'Rosa', apellido: 'Huamán Ríos', cliente: 'Rosa Huamán Ríos', celular: '975 118 430', items: [{ productoId: 4, cantidad: 2 }, { productoId: 2, cantidad: 1 }], entrega: 'Recojo en Sede Las Flores 1522', estado: 'Entregado', estadoPago: 'Pagado', metodoPago: 'Efectivo', total: 185, pagado: 185, codigoOperacion: 'OP-512188', responsableEntrega: 'Recepción · Milagros', entregadoEl: `${conDias(-1)} 17:40` },
+  { id: 2, codigo: 'PD-2040', fecha: conDias(0), dni: '70231458', nombre: 'Sandra', apellido: 'Delgado Pinto', cliente: 'Sandra Delgado Pinto', celular: '981 230 664', items: [{ productoId: 5, cantidad: 3 }], entrega: 'Recojo en Sede Las Flores 1544', estado: 'En preparación', estadoPago: 'Pagado', metodoPago: 'Izipay', total: 135, pagado: 135, codigoOperacion: 'OP-512299', responsableEntrega: 'Recepción · Milagros Ríos' },
+  { id: 7, codigo: 'PD-2042', fecha: conDias(0), dni: '43127865', nombre: 'Verónica', apellido: 'Aliaga Núñez', cliente: 'Verónica Aliaga Núñez', celular: '947 880 213', items: [{ productoId: 6, cantidad: 1 }, { productoId: 2, cantidad: 1 }], entrega: 'Recojo en Sede Las Flores 1522', estado: 'Nuevo pedido', estadoPago: 'Pendiente', metodoPago: 'Yape', total: 249, pagado: 0, responsableEntrega: 'Recepción · Milagros Ríos' },
+  { id: 3, codigo: 'PD-2039', fecha: conDias(-1), dni: '45190672', nombre: 'Fiorella', apellido: 'Castro Vera', cliente: 'Fiorella Castro Vera', celular: '918 662 054', items: [{ productoId: 3, cantidad: 1 }], entrega: 'Recojo en Sede Las Flores 1544', estado: 'Listo para entregar', estadoPago: 'Pagado', metodoPago: 'Efectivo', total: 135, pagado: 135, codigoOperacion: 'OP-512210', responsableEntrega: 'Recepción · Jazmín Cabrera' },
+  { id: 4, codigo: 'PD-2038', fecha: conDias(-1), dni: '74810022', nombre: 'Rosa', apellido: 'Huamán Ríos', cliente: 'Rosa Huamán Ríos', celular: '975 118 430', items: [{ productoId: 4, cantidad: 2 }, { productoId: 2, cantidad: 1 }], entrega: 'Recojo en Sede Las Flores 1522', estado: 'Entregado', estadoPago: 'Pagado', metodoPago: 'Efectivo', total: 185, pagado: 185, codigoOperacion: 'OP-512188', responsableEntrega: 'Recepción · Milagros Ríos', entregadoEl: `${conDias(-1)} 17:40` },
   { id: 5, codigo: 'PD-2037', fecha: conDias(-2), dni: '70551129', nombre: 'Jimena', apellido: 'Paredes Soto', cliente: 'Jimena Paredes Soto', celular: '933 907 221', items: [{ productoId: 6, cantidad: 1 }], entrega: 'Recojo en Sede Las Flores 1522', estado: 'Cancelado', estadoPago: 'Reembolsado', metodoPago: 'Izipay', total: 160, pagado: 0 },
-  { id: 6, codigo: 'PD-2036', fecha: conDias(-3), dni: '69045021', nombre: 'Diana', apellido: 'Quiroz Alva', cliente: 'Diana Quiroz Alva', celular: '964 773 508', items: [{ productoId: 1, cantidad: 2 }], entrega: 'Recojo en Sede Las Flores 1522', estado: 'Entregado', estadoPago: 'Pagado', metodoPago: 'Izipay', total: 178, pagado: 178, codigoOperacion: 'OP-512041', responsableEntrega: 'Recepción · Jazmín', entregadoEl: `${conDias(-3)} 12:10` }
+  { id: 6, codigo: 'PD-2036', fecha: conDias(-3), dni: '69045021', nombre: 'Diana', apellido: 'Quiroz Alva', cliente: 'Diana Quiroz Alva', celular: '964 773 508', items: [{ productoId: 1, cantidad: 2 }], entrega: 'Recojo en Sede Las Flores 1522', estado: 'Entregado', estadoPago: 'Pagado', metodoPago: 'Izipay', total: 178, pagado: 178, codigoOperacion: 'OP-512041', responsableEntrega: 'Recepción · Jazmín Cabrera', entregadoEl: `${conDias(-3)} 12:10` }
 ];
 
 /* ================================================================ PAGOS === */
@@ -609,13 +641,16 @@ export const PAGOS: MovimientoPago[] = [
   { id: 1, fecha: conDias(0), hora: '09:58', concepto: 'Limpieza facial profunda · María López', referencia: 'CT-1001', origen: 'Cita', metodo: 'Izipay', canal: 'Online', estado: 'Pagado', monto: 120, localId: 1, registradoPor: 'Izipay (automático)', codigoOperacion: 'OP-480137' },
   { id: 2, fecha: conDias(0), hora: '10:04', concepto: 'HIFU 25D facial · Rosa Huamán', referencia: 'CT-1002', origen: 'Cita', metodo: 'Izipay', canal: 'Online', estado: 'Pagado', monto: 350, localId: 1, registradoPor: 'Izipay (automático)', codigoOperacion: 'OP-480274' },
   { id: 3, fecha: conDias(0), hora: '11:12', concepto: 'Pedido PD-2041 · 2 productos', referencia: 'PD-2041', origen: 'Producto', metodo: 'Izipay', canal: 'Online', estado: 'Pagado', monto: 164, localId: 1, registradoPor: 'Izipay (automático)', codigoOperacion: 'OP-512340' },
+  { id: 13, fecha: conDias(0), hora: '12:00', concepto: 'Pedido PD-2040 · 3 productos', referencia: 'PD-2040', origen: 'Producto', metodo: 'Izipay', canal: 'Online', estado: 'Pagado', monto: 135, localId: 2, registradoPor: 'Izipay (automático)', codigoOperacion: 'OP-512299' },
   { id: 4, fecha: conDias(0), hora: '15:20', concepto: 'Botox full face · Verónica Aliaga', referencia: 'CT-1006', origen: 'Cita', metodo: 'Izipay', canal: 'Online', estado: 'Pagado', monto: 700, localId: 1, registradoPor: 'Izipay (automático)', codigoOperacion: 'OP-480822' },
-  { id: 5, fecha: conDias(0), hora: '17:35', concepto: 'Radiofrecuencia facial · Fiorella Castro', referencia: 'CT-1008', origen: 'Cita', metodo: 'Efectivo', canal: 'Recepción', estado: 'Pagado', monto: 160, localId: 2, registradoPor: 'Recepción · Jazmín', codigoOperacion: 'EF-88214' },
-  { id: 6, fecha: conDias(0), hora: '11:45', concepto: 'Peeling facial · Carla Ruiz', referencia: 'CT-1003', origen: 'Cita', metodo: 'Efectivo', canal: 'Recepción', estado: 'Pendiente', monto: 180, localId: 1, registradoPor: 'Recepción · Milagros', codigoOperacion: '—' },
+  { id: 5, fecha: conDias(0), hora: '17:35', concepto: 'Radiofrecuencia facial · Fiorella Castro', referencia: 'CT-1008', origen: 'Cita', metodo: 'Efectivo', canal: 'Recepción', estado: 'Pagado', monto: 160, localId: 2, registradoPor: 'Recepción · Jazmín Cabrera', codigoOperacion: 'EF-88214' },
+  { id: 6, fecha: conDias(0), hora: '11:45', concepto: 'Peeling facial · Carla Ruiz', referencia: 'CT-1003', origen: 'Cita', metodo: 'Efectivo', canal: 'Recepción', estado: 'Pendiente', monto: 180, localId: 1, registradoPor: 'Recepción · Milagros Ríos', codigoOperacion: '—' },
   { id: 7, fecha: conDias(0), hora: '18:10', concepto: 'Reembolso limpieza facial · Jimena Paredes', referencia: 'CT-1009', origen: 'Cita', metodo: 'Izipay', canal: 'Online', estado: 'Reembolsado', monto: -120, localId: 2, registradoPor: 'Administración', codigoOperacion: 'RB-480901' },
+  { id: 11, fecha: conDias(0), hora: '13:45', concepto: 'Pedido PD-2042 · 2 productos', referencia: 'PD-2042', origen: 'Producto', metodo: 'Yape', canal: 'WhatsApp', estado: 'Pendiente', monto: 249, localId: 1, registradoPor: 'Recepción · Milagros Ríos', codigoOperacion: '—' },
+  { id: 12, fecha: conDias(-2), hora: '17:20', concepto: 'Reembolso pedido PD-2037 · Kit post tratamiento corporal', referencia: 'PD-2037', origen: 'Producto', metodo: 'Izipay', canal: 'Online', estado: 'Reembolsado', monto: -160, localId: 1, registradoPor: 'Administración', codigoOperacion: 'RB-512037' },
   { id: 8, fecha: conDias(-1), hora: '09:40', concepto: 'Limpieza facial profunda · Diana Quiroz', referencia: 'CT-1010', origen: 'Cita', metodo: 'Izipay', canal: 'Online', estado: 'Pagado', monto: 120, localId: 1, registradoPor: 'Izipay (automático)', codigoOperacion: 'OP-481038' },
-  { id: 9, fecha: conDias(-1), hora: '11:20', concepto: 'Lifting 360° Tens Booster · Ana Torres', referencia: 'CT-1011', origen: 'Cita', metodo: 'Efectivo', canal: 'Recepción', estado: 'Pagado', monto: 499, localId: 1, registradoPor: 'Recepción · Milagros', codigoOperacion: 'EF-77120' },
-  { id: 10, fecha: conDias(-1), hora: '15:05', concepto: 'Drenaje linfático · Rosa Huamán', referencia: 'CT-1012', origen: 'Cita', metodo: 'Efectivo', canal: 'Recepción', estado: 'Pagado', monto: 90, localId: 2, registradoPor: 'Recepción · Jazmín', codigoOperacion: 'EF-00912' }
+  { id: 9, fecha: conDias(-1), hora: '11:20', concepto: 'Lifting 360° Tens Booster · Ana Torres', referencia: 'CT-1011', origen: 'Cita', metodo: 'Efectivo', canal: 'Recepción', estado: 'Pagado', monto: 499, localId: 1, registradoPor: 'Recepción · Milagros Ríos', codigoOperacion: 'EF-77120' },
+  { id: 10, fecha: conDias(-1), hora: '15:05', concepto: 'Drenaje linfático · Rosa Huamán', referencia: 'CT-1012', origen: 'Cita', metodo: 'Efectivo', canal: 'Recepción', estado: 'Pagado', monto: 90, localId: 2, registradoPor: 'Recepción · Jazmín Cabrera', codigoOperacion: 'EF-00912' }
 ];
 
 /* ========================================================= PROMOCIONES === */
@@ -789,7 +824,66 @@ export const PROMOCIONES: Promocion[] = [
  * identificada por DNI y avanza sesion por sesion con el intervalo de dias que
  * indique la especialista.
  */
-export const PLANES: PlanSesiones[] = [];
+export const PLANES: PlanSesiones[] = [
+  {
+    id: 1,
+    codigo: 'PL-3001',
+    pacienteId: 5,
+    dni: '09823471',
+    nombre: 'Combo lifting facial Botox + HIFU 25D',
+    localId: 1,
+    intervaloDias: 30,
+    inicio: conDias(0),
+    precioTotal: 850,
+    pagado: 300,
+    pagosDetalle: [{
+      metodo: 'Yape',
+      monto: 300,
+      fecha: conDias(0),
+      hora: '09:05',
+      canal: 'Recepción',
+      registradoPor: 'Recepción · Milagros Ríos',
+      codigoOperacion: 'YAPE-3001'
+    }],
+    estado: 'En curso',
+    notas: 'Plan de prueba con sesiones por tratamiento.',
+    sesiones: [
+      { numero: 1, tratamientoId: 2, grupoTratamiento: 1, procedimiento: 'HIFU 25D facial', fecha: conDias(0), hora: '09:00', estado: 'Programada', registradoPor: 'Recepción · Milagros Ríos' },
+      { numero: 2, tratamientoId: 2, grupoTratamiento: 1, procedimiento: 'Control HIFU 25D facial', fecha: conDias(30), hora: '10:00', estado: 'Programada', registradoPor: 'Recepción · Milagros Ríos' },
+      { numero: 3, tratamientoId: 3, grupoTratamiento: 2, procedimiento: 'Botox full face', estado: 'Pendiente', registradoPor: 'Recepción · Milagros Ríos' },
+      { numero: 4, tratamientoId: 3, grupoTratamiento: 2, procedimiento: 'Control Botox full face', estado: 'Pendiente', registradoPor: 'Recepción · Milagros Ríos' }
+    ]
+  },
+  {
+    id: 2,
+    codigo: 'PL-3002',
+    pacienteId: 4,
+    dni: '73920145',
+    nombre: 'Plan corporal reducción localizada',
+    localId: 2,
+    intervaloDias: 15,
+    inicio: conDias(-2),
+    precioTotal: 540,
+    pagado: 540,
+    pagosDetalle: [{
+      metodo: 'Transferencia',
+      monto: 540,
+      fecha: conDias(-2),
+      hora: '16:20',
+      canal: 'WhatsApp',
+      registradoPor: 'Recepción · Jazmín Cabrera',
+      codigoOperacion: 'TR-3002'
+    }],
+    fechaLiquidacion: conDias(-2),
+    estado: 'En curso',
+    notas: 'Plan pagado completo para pruebas de reportes.',
+    sesiones: [
+      { numero: 1, tratamientoId: 5, grupoTratamiento: 1, procedimiento: 'Hidrolipoclasia', fecha: conDias(-2), hora: '16:00', estado: 'Atendida', registradoPor: 'Recepción · Jazmín Cabrera' },
+      { numero: 2, tratamientoId: 6, grupoTratamiento: 2, procedimiento: 'Drenaje linfático', fecha: conDias(13), hora: '11:00', estado: 'Programada', registradoPor: 'Recepción · Jazmín Cabrera' },
+      { numero: 3, tratamientoId: 6, grupoTratamiento: 2, procedimiento: 'Drenaje linfático control', estado: 'Pendiente', registradoPor: 'Recepción · Jazmín Cabrera' }
+    ]
+  }
+];
 
 /* ============================================================= AYUDANTES == */
 

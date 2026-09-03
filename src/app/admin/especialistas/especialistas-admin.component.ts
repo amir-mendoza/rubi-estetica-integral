@@ -1,9 +1,10 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { CITAS, ESPECIALISTAS, HOY_ISO, localPorId, nombrePaciente, soles, tratamientoPorId } from '../../data/datos';
+import { CITAS, HOY_ISO, localPorId, nombrePaciente, soles, tratamientoPorId } from '../../data/datos';
 import { Especialista } from '../../data/modelos';
 import { SubidasService } from '../../compartido/subidas.service';
+import { EspecialistasService } from '../../compartido/especialistas.service';
 
 function especialistaVacia(): Especialista {
   return {
@@ -18,7 +19,8 @@ function especialistaVacia(): Especialista {
     locales: [1],
     tratamientos: [1],
     horario: 'Lunes a sábado · 09:00 a 18:00',
-    activa: true
+    activa: true,
+    atiendeRecepcion: false
   };
 }
 
@@ -55,6 +57,10 @@ function especialistaVacia(): Especialista {
           <div class="campo"><label>Apellidos</label><input required [ngModel]="borrador().apellido" (ngModelChange)="editar('apellido', $event)" name="apellido"></div>
           <div class="campo"><label>DNI interno</label><input maxlength="8" [ngModel]="borrador().dni" (ngModelChange)="editar('dni', $event)" name="dni" placeholder="Para buscarla rápido en recepción"></div>
           <div class="campo"><label>Especialidad</label><input [ngModel]="borrador().especialidad" (ngModelChange)="editar('especialidad', $event)" name="especialidad"></div>
+          <label class="check-recepcion">
+            <input type="checkbox" [ngModel]="!!borrador().atiendeRecepcion" (ngModelChange)="editar('atiendeRecepcion', $event)" name="atiendeRecepcion">
+            <span>También atiende recepción</span>
+          </label>
           <div class="campo esp-form__ancho"><label>Presentación / notas internas</label><textarea rows="3" [ngModel]="borrador().bio" (ngModelChange)="editar('bio', $event)" name="bio" placeholder="Experiencia breve visible y notas útiles para administración"></textarea></div>
           <button class="btn btn--vino btn--sm" type="submit" [disabled]="!borrador().nombre || !borrador().apellido">Guardar especialista</button>
         </form>
@@ -70,6 +76,7 @@ function especialistaVacia(): Especialista {
               <h3>{{ e.nombre }} {{ e.apellido }}</h3>
               <span class="dato__label">{{ e.especialidad }}</span>
               <span class="chip chip--info">DNI {{ e.dni || 'por registrar' }}</span>
+              @if (e.atiendeRecepcion) { <span class="chip chip--ok">Responsable recepción</span> }
             </div>
           </header>
 
@@ -117,6 +124,20 @@ function especialistaVacia(): Especialista {
     .esp-form__foto { grid-row: span 3; display: grid; gap: 10px; align-content: start; }
     .esp-form__foto img { width: 126px; height: 126px; object-fit: cover; border-radius: 50%; border: 1px solid var(--linea); background: var(--rosa-50); }
     .esp-form__ancho { grid-column: 2 / -1; }
+    .check-recepcion {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px;
+      border: 1px solid var(--linea);
+      border-radius: var(--radio);
+      background: var(--rosa-50);
+      color: var(--vino);
+      font-size: .9rem;
+      font-weight: 700;
+    }
+    .check-recepcion input { width: 16px; height: 16px; accent-color: var(--magenta); }
     .grid-esp { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
     .tarjeta-esp-admin header { display: flex; gap: 16px; align-items: center; margin-bottom: 20px; }
     .tarjeta-esp-admin header img { width: 68px; height: 68px; border-radius: 50%; object-fit: cover; }
@@ -161,9 +182,10 @@ function especialistaVacia(): Especialista {
 })
 export class EspecialistasAdminComponent {
   private subidas = inject(SubidasService);
+  private especialistasService = inject(EspecialistasService);
   soles = soles;
   nombrePaciente = nombrePaciente;
-  especialistas = signal(ESPECIALISTAS.map(e => ({ ...e, locales: [...e.locales], tratamientos: [...e.tratamientos] })));
+  especialistas = this.especialistasService.especialistas;
   mostrarFormulario = signal(false);
   borrador = signal<Especialista>(especialistaVacia());
   private mes = HOY_ISO.slice(0, 7);
@@ -189,9 +211,7 @@ export class EspecialistasAdminComponent {
 
   guardar(): void {
     const e = this.borrador();
-    this.especialistas.update(lista => e.id
-      ? lista.map(item => item.id === e.id ? { ...e } : item)
-      : [{ ...e, id: lista.reduce((max, item) => Math.max(max, item.id), 0) + 1 }, ...lista]);
+    this.especialistasService.guardar(e);
     this.cerrar();
   }
 

@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   ETIQUETAS_TRATAMIENTO, LOCALES, TRATAMIENTOS, formatoFechaLarga, formatoHora12, soles
 } from '../../data/datos';
-import { CategoriaTratamiento, Local, Promocion, Tratamiento } from '../../data/modelos';
+import { CategoriaTratamiento, Cita, Local, Paciente, Promocion, Tratamiento } from '../../data/modelos';
 import { Bloque, DisponibilidadService } from '../../compartido/disponibilidad.service';
 import { SesionService } from '../../compartido/sesion.service';
 import { PromocionesService } from '../../compartido/promociones.service';
@@ -14,6 +14,7 @@ import { RedesService } from '../../compartido/redes.service';
 import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.service';
 import { AgendaService } from '../../compartido/agenda.service';
 import { PacientesService } from '../../compartido/pacientes.service';
+import { VoucherService } from '../../compartido/voucher.service';
 
 const MINUTOS_RESERVA_PROCESO = 8;
 const MINUTOS_EXTENSION_RESERVA = 5;
@@ -42,6 +43,7 @@ export class ReservarComponent implements OnDestroy {
   readonly configPanel = inject(ConfiguracionPanelService);
   private agenda = inject(AgendaService);
   private pacientes = inject(PacientesService);
+  private vouchers = inject(VoucherService);
 
   soles = soles;
   formatoFechaLarga = formatoFechaLarga;
@@ -67,14 +69,18 @@ export class ReservarComponent implements OnDestroy {
   mensajePago = signal('');
   codigoOperacion = signal<string | null>(null);
   codigoReserva = signal('—');
+  ultimaCita = signal<Cita | null>(null);
   aceptoLegales = signal(false);
   tiempoReservaSeg = signal(0);
   reservaExpiraEn = signal<number | null>(null);
   mostrarExtension = signal(false);
   cuentaExtensionSeg = signal(SEGUNDOS_RESPUESTA_EXTENSION);
   avisoReserva = signal('');
+  disponibilidadTick = signal(0);
   private temporizadorReserva?: ReturnType<typeof setInterval>;
   private temporizadorExtension?: ReturnType<typeof setInterval>;
+  private temporizadorDisponibilidad?: ReturnType<typeof setInterval>;
+  private readonly refrescarDisponibilidad = () => this.disponibilidadTick.update(v => v + 1);
 
   // Datos del cliente.
   nombre = this.sesion.usuario()?.nombre ?? '';
@@ -119,6 +125,7 @@ export class ReservarComponent implements OnDestroy {
   );
 
   bloques = computed<Bloque[]>(() => {
+    this.disponibilidadTick();
     const l = this.local();
     return l ? this.disponibilidad.bloques(this.fecha(), l) : [];
   });
@@ -181,10 +188,23 @@ export class ReservarComponent implements OnDestroy {
   saldoPendiente = computed(() => Math.max(this.totalReserva() - this.montoPagoOnline(), 0));
 
   datosCompletos(): boolean {
-    return !!(this.nombre && this.apellido && this.dni && this.celular);
+    const dni = this.dni.replace(/\D/g, '');
+    const celular = this.celular.replace(/\D/g, '');
+    return !!(this.nombre.trim() && this.apellido.trim() && dni.length === 8 && celular.length >= 9);
+  }
+
+  etiquetaBloqueCupos(bloque: Bloque): string {
+    const ocupados = Math.max(bloque.reservados + bloque.retenidos, 0);
+    const detalle = ocupados > 0
+      ? ` · ${ocupados} ${ocupados === 1 ? 'ocupado' : 'ocupados'}${bloque.retenidos ? ` (${bloque.retenidos} temporal)` : ''}`
+      : '';
+    return `${bloque.libres} de ${bloque.cupo} cupos${detalle}`;
   }
 
   constructor() {
+    this.temporizadorDisponibilidad = setInterval(this.refrescarDisponibilidad, 5000);
+    window.addEventListener('storage', this.refrescarDisponibilidad);
+
     const q = this.ruta.snapshot.queryParamMap;
     const localId = Number(q.get('local'));
     const tratId = Number(q.get('tratamiento'));
@@ -312,6 +332,7 @@ export class ReservarComponent implements OnDestroy {
     this.detenerTemporizadores();
     this.codigoOperacion.set(null);
     this.codigoReserva.set(cita.codigo);
+    this.ultimaCita.set(cita);
     this.confirmado.set(true);
   }
 
@@ -327,6 +348,7 @@ export class ReservarComponent implements OnDestroy {
     this.etiqueta.set('Todas');
     this.busqueda.set('');
     this.codigoReserva.set('—');
+    this.ultimaCita.set(null);
     this.aceptoLegales.set(false);
     const u = this.sesion.usuario();
     this.nombre = u?.nombre ?? '';
@@ -339,6 +361,8 @@ export class ReservarComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.detenerTemporizadores();
+    clearInterval(this.temporizadorDisponibilidad);
+    window.removeEventListener('storage', this.refrescarDisponibilidad);
   }
 
   tiempoReservaTexto(): string {
@@ -423,6 +447,7 @@ export class ReservarComponent implements OnDestroy {
           this.disponibilidad.confirmarRetencionActiva();
           this.detenerTemporizadores();
           this.codigoReserva.set(cita.codigo);
+          this.ultimaCita.set(cita);
           this.confirmado.set(true);
         }
       },
@@ -433,7 +458,23 @@ export class ReservarComponent implements OnDestroy {
     });
   }
 
-  private registrarReservaConfirmada() {
+  imprimirVoucherReserva(): void {
+    const cita = this.ultimaCita();
+    if (!cita) { return; }
+    this.vouchers.imprimirCita(cita, this.pacienteVoucher(), { usarAgente: false });
+  }
+
+  enlaceCorreoReserva(): string {
+    const cita = this.ultimaCita();
+    return cita ? this.vouchers.enlaceCorreoCita(cita, this.pacienteVoucher()) : '';
+  }
+
+  enlaceWhatsappVoucherReserva(): string {
+    const cita = this.ultimaCita();
+    return cita ? this.vouchers.enlaceWhatsappCita(cita, this.pacienteVoucher()) : '';
+  }
+
+  private registrarReservaConfirmada(): Cita {
     const paciente = this.pacientes.registrarOActualizar({
       dni: this.dni.trim(),
       nombre: this.nombre.trim(),
@@ -476,6 +517,16 @@ export class ReservarComponent implements OnDestroy {
 
     this.pacientes.registrarAtencion(paciente.id, this.fecha(), montoPagado);
     return cita;
+  }
+
+  private pacienteVoucher(): Pick<Paciente, 'nombre' | 'apellido' | 'dni' | 'celular' | 'correo'> {
+    return {
+      nombre: this.nombre.trim(),
+      apellido: this.apellido.trim(),
+      dni: this.dni.trim(),
+      celular: this.celular.trim(),
+      correo: this.correo.trim()
+    };
   }
 
   private notaReserva(): string {

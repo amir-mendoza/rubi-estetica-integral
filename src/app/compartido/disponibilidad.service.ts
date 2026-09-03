@@ -66,7 +66,8 @@ export class DisponibilidadService {
       c.fecha === fechaISO &&
       c.localId === localId &&
       c.estado !== 'Cancelada' &&
-      c.estado !== 'No asistió'
+      c.estado !== 'No asistió' &&
+      c.estado !== 'Atendida'
     );
   }
 

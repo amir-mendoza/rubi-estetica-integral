@@ -192,9 +192,10 @@
 /* Agenda */
 .agenda { display: grid; gap: 12px; }
 .cita {
-  display: grid; grid-template-columns: 104px 1fr 190px; gap: 20px;
+  display: grid; grid-template-columns: 96px minmax(0, 1fr) minmax(180px, 210px); gap: 18px;
   background: #fff; border: 1px solid var(--linea); border-left: 3px solid var(--magenta);
   border-radius: var(--radio-lg); padding: 18px 20px;
+  overflow: hidden;
 }
 .cita > * { min-width: 0; }
 .cita--cancelada { border-left-color: var(--error); background: #fdfafa; }
@@ -228,7 +229,12 @@
 /* Acciones de recepcion */
 .cita__acciones { margin-top: 14px; display: grid; gap: 6px; }
 .cita__acciones-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.cita__acciones-top-botones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.cita__acciones-top-botones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
+.cita__acciones-top-botones .boton-icono {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+}
 .boton-icono--seguimiento {
   border-color: rgba(176, 27, 114, .35);
   background: var(--vino);
@@ -276,10 +282,29 @@
 .cita__montos {
   display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
   padding-left: 20px; border-left: 1px dashed var(--linea);
+  min-width: 0;
 }
 .cita__montos div { display: flex; justify-content: space-between; gap: 14px; width: 100%; font-size: .9rem; color: var(--gris); }
 .cita__montos strong { font-weight: 500; }
 .cita__montos .boton-icono { margin-top: auto; }
+.voucher-acciones {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 6px;
+  width: 100%;
+}
+.voucher-acciones .boton-icono {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  text-align: center;
+  text-decoration: none;
+  white-space: normal;
+}
 
 .cita__traza {
   grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
@@ -292,6 +317,22 @@
   .calendario-grid { grid-template-columns: 1fr; }
   .calendario { position: static; }
 }
+@media (max-width: 1180px) {
+  .cita { grid-template-columns: 88px minmax(0, 1fr); }
+  .cita__montos {
+    grid-column: 1 / -1;
+    align-items: stretch;
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px dashed var(--linea);
+    padding-top: 14px;
+  }
+  .cobro-flex { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; align-items: end; }
+  .cita__montos .boton-icono { margin-top: 0; }
+  .voucher-acciones {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 @media (max-width: 900px) {
   .cita-manual__form { grid-template-columns: 1fr; }
   .cita-manual__ancho { grid-column: auto; }
@@ -301,6 +342,8 @@
   .cita { grid-template-columns: 1fr; }
   .cita__datos { grid-template-columns: repeat(2, 1fr); }
   .reprogramar__campos { grid-template-columns: 1fr; }
+  .cobro-flex { grid-template-columns: 1fr !important; }
+  .voucher-acciones { grid-template-columns: 1fr; }
   .cita__montos { align-items: flex-start; padding-left: 0; border-left: none; border-top: 1px dashed var(--linea); padding-top: 14px; }
   .cita__traza { grid-template-columns: 1fr; }
 }

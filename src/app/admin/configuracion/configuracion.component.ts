@@ -8,7 +8,8 @@ import { RedesEnlacesComponent } from '../../compartido/redes-enlaces.component'
 import { CargadorService } from '../../compartido/cargador.service';
 import { CargadorRuedaComponent } from '../../compartido/cargador-rueda.component';
 import { SubidasService } from '../../compartido/subidas.service';
-import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartido/configuracion-panel.service';
+import { ConfiguracionImpresionEquipo, ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartido/configuracion-panel.service';
+import { ImpresionService } from '../../compartido/impresion.service';
 
 @Component({
   selector: 'app-configuracion',
@@ -503,6 +504,106 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
       </div>
     }
 
+    @if (pestana() === 'Impresión') {
+      <div class="grid-config">
+        <div class="panel">
+          <h4>Impresión de vouchers por recepción</h4>
+          <p class="campo__ayuda" style="margin-bottom:18px">
+            Cada sede puede trabajar en modo navegador para pruebas o con agente local instalado en la computadora de recepción.
+            Si una impresora falla, el agente puede usar una impresora de respaldo sin cambiar código.
+          </p>
+
+          @for (l of locales; track l.id) {
+            @let equipo = equipoImpresion(l.id);
+            <article class="impresora-card">
+              <div class="impresora-card__cabecera">
+                <div>
+                  <span class="dato__label">{{ l.nombre }}</span>
+                  <strong>{{ equipo.equipo }}</strong>
+                </div>
+                <span class="chip" [class.chip--ok]="equipo.activo" [class.chip--neutro]="!equipo.activo">
+                  {{ equipo.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </div>
+
+              <div class="impresora-grid">
+                <div class="campo">
+                  <label>Equipo o caja</label>
+                  <input type="text" [ngModel]="equipo.equipo" (ngModelChange)="actualizarEquipoImpresion(l.id, { equipo: $event })" placeholder="Recepción principal">
+                </div>
+                <div class="campo">
+                  <label>Modo de impresión</label>
+                  <select [ngModel]="equipo.modo" (ngModelChange)="actualizarEquipoImpresion(l.id, { modo: $event })">
+                    <option value="navegador">Navegador / pruebas</option>
+                    <option value="agente-local">Agente local instalado</option>
+                  </select>
+                </div>
+                <div class="campo">
+                  <label>URL del agente local</label>
+                  <input type="text" [ngModel]="equipo.agenteUrl" (ngModelChange)="actualizarEquipoImpresion(l.id, { agenteUrl: $event })" placeholder="http://127.0.0.1:48531">
+                </div>
+                <div class="campo">
+                  <label>Papel</label>
+                  <select [ngModel]="equipo.papel" (ngModelChange)="actualizarEquipoImpresion(l.id, { papel: $event })">
+                    <option value="80mm">Ticket 80 mm</option>
+                    <option value="58mm">Ticket 58 mm</option>
+                  </select>
+                </div>
+                <div class="campo">
+                  <label>Impresora principal</label>
+                  <input type="text" [ngModel]="equipo.impresoraPrincipal" (ngModelChange)="actualizarEquipoImpresion(l.id, { impresoraPrincipal: $event })" placeholder="Ej. EPSON TM-T20III">
+                </div>
+                <div class="campo">
+                  <label>Impresora de respaldo</label>
+                  <input type="text" [ngModel]="equipo.impresoraRespaldo" (ngModelChange)="actualizarEquipoImpresion(l.id, { impresoraRespaldo: $event })" placeholder="Ej. POS-80C">
+                </div>
+                <div class="campo">
+                  <label>Copias</label>
+                  <input type="number" min="1" max="3" [ngModel]="equipo.copias" (ngModelChange)="actualizarEquipoImpresion(l.id, { copias: +$event })">
+                </div>
+              </div>
+
+              <div class="interruptores impresora-switches">
+                <label><input type="checkbox" [ngModel]="equipo.activo" (ngModelChange)="actualizarEquipoImpresion(l.id, { activo: $event })"> Usar este equipo para la sede</label>
+                <label><input type="checkbox" [ngModel]="equipo.imprimirAutomaticamente" (ngModelChange)="actualizarEquipoImpresion(l.id, { imprimirAutomaticamente: $event })"> Imprimir automáticamente al guardar una cita presencial</label>
+                <label><input type="checkbox" [ngModel]="equipo.usarRespaldoSiFalla" (ngModelChange)="actualizarEquipoImpresion(l.id, { usarRespaldoSiFalla: $event })"> Usar impresora de respaldo si falla la principal</label>
+                <label><input type="checkbox" [ngModel]="equipo.fallbackNavegador" (ngModelChange)="actualizarEquipoImpresion(l.id, { fallbackNavegador: $event })"> Abrir impresión del navegador si el agente no responde</label>
+              </div>
+
+              <div class="acciones-marca">
+                <button class="btn btn--vino btn--sm" type="button" (click)="probarImpresion(l.id)">
+                  Probar impresión
+                </button>
+                @if (estadoPruebaImpresion()[l.id]) {
+                  <span class="chip" [class.chip--ok]="estadoPruebaImpresion()[l.id].ok" [class.chip--neutro]="!estadoPruebaImpresion()[l.id].ok">
+                    {{ estadoPruebaImpresion()[l.id].mensaje }}
+                  </span>
+                }
+              </div>
+            </article>
+          }
+
+          <div class="acciones-marca">
+            <button class="btn btn--linea btn--sm" (click)="configPanel.restablecerImpresion()">Restablecer impresión</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h4>Flujo recomendado en producción</h4>
+          <div class="flujo-impresion">
+            <div><strong>1</strong><span>Windows reconoce la impresora térmica por USB o red.</span></div>
+            <div><strong>2</strong><span>Se instala Rubi Print Agent en la computadora de recepción.</span></div>
+            <div><strong>3</strong><span>El panel envía el voucher al agente local con sede, equipo e impresora.</span></div>
+            <div><strong>4</strong><span>Si falla la principal, se intenta con la impresora de respaldo y queda trazabilidad.</span></div>
+          </div>
+          <p class="campo__ayuda" style="margin-top:16px">
+            En este prototipo el agente todavía no está instalado. Por eso el modo seguro es navegador. Cuando tengamos Spring Boot,
+            el backend guardará esta misma configuración en base de datos y el agente imprimirá sin mostrar "Guardar como PDF".
+          </p>
+        </div>
+      </div>
+    }
+
     @if (pestana() === 'Usuarios') {
       <div class="tabla-panel">
         <div class="tabla-panel__cabecera">
@@ -681,6 +782,16 @@ import { ConfiguracionPanelService, UsuarioSistemaConfig } from '../../compartid
     .horario-config__fila span { font-size: .9rem; color: var(--gris); }
     .horario-config__fila input, .horario-config__fila select { border: 1px solid var(--linea); border-radius: var(--radio); padding: .45rem .6rem; font-family: inherit; font-size: .9rem; background: #fff; }
     .horario-config__acciones { display: flex; justify-content: flex-end; margin-top: 10px; }
+    .impresora-card { display: grid; gap: 14px; padding: 16px; border: 1px solid var(--linea); border-radius: var(--radio-lg); background: var(--rosa-50); margin-bottom: 16px; }
+    .impresora-card__cabecera { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; padding-bottom: 12px; border-bottom: 1px dashed var(--linea); }
+    .impresora-card__cabecera div { display: grid; gap: 4px; }
+    .impresora-card__cabecera strong { color: var(--vino); font-size: 1rem; }
+    .impresora-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 12px 14px; align-items: end; }
+    .impresora-switches { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 10px 16px; }
+    .flujo-impresion { display: grid; gap: 12px; }
+    .flujo-impresion div { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--linea); border-radius: var(--radio); background: #fff; }
+    .flujo-impresion strong { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--vino); color: #fff; }
+    .flujo-impresion span { color: var(--gris); line-height: 1.45; }
     .marca-preview {
       display: grid;
       place-items: center;
@@ -767,11 +878,13 @@ export class ConfiguracionComponent {
   readonly redes = inject(RedesService);
   readonly cargador = inject(CargadorService);
   readonly subidas = inject(SubidasService);
-  pestanas = ['Negocio', 'Marca', 'Fondo', 'Carga', 'Agenda', 'Pagos', 'Usuarios', 'Sincronización'];
+  readonly impresion = inject(ImpresionService);
+  pestanas = ['Negocio', 'Marca', 'Fondo', 'Carga', 'Agenda', 'Pagos', 'Impresión', 'Usuarios', 'Sincronización'];
   pestana = signal('Negocio');
   logoRuta = signal('');
   logoAdminRuta = signal('');
   faviconRuta = signal('');
+  estadoPruebaImpresion = signal<Record<number, { ok: boolean; mensaje: string }>>({});
   mostrarFormularioUsuario = signal(false);
   indiceUsuarioEditando = signal<number | null>(null);
   usuarioForm = signal<UsuarioSistemaConfig>({
@@ -819,6 +932,33 @@ export class ConfiguracionComponent {
 
   cambiarBloqueoSync(valor: string | number): void {
     this.configPanel.actualizarSincronizacion({ bloquearReservasTrasMin: Number(valor) as 30 | 60 });
+  }
+
+  equipoImpresion(localId: number): ConfiguracionImpresionEquipo {
+    return this.configPanel.impresion().equipos.find(equipo => equipo.localId === localId)
+      ?? this.configPanel.impresion().equipos[0];
+  }
+
+  actualizarEquipoImpresion(localId: number, cambios: Partial<ConfiguracionImpresionEquipo>): void {
+    this.configPanel.actualizarEquipoImpresion(localId, cambios);
+  }
+
+  probarImpresion(localId: number): void {
+    const equipo = this.equipoImpresion(localId);
+    if (equipo.modo === 'navegador') {
+      this.estadoPruebaImpresion.update(v => ({
+        ...v,
+        [localId]: { ok: true, mensaje: 'Modo navegador listo para pruebas.' }
+      }));
+      return;
+    }
+    this.estadoPruebaImpresion.update(v => ({
+      ...v,
+      [localId]: { ok: false, mensaje: 'Probando agente local...' }
+    }));
+    void this.impresion.probarEquipo(localId).then(resultado => {
+      this.estadoPruebaImpresion.update(v => ({ ...v, [localId]: resultado }));
+    });
   }
 
   guardarLogo(): void {

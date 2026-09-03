@@ -1,151 +1,171 @@
 <div class="cabecera-admin">
   <div>
     <h1>Dashboard</h1>
-    <p>{{ hoyTexto }} · Resumen de operación y control de dinero</p>
+    <p>{{ hoyTexto }} · Resumen operativo, caja y alertas principales</p>
   </div>
   <div class="cabecera-admin__acciones">
-    <a routerLink="/admin/calendario" class="btn btn--linea btn--sm">Ver agenda del día</a>
+    <a routerLink="/admin/calendario" class="btn btn--linea btn--sm">Ver agenda</a>
     <a routerLink="/admin/pagos" class="btn btn--vino btn--sm">Revisar pagos</a>
   </div>
 </div>
 
-<!-- ===================================================== Dinero de hoy -->
-<section class="bloque-dinero">
-  <div class="kpis kpis-5">
-    <div class="kpi kpi--acento">
-      <span class="kpi__label">Cobrado hoy</span>
-      <span class="kpi__valor">{{ soles(cobradoHoy) }}</span>
-      <span class="kpi__nota">Dinero real confirmado por caja o Izipay</span>
-    </div>
-    <div class="kpi">
-      <span class="kpi__label">Tratamientos cobrados</span>
-      <span class="kpi__valor">{{ soles(cobradoCitasHoy) }}</span>
-      <span class="kpi__nota">Pagos de citas atendidas o reservadas</span>
-    </div>
-    <div class="kpi">
-      <span class="kpi__label">Productos cobrados</span>
-      <span class="kpi__valor">{{ soles(cobradoProductosHoy) }}</span>
-      <span class="kpi__nota">{{ pedidosHoy.length }} pedidos registrados hoy</span>
-    </div>
-    <div class="kpi">
-      <span class="kpi__label">Por cobrar</span>
-      <span class="kpi__valor" style="color:var(--alerta)">{{ soles(pendienteHoy) }}</span>
-      <span class="kpi__nota">Saldo pendiente, no cuenta como ingreso</span>
-    </div>
-    <div class="kpi">
-      <span class="kpi__label">Devuelto / anulado</span>
-      <span class="kpi__valor" style="color:var(--error)">{{ soles(canceladoHoy) }}</span>
-      <span class="kpi__nota">Incluye {{ soles(reembolsosHoy) }} reembolsados</span>
-    </div>
+<section class="alerta-inventario">
+  <div>
+    <span class="dato__label">Bandeja de alertas</span>
+    <h2>Stock por reponer</h2>
+    <p>
+      {{ stockAlerta }} producto{{ stockAlerta === 1 ? '' : 's' }} con pocas unidades.
+      {{ stockCritico }} en nivel crítico.
+    </p>
+  </div>
+  <div class="alerta-inventario__lista">
+    @for (p of stockBajo; track p.id) {
+      <article class="alerta-stock" [class.alerta-stock--critica]="p.stock <= 3">
+        <div class="mini-dato">
+          <strong>{{ p.nombre }}</strong>
+          <span>{{ p.marca }} · {{ p.categoria }}</span>
+        </div>
+        <span [class]="p.stock <= 3 ? 'chip chip--error chip--punto' : 'chip chip--alerta chip--punto'">
+          {{ p.stock }} unidades
+        </span>
+      </article>
+    } @empty {
+      <article class="alerta-stock">
+        <div class="mini-dato"><strong>Inventario estable</strong><span>No hay productos en alerta.</span></div>
+        <span class="chip chip--ok chip--punto">OK</span>
+      </article>
+    }
   </div>
 </section>
 
-<!-- ======================================= Canales, periodos y citas -->
-<section class="grid-tres">
-  <div class="panel">
-    <h4>Origen del dinero de hoy</h4>
-    <div class="linea-dato"><span>Pagos online (Izipay)</span><strong>{{ soles(pagosOnlineHoy) }}</strong></div>
-    <div class="linea-dato"><span>Pagos en local</span><strong>{{ soles(pagosLocalHoy) }}</strong></div>
-    <div class="linea-dato"><span>Total cobrado</span><strong style="color:var(--ok)">{{ soles(cobradoHoy) }}</strong></div>
-    <div class="linea-dato"><span>Reembolsos</span><strong style="color:var(--error)">{{ soles(reembolsosHoy) }}</strong></div>
-    <p class="nota-caja">El saldo pendiente se muestra aparte para no confundirlo con dinero ganado.</p>
+<section class="kpis kpis-5 bloque-dinero">
+  <div class="kpi kpi--acento">
+    <span class="kpi__label">Cobrado hoy</span>
+    <span class="kpi__valor">{{ soles(cobradoHoy) }}</span>
+    <span class="kpi__nota">Dinero confirmado por caja o Izipay</span>
   </div>
+  <div class="kpi kpi--verde">
+    <span class="kpi__label">Tratamientos</span>
+    <span class="kpi__valor">{{ soles(cobradoCitasHoy) }}</span>
+    <span class="kpi__nota">Reservas y atenciones pagadas</span>
+  </div>
+  <div class="kpi kpi--azul">
+    <span class="kpi__label">Productos</span>
+    <span class="kpi__valor">{{ soles(cobradoProductosHoy) }}</span>
+    <span class="kpi__nota">{{ pedidosHoy.length }} pedidos registrados hoy</span>
+  </div>
+  <div class="kpi kpi--naranja">
+    <span class="kpi__label">Por cobrar</span>
+    <span class="kpi__valor">{{ soles(pendienteHoy) }}</span>
+    <span class="kpi__nota">Saldo pendiente, no es ingreso</span>
+  </div>
+  <div class="kpi kpi--rojo">
+    <span class="kpi__label">Devuelto / anulado</span>
+    <span class="kpi__valor">{{ soles(canceladoHoy) }}</span>
+    <span class="kpi__nota">Incluye {{ soles(reembolsosHoy) }} reembolsados</span>
+  </div>
+</section>
 
-  <div class="panel">
-    <h4>Ingresos por periodo</h4>
-    <div class="linea-dato"><span>Hoy</span><strong>{{ soles(cobradoHoy) }}</strong></div>
-    <div class="linea-dato"><span>Últimos 7 días</span><strong>{{ soles(ingresoSemana) }}</strong></div>
-    <div class="linea-dato"><span>Mes en curso</span><strong>{{ soles(ingresoMes) }}</strong></div>
-    <div class="grafico">
-      @for (s of serie; track s.iso) {
-        <div class="grafico__col" [title]="soles(s.monto)">
-          <div class="grafico__barra" [style.height.%]="(s.monto / maxSerie) * 100"></div>
+<section class="dashboard-grid">
+  <article class="panel panel-chart">
+    <div class="panel-cabecera">
+      <div><span class="dato__label">Citas de hoy</span><h3>Estado de atención</h3></div>
+      <strong>{{ totalCitasHoy }} citas</strong>
+    </div>
+    <div class="donut-wrap">
+      <div class="donut" [style.background]="donutEstados"><span>{{ atencionPorcentaje }}%</span></div>
+      <div class="leyenda">
+        @for (e of estadoCitas; track e.etiqueta) {
+          <div><i [style.background]="e.color"></i><span>{{ e.etiqueta }}</span><strong>{{ e.valor }}</strong></div>
+        }
+      </div>
+    </div>
+  </article>
+
+  <article class="panel panel-chart">
+    <div class="panel-cabecera">
+      <div><span class="dato__label">Últimos 7 días</span><h3>Ingresos por día</h3></div>
+      <strong>{{ soles(ingresoSemana) }}</strong>
+    </div>
+    <div class="line-chart">
+      <svg viewBox="0 0 100 170" preserveAspectRatio="none" aria-hidden="true">
+        <path class="line-chart__area" [attr.d]="areaIngreso"></path>
+        <path class="line-chart__linea" [attr.d]="puntosIngreso"></path>
+      </svg>
+      <div class="line-chart__dias">
+        @for (s of serie; track s.iso) { <span>{{ s.dia }}</span> }
+      </div>
+    </div>
+  </article>
+
+  <article class="panel panel-chart">
+    <div class="panel-cabecera">
+      <div><span class="dato__label">Últimos 7 días</span><h3>Citas por día</h3></div>
+      <strong>{{ citasSemana.length }} registros</strong>
+    </div>
+    <div class="grafico grafico--alto grafico--citas">
+      @for (s of serieCitas; track s.iso) {
+        <div class="grafico__col" [title]="s.total + ' citas'">
+          <div class="grafico__barra" [style.height.%]="(s.total / maxSerieCitas) * 100"></div>
           <span>{{ s.dia }}</span>
         </div>
       }
     </div>
-  </div>
-
-  <div class="panel">
-    <h4>Citas de hoy</h4>
-    <div class="conteos">
-      <div><strong>{{ atendidas }}</strong><span>Atendidas</span></div>
-      <div><strong>{{ enProceso }}</strong><span>En proceso</span></div>
-      <div><strong>{{ programadas }}</strong><span>Programadas</span></div>
-      <div><strong>{{ canceladas }}</strong><span>Canceladas / no asistió</span></div>
-    </div>
-    <a routerLink="/admin/calendario" class="btn btn--linea btn--sm btn--bloque" style="margin-top:18px">Abrir calendario</a>
-  </div>
+  </article>
 </section>
 
-<!-- =========================================== Desgloses del mes -->
-<section class="grid-tres">
-  <div class="panel">
-    <h4>Ingresos por local <small>· mes</small></h4>
-    @for (f of porLocal; track f.etiqueta) {
-      <div class="fila-barra">
-        <div class="fila-barra__texto"><span>{{ f.etiqueta }}</span><strong>{{ soles(f.monto) }}</strong></div>
-        <div class="barra-progreso"><span [style.width.%]="(f.monto / maxLocal) * 100"></span></div>
-        <small>{{ f.detalle }}</small>
-      </div>
-    }
-  </div>
+<section class="dashboard-grid dashboard-grid--dos">
+  <article class="panel">
+    <div class="panel-cabecera">
+      <div><span class="dato__label">Caja de hoy</span><h3>Origen del dinero</h3></div>
+    </div>
+    <div class="linea-dato"><span>Pagos online</span><strong>{{ soles(pagosOnlineHoy) }}</strong></div>
+    <div class="linea-dato"><span>Pagos en recepción / WhatsApp</span><strong>{{ soles(pagosLocalHoy) }}</strong></div>
+    <div class="linea-dato"><span>Total cobrado</span><strong class="color-ok">{{ soles(cobradoHoy) }}</strong></div>
+    <div class="linea-dato"><span>Reembolsos</span><strong class="color-error">{{ soles(reembolsosHoy) }}</strong></div>
+  </article>
 
-  <div class="panel">
-    <h4>Ingresos por tratamiento <small>· mes</small></h4>
+  <article class="panel">
+    <div class="panel-cabecera">
+      <div><span class="dato__label">Mes actual</span><h3>Tratamientos con más ingreso</h3></div>
+    </div>
     @for (f of porTratamiento; track f.etiqueta) {
       <div class="fila-barra">
         <div class="fila-barra__texto"><span>{{ f.etiqueta }}</span><strong>{{ soles(f.monto) }}</strong></div>
         <div class="barra-progreso"><span [style.width.%]="(f.monto / maxTratamiento) * 100"></span></div>
         <small>{{ f.detalle }}</small>
       </div>
+    } @empty {
+      <p class="vacio-panel">Sin ingresos de tratamientos en el mes.</p>
     }
-  </div>
-
-  <div class="panel">
-    <h4>Ingresos por especialista <small>· mes</small></h4>
-    @for (f of porEspecialista; track f.etiqueta) {
-      <div class="fila-barra">
-        <div class="fila-barra__texto"><span>{{ f.etiqueta }}</span><strong>{{ soles(f.monto) }}</strong></div>
-        <div class="barra-progreso"><span [style.width.%]="(f.monto / maxEspecialista) * 100"></span></div>
-        <small>{{ f.detalle }}</small>
-      </div>
-    }
-  </div>
+  </article>
 </section>
 
-<!-- ============================================ Agenda y pagos -->
-<section class="grid-dos">
+<section class="dashboard-grid dashboard-grid--dos">
   <div class="tabla-panel">
     <div class="tabla-panel__cabecera">
-      <h3>Cuaderno rápido de hoy</h3>
+      <div>
+        <h3>Agenda rápida de hoy</h3>
+        <span class="panel-desc">Pacientes programadas, tratamiento, avance y saldo pendiente.</span>
+      </div>
       <a routerLink="/admin/calendario" class="enlace-flecha">Ver todo</a>
     </div>
     <div class="tabla-envoltura">
-        <table class="tabla">
-          <thead>
-          <tr><th>Hora</th><th>Paciente</th><th>Tratamiento</th><th class="num">Precio</th><th>Método de pago</th><th class="num">Pagado</th><th class="num">Falta</th><th>Control</th></tr>
-          </thead>
-          <tbody>
+      <table class="tabla tabla-compacta">
+        <thead>
+          <tr><th>Hora</th><th>Paciente</th><th>Tratamiento</th><th>Control</th><th class="num">Falta</th></tr>
+        </thead>
+        <tbody>
           @for (c of agendaHoy; track c.id) {
             <tr>
               <td><strong>{{ c.horaInicio }}</strong><br><small>{{ c.horaFin }}</small></td>
-              <td>
-                <div class="mini-dato">
-                  <strong>{{ nombrePaciente(c.pacienteId) }}</strong>
-                  <span>{{ nombreEspecialista(c.especialistaId) }}</span>
-                </div>
-              </td>
+              <td><div class="mini-dato"><strong>{{ nombrePaciente(c.pacienteId) }}</strong><span>{{ nombreEspecialista(c.especialistaId) }}</span></div></td>
               <td>{{ tratamientosCita(c) }}</td>
-              <td class="num">{{ soles(c.montoTotal) }}</td>
-              <td>{{ metodoPagoCita(c) }}</td>
-              <td class="num" style="color:var(--ok)">{{ soles(c.montoPagado) }}</td>
+              <td><span [class]="claseEstado(c)">{{ c.estado }}</span><br><small>{{ metodoPagoCita(c) }}</small></td>
               <td class="num" [style.color]="saldoCita(c) > 0 ? 'var(--alerta)' : 'var(--ok)'">{{ soles(saldoCita(c)) }}</td>
-              <td>
-                <span [class]="claseEstado(c)">{{ c.estado }}</span>
-                <br><small>{{ c.estadoPago }}</small>
-              </td>
             </tr>
+          } @empty {
+            <tr><td colspan="5" class="vacio">No hay citas registradas para hoy.</td></tr>
           }
         </tbody>
       </table>
@@ -154,11 +174,14 @@
 
   <div class="tabla-panel">
     <div class="tabla-panel__cabecera">
-      <h3>Últimos movimientos</h3>
+      <div>
+        <h3>Últimos movimientos</h3>
+        <span class="panel-desc">Pagos recientes de citas, planes y productos.</span>
+      </div>
       <a routerLink="/admin/pagos" class="enlace-flecha">Ver pagos</a>
     </div>
     <div class="tabla-envoltura">
-      <table class="tabla">
+      <table class="tabla tabla-compacta">
         <thead>
           <tr><th>Hora</th><th>Concepto</th><th>Método</th><th class="num">Monto</th></tr>
         </thead>
@@ -166,15 +189,12 @@
           @for (p of pagosRecientes; track p.id) {
             <tr>
               <td>{{ p.hora }}</td>
-              <td>
-                <div class="mini-dato">
-                  <strong>{{ p.concepto }}</strong>
-                  <span>{{ p.referencia }} · {{ p.codigoOperacion }}</span>
-                </div>
-              </td>
+              <td><div class="mini-dato"><strong>{{ p.concepto }}</strong><span>{{ p.referencia }} · {{ p.codigoOperacion }}</span></div></td>
               <td>{{ p.metodo }}<br><small>{{ p.canal }}</small></td>
               <td class="num" [style.color]="p.monto < 0 ? 'var(--error)' : ''">{{ soles(p.monto) }}</td>
             </tr>
+          } @empty {
+            <tr><td colspan="4" class="vacio">No hay movimientos recientes.</td></tr>
           }
         </tbody>
       </table>
@@ -182,13 +202,16 @@
   </div>
 </section>
 
-<section class="tabla-panel" style="margin-top:22px">
+<section class="tabla-panel">
   <div class="tabla-panel__cabecera">
-    <h3>Seguimientos multisesión</h3>
+    <div>
+      <h3>Seguimientos multisesión</h3>
+      <span class="panel-desc">Planes activos con próxima sesión, avance de pago y control.</span>
+    </div>
     <a routerLink="/admin/sesiones" class="enlace-flecha">Ver planes</a>
   </div>
   <div class="tabla-envoltura">
-    <table class="tabla">
+    <table class="tabla tabla-compacta">
       <thead>
         <tr><th>Paciente</th><th>Plan</th><th>Próxima sesión</th><th class="num">Pagado</th><th class="num">Saldo</th><th>Control</th></tr>
       </thead>
@@ -207,19 +230,5 @@
         }
       </tbody>
     </table>
-  </div>
-</section>
-
-<section class="panel" style="margin-top:22px">
-  <h4>Alertas de stock</h4>
-  <div class="alertas">
-    @for (p of stockBajo; track p.id) {
-      <div class="alerta-stock">
-        <div class="mini-dato"><strong>{{ p.nombre }}</strong><span>{{ p.marca }}</span></div>
-        <span [class]="p.stock <= 3 ? 'chip chip--error chip--punto' : 'chip chip--alerta chip--punto'">
-          {{ p.stock }} unidades
-        </span>
-      </div>
-    }
   </div>
 </section>

@@ -1,8 +1,8 @@
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
-  DIAS_SEMANA, HOY_ISO, LOCALES, MESES, TRATAMIENTOS, aISO,
+  DIAS_SEMANA, ESPECIALISTAS, HOY_ISO, LOCALES, MESES, TRATAMIENTOS, aISO,
   formatoHora12,
   formatoFechaLarga, localPorId, nombreCabina, nombreEspecialista,
   soles, tratamientoPorId
@@ -14,6 +14,7 @@ import { ConfiguracionPanelService } from '../../compartido/configuracion-panel.
 import { PacientesService } from '../../compartido/pacientes.service';
 import { PlanesService } from '../../compartido/planes.service';
 import { Bloque, DisponibilidadService } from '../../compartido/disponibilidad.service';
+import { VoucherService } from '../../compartido/voucher.service';
 
 interface Celda {
   iso: string;
@@ -51,7 +52,7 @@ interface ManualTratamientoSeguimiento {
   changeDetection: ChangeDetectionStrategy.Default,
   styleUrl: './calendario.component.scss'
 })
-export class CalendarioComponent {
+export class CalendarioComponent implements OnDestroy {
   private agenda = inject(AgendaService);
   private sesion = inject(SesionService);
   private configPanel = inject(ConfiguracionPanelService);
@@ -59,6 +60,7 @@ export class CalendarioComponent {
   private planes = inject(PlanesService);
   private disponibilidad = inject(DisponibilidadService);
   private router = inject(Router);
+  private vouchers = inject(VoucherService);
 
   soles = soles;
   Number = Number;
@@ -88,7 +90,11 @@ export class CalendarioComponent {
   editFecha = signal<Record<number, string>>({});
   editHora = signal<Record<number, string>>({});
   manualTratamientoBusqueda = signal<Record<number, string>>({});
+  manualTratamientoAbierto = signal<number | null>(null);
   manualPacienteEncontrado = signal(this.pacientes.porDni('') ?? null);
+  disponibilidadTick = signal(0);
+  private temporizadorDisponibilidad?: ReturnType<typeof setInterval>;
+  private readonly refrescarDisponibilidad = () => this.disponibilidadTick.update(v => v + 1);
 
   manualDni = '';
   manualCelular = '';
@@ -101,6 +107,7 @@ export class CalendarioComponent {
   manualPagado = 0;
   manualMetodo: MetodoPago = 'Efectivo';
   manualOrigen: 'Recepción' | 'WhatsApp' = 'Recepción';
+  manualResponsable = '';
   manualPlanNombre = '';
   manualSeguimientos = signal<ManualTratamientoSeguimiento[]>([{
     tratamientoId: TRATAMIENTOS[0]?.id ?? 1,
@@ -115,6 +122,16 @@ export class CalendarioComponent {
 
   estados = ['Todos', ...ESTADOS_CITA];
   estadosPago = ['Todos', 'Pagado', 'Pago en local', 'Pendiente', 'Reembolsado'];
+
+  constructor() {
+    this.temporizadorDisponibilidad = setInterval(this.refrescarDisponibilidad, 5000);
+    window.addEventListener('storage', this.refrescarDisponibilidad);
+  }
+
+  ngOnDestroy(): void {
+    clearInterval(this.temporizadorDisponibilidad);
+    window.removeEventListener('storage', this.refrescarDisponibilidad);
+  }
 
   titulo = computed(() => `${this.meses[this.mes()]} ${this.anio()}`);
   saldoManual(): number {
@@ -219,6 +236,18 @@ export class CalendarioComponent {
     this.pagoCodigo.update(m => ({ ...m, [c.id]: '' }));
   }
 
+  imprimirVoucherCita(cita: Cita): void {
+    this.vouchers.imprimirCita(cita, this.paciente(cita.pacienteId));
+  }
+
+  enlaceCorreoCita(cita: Cita): string {
+    return this.vouchers.enlaceCorreoCita(cita, this.paciente(cita.pacienteId));
+  }
+
+  enlaceWhatsappCita(cita: Cita): string {
+    return this.vouchers.enlaceWhatsappCita(cita, this.paciente(cita.pacienteId));
+  }
+
   setPagoMonto(id: number, monto: number): void {
     this.pagoMonto.update(v => ({ ...v, [id]: monto }));
   }
@@ -245,6 +274,7 @@ export class CalendarioComponent {
 
   buscarTratamientoManual(indice: number, valor: string): void {
     this.manualTratamientoBusqueda.update(v => ({ ...v, [indice]: valor }));
+    this.manualTratamientoAbierto.set(indice);
     const seleccionado = this.tratamientosCatalogo.find(t =>
       this.normalizarTexto(this.tratamientoEtiqueta(t.id)) === this.normalizarTexto(valor) ||
       this.normalizarTexto(t.nombre) === this.normalizarTexto(valor)
@@ -256,6 +286,27 @@ export class CalendarioComponent {
 
   busquedaTratamientoManual(indice: number, tratamientoId: number): string {
     return this.manualTratamientoBusqueda()[indice] ?? this.tratamientoEtiqueta(tratamientoId);
+  }
+
+  abrirSelectorTratamientoManual(indice: number): void {
+    this.manualTratamientoAbierto.set(indice);
+  }
+
+  alternarSelectorTratamientoManual(indice: number): void {
+    this.manualTratamientoAbierto.set(this.manualTratamientoAbierto() === indice ? null : indice);
+  }
+
+  seleccionarTratamientoManual(indice: number, tratamientoId: number): void {
+    this.cambiarTratamientoSeguimiento(indice, tratamientoId);
+    this.manualTratamientoAbierto.set(null);
+  }
+
+  opcionesTratamientoManual(indice: number) {
+    const texto = this.normalizarTexto(this.manualTratamientoBusqueda()[indice] ?? '');
+    if (!texto) { return this.tratamientosCatalogo; }
+    return this.tratamientosCatalogo.filter(t =>
+      this.normalizarTexto(`${t.nombre} ${t.categoria} ${t.resumen} ${this.tratamientoEtiqueta(t.id)}`).includes(texto)
+    );
   }
 
   tratamientoEtiqueta(tratamientoId: number): string {
@@ -320,6 +371,18 @@ export class CalendarioComponent {
       && this.cuposManualSuficientes(programadas);
   }
 
+  datosManualValidos(): boolean {
+    const dni = this.manualDni.replace(/\D/g, '');
+    const celular = this.manualCelular.replace(/\D/g, '');
+    return !!(
+      this.manualNombre.trim()
+      && this.manualApellido.trim()
+      && dni.length === 8
+      && celular.length >= 9
+      && this.manualResponsable.trim()
+    );
+  }
+
   recalcularManualDesdeSeguimientos(): void {
     this.manualTotal = this.manualSeguimientos().reduce((total, item) => total + (tratamientoPorId(item.tratamientoId)?.precio ?? 0), 0);
     this.manualPagado = this.pagadoManualSeguro();
@@ -356,6 +419,7 @@ export class CalendarioComponent {
   }
 
   registrarCitaManual(): void {
+    if (!this.datosManualValidos()) { return; }
     this.registrarPlanMultisesion();
   }
 
@@ -374,11 +438,19 @@ export class CalendarioComponent {
     return this.bloquesPara(this.manualLocalId, fecha);
   }
 
+  etiquetaBloque(bloque: Bloque): string {
+    const ocupados = Math.max(bloque.reservados + bloque.retenidos, 0);
+    const detalle = ocupados > 0
+      ? ` · ${ocupados} ${ocupados === 1 ? 'ocupado' : 'ocupados'}${bloque.retenidos ? ` (${bloque.retenidos} temporal)` : ''}`
+      : '';
+    return `${this.formatoHora(bloque.inicio)} · ${bloque.libres} de ${bloque.cupo} disponibles${detalle}`;
+  }
+
   bloquesReprogramacion(cita: Cita, fecha: string): Bloque[] {
     return this.bloquesPara(cita.localId, fecha).map(bloque => {
       const esHorarioActual = fecha === cita.fecha && bloque.inicio === cita.horaInicio;
       return esHorarioActual
-        ? { ...bloque, libres: Math.min(bloque.cupo, bloque.libres + 1), disponible: true, motivo: undefined }
+        ? { ...bloque, disponible: true, motivo: undefined }
         : bloque;
     });
   }
@@ -448,11 +520,12 @@ export class CalendarioComponent {
 
   private registrarPlanMultisesion(): void {
     const seguimientos = this.manualSeguimientos();
+    const responsableRegistro = this.manualResponsable.trim();
     const sesionesValidas = seguimientos.flatMap((item, grupoIndice) => item.sesiones
       .map((sesion) => ({ ...sesion, tratamientoId: item.tratamientoId, grupoTratamiento: grupoIndice + 1 }))
     );
     const faltaPrimeraSesion = seguimientos.some(item => !item.sesiones[0]?.fecha || !item.sesiones[0]?.hora);
-    if (!sesionesValidas.length || faltaPrimeraSesion || !this.seguimientoManualValido()) {
+    if (!responsableRegistro || !sesionesValidas.length || faltaPrimeraSesion || !this.seguimientoManualValido()) {
       return;
     }
 
@@ -473,7 +546,7 @@ export class CalendarioComponent {
       fecha: HOY_ISO,
       hora: new Date().toTimeString().slice(0, 5),
       canal: this.manualOrigen,
-      registradoPor: this.responsable(),
+      registradoPor: responsableRegistro,
       codigoOperacion: `${this.manualMetodo.toUpperCase().replace(/\s/g, '-')}-${Date.now().toString().slice(-6)}`
     }] : [];
 
@@ -500,11 +573,12 @@ export class CalendarioComponent {
         zona: sesion.zona.trim() || undefined,
         estado: sesion.fecha && sesion.hora ? 'Programada' as const : 'Pendiente' as const,
         observaciones: sesion.observaciones.trim() || undefined,
-        registradoPor: this.responsable()
+        registradoPor: responsableRegistro
       }))
     });
 
     this.pacientes.registrarAtencion(paciente.id, sesionesValidas[0].fecha, pagado);
+    this.vouchers.imprimirPlan(plan, paciente);
     this.cerrarFormularioManual(sesionesValidas[0].fecha);
     this.busqueda.set('');
   }
@@ -522,6 +596,7 @@ export class CalendarioComponent {
     this.manualPagado = 0;
     this.manualOrigen = 'Recepción';
     this.manualMetodo = 'Efectivo';
+    this.manualResponsable = '';
     this.manualPlanNombre = '';
     this.manualSeguimientos.set([this.crearSeguimientoManualVacio(true)]);
     this.manualTratamientoBusqueda.set({});
@@ -538,6 +613,7 @@ export class CalendarioComponent {
   }
 
   private bloquesPara(localId: number, fecha: string): Bloque[] {
+    this.disponibilidadTick();
     const local = localPorId(localId);
     return fecha && local ? this.disponibilidad.bloques(fecha, local) : [];
   }
@@ -595,6 +671,31 @@ export class CalendarioComponent {
 
   private responsable(): string {
     return this.sesion.nombreCompleto() || 'Recepción';
+  }
+
+  responsablesRegistro(): { valor: string; etiqueta: string }[] {
+    const local = localPorId(Number(this.manualLocalId));
+    const referenciasLocal = [
+      local?.nombre ?? '',
+      local?.direccion ?? '',
+      local?.nombre.match(/\d{4}/)?.[0] ?? ''
+    ].filter(Boolean);
+    const internos = this.configPanel.usuarios()
+      .filter(u => u.activo && u.rol !== 'Administrador')
+      .filter(u => u.local === 'Ambas sedes' || referenciasLocal.some(ref => u.local.includes(ref)))
+      .map(u => ({
+        valor: `${u.rol === 'Recepcionista' ? 'Recepción' : 'Especialista'} · ${u.nombre}`,
+        etiqueta: `${u.rol === 'Recepcionista' ? 'Recepción' : 'Especialista'} · ${u.nombre}`
+      }));
+    const especialistas = ESPECIALISTAS
+      .filter(e => e.activa && e.locales.includes(Number(this.manualLocalId)))
+      .map(e => ({
+        valor: `Especialista · ${e.nombre} ${e.apellido}`,
+        etiqueta: `Especialista · ${e.nombre} ${e.apellido}`
+      }));
+    return [...internos, ...especialistas].filter((item, indice, lista) =>
+      lista.findIndex(unico => unico.valor === item.valor) === indice
+    );
   }
 
   paciente = (id: number) => this.pacientes.porId(id);

@@ -297,6 +297,35 @@
   border-radius: var(--radio-lg); padding: 28px; margin: 34px 0;
 }
 .confirmacion__acciones { display: flex; gap: 14px; justify-content: center; }
+.voucher-reserva {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin: 0 0 22px;
+  padding: 18px;
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+}
+.voucher-reserva strong {
+  display: block;
+  color: var(--vino);
+  margin-bottom: 4px;
+}
+.voucher-reserva span {
+  display: block;
+  color: var(--gris);
+  font-size: .92rem;
+  line-height: 1.5;
+}
+.voucher-reserva__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 .aviso--llegada {
   max-width: 680px;
   margin: 20px auto 0;
@@ -385,9 +414,13 @@
   }
   .acciones-paso,
   .confirmacion__acciones,
+  .voucher-reserva,
+  .voucher-reserva__acciones,
   .reserva-modal__acciones {
+    grid-template-columns: 1fr;
     flex-direction: column;
   }
+  .voucher-reserva__acciones .btn { width: 100%; }
   .resumen__fila {
     grid-template-columns: 1fr;
     gap: 3px;

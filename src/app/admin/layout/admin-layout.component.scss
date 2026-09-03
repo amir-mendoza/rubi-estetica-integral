@@ -80,6 +80,82 @@
   letter-spacing: .04em;
 }
 .topbar__rol { display: flex; align-items: center; gap: 10px; }
+.topbar__rol strong {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  background: var(--rosa-50);
+  color: var(--vino);
+  font-size: .9rem;
+}
+.topbar__notificaciones { position: relative; }
+.topbar__campana {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--linea);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--vino);
+  cursor: pointer;
+}
+.topbar__campana svg { width: 19px; height: 19px; }
+.topbar__campana span {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--error);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 800;
+}
+.topbar__bandeja {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: min(340px, calc(100vw - 28px));
+  display: none;
+  padding: 14px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-lg);
+  background: #fff;
+  box-shadow: 0 22px 45px rgba(42, 32, 40, .16);
+  z-index: 50;
+}
+.topbar__notificaciones:hover .topbar__bandeja,
+.topbar__notificaciones:focus-within .topbar__bandeja { display: grid; gap: 8px; }
+.topbar__bandeja > strong { color: var(--vino); font-size: .96rem; }
+.topbar__bandeja a {
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  border-radius: var(--radio);
+  color: var(--tinta);
+}
+.topbar__bandeja a:hover { background: var(--rosa-50); }
+.topbar__bandeja a span { font-size: .9rem; font-weight: 700; }
+.topbar__bandeja a small, .topbar__bandeja p { color: var(--gris-claro); font-size: .82rem; margin: 0; }
+.topbar__bandeja-todo {
+  margin-top: 4px;
+  border: 1px solid var(--linea);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-size: .76rem;
+  font-weight: 800;
+  color: var(--vino) !important;
+}
 .topbar__rol label { font-size: .78rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris-claro); }
 .topbar__rol select {
   border: 1px solid var(--linea); border-radius: var(--radio); padding: .45rem .7rem;
